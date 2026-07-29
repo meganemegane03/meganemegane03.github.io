@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>涼しくなった気がするボタン</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Hiragino Kaku Gothic ProN', 'メイリオ', sans-serif;
+    background: linear-gradient(160deg, #ff9a3c, #ff6b35, #e84855);
+    transition: background 2s ease;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body.cool {
+    background: linear-gradient(160deg, #a8edea, #74b9ff, #0984e3);
+  }
+
+  .temp-display {
+    font-size: 5rem;
+    font-weight: 900;
+    color: white;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    letter-spacing: -2px;
+    transition: all 2s ease;
+    margin-bottom: 0.2em;
+  }
+
+  .temp-label {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 2.5rem;
+    letter-spacing: 2px;
+    transition: all 2s ease;
+  }
+
+  .btn {
+    background: white;
+    border: none;
+    border-radius: 100px;
+    padding: 1.2rem 3rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #ff6b35;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+    letter-spacing: 1px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn.cool-btn {
+    color: #0984e3;
+  }
+
+  .message {
+    margin-top: 2rem;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.9);
+    min-height: 1.5em;
+    text-align: center;
+    letter-spacing: 1px;
+    transition: opacity 0.5s ease;
+  }
+
+  /* 汗エフェクト */
+  .drop {
+    position: absolute;
+    width: 8px;
+    height: 14px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 50% 50% 50% 50% / 30% 30% 70% 70%;
+    animation: falling linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes falling {
+    0% { transform: translateY(-20px); opacity: 0.8; }
+    100% { transform: translateY(110vh); opacity: 0; }
+  }
+
+  /* 雪エフェクト */
+  .snow {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: snowfall linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes snowfall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 0.8; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
+
+  .count {
+    position: fixed;
+    bottom: 2rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body id="app">
+
+  <div class="temp-display" id="tempDisplay">35°C</div>
+  <div class="temp-label" id="tempLabel">🥵 今日も灼熱地獄</div>
+
+  <button class="btn" id="mainBtn" onclick="pressCool()">
+    涼しくなった気がするボタン
+  </button>
+
+  <div class="message" id="message">↑ 押してみ？</div>
+
+  <div class="count" id="countDisplay"></div>
+
+<script>
+  let isCool = false;
+  let pressCount = 0;
+  let particles = [];
+
+  const hotMessages = [
+    "やっぱり暑い😇",
+    "気のせいやった",
+    "35℃に戻ってもた",
+    "ダメやった…",
+    "現実は厳しい🥵",
+  ];
+
+  const coolMessages = [
+    "涼しくなった気がする〜！❄️",
+    "ひんやりしてきた（気がする）",
+    "なんか知らんけど涼しい！",
+    "エアコン要らんかも（嘘）",
+    "気持ちだけでも夏を乗り切れ！",
+  ];
+
+  function pressCool() {
+    pressCount++;
+    isCool = !isCool;
+    const app = document.getElementById('app');
+    const tempDisplay = document.getElementById('tempDisplay');
+    const tempLabel = document.getElementById('tempLabel');
+    const btn = document.getElementById('mainBtn');
+    const message = document.getElementById('message');
+    const countDisplay = document.getElementById('countDisplay');
+
+    clearParticles();
+
+    if (isCool) {
+      app.classList.add('cool');
+      tempDisplay.textContent = '18°C';
+      tempLabel.textContent = '❄️ 涼しい（気がする）';
+      btn.classList.add('cool-btn');
+      btn.textContent = '暑さに戻すボタン';
+      message.textContent = coolMessages[Math.floor(Math.random() * coolMessages.length)];
+      spawnSnow();
+    } else {
+      app.classList.remove('cool');
+      tempDisplay.textContent = '35°C';
+      tempLabel.textContent = '🥵 今日も灼熱地獄';
+      btn.classList.remove('cool-btn');
+      btn.textContent = '涼しくなった気がするボタン';
+      message.textContent = hotMessages[Math.floor(Math.random() * hotMessages.length)];
+      spawnDrops();
+    }
+
+    countDisplay.textContent = `ボタン押した回数：${pressCount}回（現実の気温は変わってません）`;
+  }
+
+  function spawnDrops() {
+    for (let i = 0; i < 15; i++) {
+      setTimeout(() => {
+        const drop = document.createElement('div');
+        drop.className = 'drop';
+        drop.style.left = Math.random() * 100 + 'vw';
+        drop.style.top = '-20px';
+        drop.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        drop.style.animationDelay = (Math.random() * 1) + 's';
+        document.getElementById('app').appendChild(drop);
+        particles.push(drop);
+        setTimeout(() => drop.remove(), 4000);
+      }, i * 80);
+    }
+  }
+
+  function spawnSnow() {
+    for (let i = 0; i < 20; i++) {
+      setTimeout(() => {
+        const snow = document.createElement('div');
+        snow.className = 'snow';
+        snow.style.left = Math.random() * 100 + 'vw';
+        snow.style.top = '-20px';
+        snow.style.width = (4 + Math.random() * 8) + 'px';
+        snow.style.height = snow.style.width;
+        snow.style.animationDuration = (2 + Math.random() * 3) + 's';
+        snow.style.animationDelay = (Math.random() * 1.5) + 's';
+        document.getElementById('app').appendChild(snow);
+        particles.push(snow);
+        setTimeout(() => snow.remove(), 5000);
+      }, i * 60);
+    }
+  }
+
+  function clearParticles() {
+    particles.forEach(p => p.remove());
+    particles = [];
+  }
+</script>
+</body>
+</html>
