@@ -1,0 +1,15 @@
+{
+  "name": "めがねのおっさんの占い",
+  "short_name": "おっさん占い",
+  "start_url": "/ossan-fortune.html",
+  "display": "standalone",
+  "background_color": "#1a0a00",
+  "theme_color": "#f9ca24",
+  "icons": [
+    {
+      "src": "data:image/png;base64,iVBORw0KGgo=",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
