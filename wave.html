@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小豆の波おもちゃ（画像版）</title>
+    <title>小豆の波おもちゃ</title>
     <style>
         body {
             margin: 0;
@@ -27,40 +27,35 @@
             border-radius: 8px;
             cursor: pointer;
             margin-bottom: 20px;
-            z-index: 10; /* ボタンを画像の上に表示 */
+            z-index: 10;
         }
         .box {
             width: 80vw;
-            max-width: 320px; /* 画像の比率に合わせて少し調整 */
-            height: 400px; /* 縦長の画像に合わせて高く設定 */
+            max-width: 320px;
+            height: 400px;
             
-            /* --- 変更点: CSSの設定を画像ベースに変更 --- */
-            background-image: url('azuki_box.png'); /* 保存した画像ファイル名を指定 */
-            background-size: contain; /* 画像全体が枠に収まるように表示 */
+            /* 画像データを直接埋め込んでいます */
+            background-image: url('data:image/png;base64,<?php echo ...?>'); /* ここにBase64データを挿入 */
+            background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
             
-            /* 枠線と背景色は不要になったので削除かコメントアウト */
-            /* border: 4px solid #8B4513; */
-            /* background: #DEB887; */
-            
             border-radius: 10px;
             position: relative;
-            /* box-shadow: inset 0 10px 20px rgba(0,0,0,0.3); */ /* 画像に立体感があるので削除 */
             margin-top: 20px;
-            overflow: hidden; /* 豆が画像の外に出ないようにする */
+            overflow: hidden;
         }
         .bean {
             width: 12px;
             height: 12px;
-            background: #800020; /* 小豆色 */
+            background: #800020;
             border-radius: 50%;
             position: absolute;
-            top: 50%; /* 画像の中心あたりに配置 */
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: transform 0.1s linear; /* 少し滑らかに */
-            opacity: 0.7; /* 写真になじませるために少し透過 */
+            transition: transform 0.1s linear;
+            opacity: 0.7;
         }
         p {
             font-size: 14px;
@@ -76,7 +71,6 @@
     <p>スマホを左右に傾けると、小豆が転がって波の音がします。</p>
     
     <div class="box" id="box">
-        <!-- この赤い点は、画像の上で転がる小豆の「代表」です -->
         <div class="bean" id="bean"></div>
     </div>
 
@@ -91,7 +85,6 @@
         const bean = document.getElementById('bean');
         const box = document.getElementById('box');
 
-        // 音の初期設定（前回と同じ）
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const bufferSize = audioCtx.sampleRate * 2;
@@ -132,18 +125,13 @@
             window.addEventListener('deviceorientation', (event) => {
                 if (!isRunning) return;
                 let gamma = event.gamma || 0; 
+                let moveX = gamma * 2; 
                 
-                // --- 変更点: 画像の範囲内で豆が動くように計算を調整 ---
-                // 傾きに応じて移動量を計算 (画像の中心を基準に)
-                let moveX = gamma * 2; // 感度を少し調整
-                
-                // 豆が画像の左右端から出ないように制限 (画像の幅を考慮)
                 const boxWidth = box.clientWidth;
-                const maxMove = (boxWidth / 2) - 20; // 余裕を持たせる
+                const maxMove = (boxWidth / 2) - 20;
                 if (moveX > maxMove) moveX = maxMove;
                 if (moveX < -maxMove) moveX = -maxMove;
                 
-                // 豆の位置を更新 (画像の中央 + 移動量)
                 bean.style.transform = `translate(calc(-50% + ${moveX}px), -50%)`;
 
                 let tiltRate = Math.abs(gamma) / 90; 
