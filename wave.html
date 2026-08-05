@@ -3,142 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小豆の波おもちゃ</title>
+    <title>Wave App</title>
     <style>
         body {
             margin: 0;
-            height: 100vh;
+            padding: 0;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: #222;
-            color: #fff;
-            font-family: sans-serif;
+            height: 100vh;
             overflow: hidden;
+        }
+        .container {
             text-align: center;
         }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-            z-index: 10;
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .box {
-            width: 80vw;
-            max-width: 320px;
-            height: 400px;
-            
-            /* 画像データを直接埋め込んでいます */
-            background-image: url('data:image/png;base64,<?php echo ...?>'); /* ここにBase64データを挿入 */
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            
-            border-radius: 10px;
-            position: relative;
-            margin-top: 20px;
-            overflow: hidden;
-        }
-        .bean {
-            width: 12px;
-            height: 12px;
-            background: #800020;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s linear;
-            opacity: 0.7;
-        }
-        p {
-            font-size: 14px;
-            color: #aaa;
-            padding: 0 20px;
-            z-index: 10;
+        canvas {
+            background-color: #1e293b;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
     </style>
 </head>
 <body>
-
-    <button id="startButton">スタート（音を有効にする）</button>
-    <p>スマホを左右に傾けると、小豆が転がって波の音がします。</p>
-    
-    <div class="box" id="box">
-        <div class="bean" id="bean"></div>
+    <div class="container">
+        <h1>Wave App</h1>
+        <canvas id="waveCanvas" width="350" height="200"></canvas>
     </div>
 
     <script>
-        let audioCtx;
-        let noiseNode;
-        let filterNode;
-        let gainNode;
-        let isRunning = false;
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        let step = 0;
 
-        const startButton = document.getElementById('startButton');
-        const bean = document.getElementById('bean');
-        const box = document.getElementById('box');
+        function drawWave() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.beginPath();
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#38bdf8';
 
-        function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const bufferSize = audioCtx.sampleRate * 2;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                data[i] = Math.random() * 2 - 1;
+            for (let x = 0; x < canvas.width; x++) {
+                // 波の計算式
+                let y = Math.sin(x * 0.02 + step) * 30 + Math.cos(x * 0.01 + step * 0.5) * 15 + canvas.height / 2;
+                if (x === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
             }
-            noiseNode = audioCtx.createBufferSource();
-            noiseNode.buffer = buffer;
-            noiseNode.loop = true;
-            filterNode = audioCtx.createBiquadFilter();
-            filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
-            gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            noiseNode.connect(filterNode);
-            filterNode.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            noiseNode.start();
+            ctx.stroke();
+            
+            step += 0.05;
+            requestAnimationFrame(drawWave);
         }
 
-        startButton.addEventListener('click', async () => {
-            if (!audioCtx) initAudio();
-            else if (audioCtx.state === 'suspended') await audioCtx.resume();
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const response = await DeviceOrientationEvent.requestPermission();
-                    if (response === 'granted') startSensor();
-                    else alert('センサーの許可が必要です');
-                } catch (e) { console.error(e); }
-            } else { startSensor(); }
-            startButton.style.display = 'none';
-            isRunning = true;
-        });
-
-        function startSensor() {
-            window.addEventListener('deviceorientation', (event) => {
-                if (!isRunning) return;
-                let gamma = event.gamma || 0; 
-                let moveX = gamma * 2; 
-                
-                const boxWidth = box.clientWidth;
-                const maxMove = (boxWidth / 2) - 20;
-                if (moveX > maxMove) moveX = maxMove;
-                if (moveX < -maxMove) moveX = -maxMove;
-                
-                bean.style.transform = `translate(calc(-50% + ${moveX}px), -50%)`;
-
-                let tiltRate = Math.abs(gamma) / 90; 
-                gainNode.gain.setTargetAtTime(tiltRate * 0.8, audioCtx.currentTime, 0.1);
-                filterNode.frequency.setTargetAtTime(200 + tiltRate * 800, audioCtx.currentTime, 0.1);
-            });
-        }
+        drawWave();
     </script>
 </body>
 </html>
