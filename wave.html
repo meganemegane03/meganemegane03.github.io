@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wave App</title>
+    <title>Zaru Wave App</title>
     <style>
         body {
             margin: 0;
@@ -12,62 +12,155 @@
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-        }
-        .container {
             text-align: center;
         }
         h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
             background: linear-gradient(45deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        canvas {
-            background-color: #1e293b;
-            border-radius: 12px;
+        p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        .container {
+            position: relative;
+            cursor: pointer;
+        }
+        /* ざるや小豆の画像をここに表示します */
+        img {
+            width: 300px;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transition: transform 0.1s ease-out;
+        }
+        .start-btn {
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
+
     <div class="container">
-        <h1>Wave App</h1>
-        <canvas id="waveCanvas" width="350" height="200"></canvas>
+        <h1>Zaru Wave App</h1>
+        <p id="status">ボタンを押してスタートしてください</p>
+        
+        <!-- 画像を表示する部分（ここに画像のURLやファイル名を入れてください） -->
+        <img id="zaruImg" src="YOUR_IMAGE_URL_HERE.png" alt="ざるの画像">
+        
+        <br>
+        <button class="start-btn" id="startButton">音とセンサーを有効化</button>
     </div>
 
     <script>
-        const canvas = document.getElementById('waveCanvas');
-        const ctx = canvas.getContext('2d');
-        let step = 0;
+        let audioCtx = null;
+        let noiseNode = null;
+        let filterNode = null;
+        let isRunning = false;
 
-        function drawWave() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const startButton = document.getElementById('startButton');
+        const statusText = document.getElementById('status');
+        const zaruImg = document.getElementById('zaruImg');
+
+        // 音声（ホワイトノイズ＝波の音に近い音）の準備
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
-            ctx.beginPath();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = '#38bdf8';
-
-            for (let x = 0; x < canvas.width; x++) {
-                // 波の計算式
-                let y = Math.sin(x * 0.02 + step) * 30 + Math.cos(x * 0.01 + step * 0.5) * 15 + canvas.height / 2;
-                if (x === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+            // ホワイトノイズ用のバッファ作成
+            const bufferSize = audioCtx.sampleRate * 2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
             }
-            ctx.stroke();
-            
-            step += 0.05;
-            requestAnimationFrame(drawWave);
+
+            noiseNode = audioCtx.createBufferSource();
+            noiseNode.buffer = buffer;
+            noiseNode.loop = true;
+
+            // フィルターを使って音をこもらせ、波の「ザァーッ」という音に近づける
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+
+            noiseNode.connect(filterNode);
+            filterNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            noiseNode.start();
         }
 
-        drawWave();
+        // スタートボタンを押したときの処理（ブラウザの制限で音声再生にユーザー操作が必要なため）
+        startButton.addEventListener('click', async () => {
+            if (!audioCtx) {
+                initAudio();
+            } else if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+
+            // iPhoneの傾きセンサー（ジャイロ）の許可をリクエスト
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const response = await DeviceOrientationEvent.requestPermission();
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        statusText.textContent = 'スマホを傾けると音が変化します';
+                        startButton.style.display = 'none';
+                        isRunning = true;
+                    } else {
+                        alert('センサーの権限が許可されませんでした');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                // 許可が不要な端末の場合
+                window.addEventListener('deviceorientation', handleOrientation);
+                statusText.textContent = 'スマホを傾けると音が変化します';
+                startButton.style.display = 'none';
+                isRunning = true;
+            }
+        });
+
+        // スマホを傾けたときの処理
+        function handleOrientation(event) {
+            if (!isRunning) return;
+
+            // 左右の傾き (gamma: -90 ～ 90) や 前後の傾き (beta: -180 ～ 180)
+            const beta = event.beta || 0;  // 前後
+            const gamma = event.gamma || 0; // 左右
+
+            // 画像を傾きに合わせて少し傾ける・動かす演出
+            zaruImg.style.transform = `rotate(${gamma}deg) scale(${1 + Math.abs(beta)/200})`;
+
+            // 傾きに応じて波の音のフィルター（こもり具合）を変化させる
+            if (filterNode) {
+                const freq = Math.min(Math.max(200 + Math.abs(gamma) * 30, 200), 2000);
+                filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            }
+        }
     </script>
 </body>
 </html>
