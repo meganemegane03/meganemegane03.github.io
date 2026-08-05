@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaru Wave App</title>
+    <title>Zaru Azuki Wave App</title>
     <style>
         body {
             margin: 0;
@@ -20,29 +20,41 @@
             text-align: center;
         }
         h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
             background: linear-gradient(45deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         p {
             color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
         }
         .container {
             position: relative;
-            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
-        /* ざるや小豆の画像をここに表示します */
-        img {
-            width: 300px;
-            height: 300px;
-            object-fit: cover;
+        /* ざるの画像を表示する部分 */
+        .zaru-wrapper {
+            width: 320px;
+            height: 480px;
+            overflow: hidden;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            transition: transform 0.1s ease-out;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            background-color: #1e293b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.05s ease-out;
+            transform-origin: center center;
         }
         .start-btn {
             background-color: #38bdf8;
@@ -60,14 +72,17 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>Zaru Wave App</h1>
+    <div class="container-all">
+        <h1>ざる・小豆 波音アプリ</h1>
         <p id="status">ボタンを押してスタートしてください</p>
         
-        <!-- 画像を表示する部分（ここに画像のURLやファイル名を入れてください） -->
-        <img id="zaruImg" src="YOUR_IMAGE_URL_HERE.png" alt="ざるの画像">
+        <div class="container">
+            <div class="zaru-wrapper">
+                <!-- 画像ファイル名（zaru.jpg）を指定しています -->
+                <img id="zaruImg" src="zaru.jpg" alt="ざると小豆の画像">
+            </div>
+        </div>
         
-        <br>
         <button class="start-btn" id="startButton">音とセンサーを有効化</button>
     </div>
 
@@ -81,11 +96,10 @@
         const statusText = document.getElementById('status');
         const zaruImg = document.getElementById('zaruImg');
 
-        // 音声（ホワイトノイズ＝波の音に近い音）の準備
+        // 波の音（ホワイトノイズ＋ローパスフィルター）の準備
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
-            // ホワイトノイズ用のバッファ作成
             const bufferSize = audioCtx.sampleRate * 2;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
@@ -97,13 +111,12 @@
             noiseNode.buffer = buffer;
             noiseNode.loop = true;
 
-            // フィルターを使って音をこもらせ、波の「ザァーッ」という音に近づける
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+            filterNode.frequency.setValueAtTime(350, audioCtx.currentTime);
 
             const gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
 
             noiseNode.connect(filterNode);
             filterNode.connect(gainNode);
@@ -112,7 +125,7 @@
             noiseNode.start();
         }
 
-        // スタートボタンを押したときの処理（ブラウザの制限で音声再生にユーザー操作が必要なため）
+        // スタートボタン（ブラウザの自動再生制限を解除するため必須）
         startButton.addEventListener('click', async () => {
             if (!audioCtx) {
                 initAudio();
@@ -120,13 +133,13 @@
                 await audioCtx.resume();
             }
 
-            // iPhoneの傾きセンサー（ジャイロ）の許可をリクエスト
+            // iPhoneの傾きセンサー（ジャイロ）の許可リクエスト
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
                     const response = await DeviceOrientationEvent.requestPermission();
                     if (response === 'granted') {
                         window.addEventListener('deviceorientation', handleOrientation);
-                        statusText.textContent = 'スマホを傾けると音が変化します';
+                        statusText.textContent = 'スマホを傾けると画像と音が連動します';
                         startButton.style.display = 'none';
                         isRunning = true;
                     } else {
@@ -136,9 +149,8 @@
                     console.error(e);
                 }
             } else {
-                // 許可が不要な端末の場合
                 window.addEventListener('deviceorientation', handleOrientation);
-                statusText.textContent = 'スマホを傾けると音が変化します';
+                statusText.textContent = 'スマホを傾けると画像と音が連動します';
                 startButton.style.display = 'none';
                 isRunning = true;
             }
@@ -148,16 +160,19 @@
         function handleOrientation(event) {
             if (!isRunning) return;
 
-            // 左右の傾き (gamma: -90 ～ 90) や 前後の傾き (beta: -180 ～ 180)
-            const beta = event.beta || 0;  // 前後
-            const gamma = event.gamma || 0; // 左右
+            const beta = event.beta || 0;   // 前後の傾き (-180 ～ 180)
+            const gamma = event.gamma || 0; // 左右の傾き (-90 ～ 90)
 
-            // 画像を傾きに合わせて少し傾ける・動かす演出
-            zaruImg.style.transform = `rotate(${gamma}deg) scale(${1 + Math.abs(beta)/200})`;
+            // 傾きに合わせて画像を少し傾けたり移動させ、ざるを揺らしているように見せる
+            const moveX = gamma * 0.8;
+            const moveY = (beta - 45) * 0.8; // 持っている自然な角度を基準に調整
+            const rotateDeg = gamma * 0.3;
 
-            // 傾きに応じて波の音のフィルター（こもり具合）を変化させる
+            zaruImg.style.transform = `translate(${moveX}px, ${moveY}px) rotate(${rotateDeg}deg)`;
+
+            // 傾きに応じて波の音の響き（フィルター）を変化させる
             if (filterNode) {
-                const freq = Math.min(Math.max(200 + Math.abs(gamma) * 30, 200), 2000);
+                const freq = Math.min(Math.max(200 + Math.abs(gamma) * 25, 200), 1800);
                 filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
             }
         }
