@@ -3,85 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小豆の波おもちゃ</title>
+    <title>Zaru Azuki Wave App</title>
     <style>
         body {
             margin: 0;
-            height: 100vh;
+            padding: 0;
+            background-color: #0f172a;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: #222;
-            color: #fff;
-            font-family: sans-serif;
+            height: 100vh;
             overflow: hidden;
             text-align: center;
         }
-        button {
-            padding: 15px 30px;
-            font-size: 18px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        .box {
-            width: 80vw;
-            max-width: 300px;
-            height: 150px;
-            border: 4px solid #8B4513;
-            background: #DEB887;
-            border-radius: 10px;
-            position: relative;
-            box-shadow: inset 0 10px 20px rgba(0,0,0,0.3);
-            margin-top: 20px;
-        }
-        .bean {
-            width: 12px;
-            height: 12px;
-            background: #800020; /* 小豆色 */
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            transition: transform 0.05s linear;
+        h1 {
+            font-size: 1.6rem;
+            margin-bottom: 0.3rem;
+            background: linear-gradient(45deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         p {
-            font-size: 14px;
-            color: #aaa;
-            padding: 0 20px;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
+        }
+        /* ざるの枠組み */
+        .zaru-wrapper {
+            position: relative;
+            width: 320px;
+            height: 480px;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            background-color: #1e293b;
+            border: 4px solid #854d0e;
+        }
+        /* 背景としてのざる画像 */
+        .zaru-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            opacity: 0.7;
+        }
+        /* ざるの中で動く小豆（30個生成されます） */
+        .azuki {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            z-index: 2;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+        }
+        .start-btn {
+            background-color: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.4);
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
 
-    <button id="startButton">スタート（音を有効にする）</button>
-    <p>スマホを左右に傾けると、小豆が転がって波の音がします。</p>
-    
-    <div class="box" id="box">
-        <div class="bean" id="bean"></div>
+    <div>
+        <h1>ざる・小豆 波音アプリ</h1>
+        <p id="status">ボタンを押してスタートしてください</p>
+        
+        <div class="zaru-wrapper" id="zaruContainer">
+            <!-- 背景のざる画像（ファイル名が違う場合はここを修正してください） -->
+            <img src="zaru.jpg" class="zaru-bg" alt="ざるの背景">
+        </div>
+        
+        <button class="start-btn" id="startButton">音とセンサーを有効化</button>
     </div>
 
     <script>
-        let audioCtx;
-        let noiseNode;
-        let filterNode;
-        let gainNode;
+        let audioCtx = null;
+        let noiseNode = null;
+        let filterNode = null;
         let isRunning = false;
 
         const startButton = document.getElementById('startButton');
-        const bean = document.getElementById('bean');
-        const box = document.getElementById('box');
+        const statusText = document.getElementById('status');
+        const container = document.getElementById('zaruContainer');
 
-        // 音の初期設定（ホワイトノイズを波っぽく加工）
+        // 小豆のデータ（30個作成）
+        const azukiCount = 30;
+        const azukis = [];
+
+        // 画面サイズ（ざるの内部）
+        const maxX = 320;
+        const maxY = 480;
+
+        // 小豆を生成して配置する
+        for (let i = 0; i < azukiCount; i++) {
+            const img = document.createElement('img');
+            img.src = 'zaru.jpg'; // 同じ画像を小豆のパーツとしても利用します
+            img.className = 'azuki';
+            container.appendChild(img);
+
+            azukis.push({
+                element: img,
+                x: 60 + Math.random() * (maxX - 120),
+                y: 100 + Math.random() * (maxY - 200),
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2
+            });
+        }
+
+        // 物理アニメーション（小豆がコロコロ転がる動き）
+        let tiltX = 0;
+        let tiltY = 0;
+
+        function updatePhysics() {
+            if (isRunning) {
+                // 傾きに応じて速度を変化させる
+                for (let a of azukis) {
+                    a.vx += tiltX * 0.15;
+                    a.vy += tiltY * 0.15;
+
+                    // 摩擦で少しずつスピードを落とす
+                    a.vx *= 0.85;
+                    a.vy *= 0.85;
+
+                    a.x += a.vx;
+                    a.y += a.vy;
+
+                    // ざるの端っこ（壁）で跳ね返す
+                    const margin = 20;
+                    if (a.x < margin) { a.x = margin; a.vx *= -0.5; }
+                    if (a.x > maxX - margin) { a.x = maxX - margin; a.vx *= -0.5; }
+                    if (a.y < margin) { a.y = margin; a.vy *= -0.5; }
+                    if (a.y > maxY - margin) { a.y = maxY - margin; a.vy *= -0.5; }
+
+                    // 画面の位置に反映
+                    a.element.style.left = a.x + 'px';
+                    a.element.style.top = a.y + 'px';
+                }
+            }
+            requestAnimationFrame(updatePhysics);
+        }
+        updatePhysics();
+
+        // 波の音の準備
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-            // ホワイトノイズのバッファ作成
+            
             const bufferSize = audioCtx.sampleRate * 2;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
@@ -93,14 +174,12 @@
             noiseNode.buffer = buffer;
             noiseNode.loop = true;
 
-            // ローパスフィルターで「ざざー」というこもった音（波や小豆っぽさ）にする
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
-            filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+            filterNode.frequency.setValueAtTime(350, audioCtx.currentTime);
 
-            // 音量調整
-            gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
 
             noiseNode.connect(filterNode);
             filterNode.connect(gainNode);
@@ -116,51 +195,43 @@
             } else if (audioCtx.state === 'suspended') {
                 await audioCtx.resume();
             }
-            
-            // iOSなどのセンサー許可をリクエスト
+
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
                     const response = await DeviceOrientationEvent.requestPermission();
                     if (response === 'granted') {
-                        startSensor();
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        statusText.textContent = 'スマホを傾けると小豆が転がります';
+                        startButton.style.display = 'none';
+                        isRunning = true;
                     } else {
-                        alert('センサーの許可が必要です');
+                        alert('センサーの権限が許可されませんでした');
                     }
                 } catch (e) {
                     console.error(e);
                 }
             } else {
-                startSensor();
+                window.addEventListener('deviceorientation', handleOrientation);
+                statusText.textContent = 'スマホを傾けると小豆が転がります';
+                startButton.style.display = 'none';
+                isRunning = true;
             }
-
-            startButton.style.display = 'none';
-            isRunning = true;
         });
 
-        // 傾きセンサーの処理
-        function startSensor() {
-            window.addEventListener('deviceorientation', (event) => {
-                if (!isRunning) return;
+        // 傾き検知
+        function handleOrientation(event) {
+            const beta = event.beta || 0;   // 前後 (-180 ～ 180)
+            const gamma = event.gamma || 0; // 左右 (-90 ～ 90)
 
-                // 左右の傾き (gamma: -90 ～ 90)
-                let gamma = event.gamma || 0; 
-                
-                // 画面上の小豆の動きを計算（ざるの中で転がるイメージ）
-                let moveX = gamma * 1.5;
-                const maxMove = (box.clientWidth / 2) - 10;
-                if (moveX > maxMove) moveX = maxMove;
-                if (moveX < -maxMove) moveX = -maxMove;
-                bean.style.transform = `translate(calc(-50% + ${moveX}px), -50%)`;
+            // 傾きの強さを物理演算用の数値に変換
+            tiltX = gamma / 15;
+            tiltY = beta / 15;
 
-                // 傾きの「変化のスピードや傾き具合」に応じて音量とフィルターを変化させる
-                let tiltRate = Math.abs(gamma) / 90; // 0 〜 1
-                
-                // 音量（傾けているほど大きく）
-                gainNode.gain.setTargetAtTime(tiltRate * 0.8, audioCtx.currentTime, 0.1);
-                
-                // フィルター周波数（小豆が勢いよく動くイメージ）
-                filterNode.frequency.setTargetAtTime(200 + tiltRate * 800, audioCtx.currentTime, 0.1);
-            });
+            // 音のフィルター変更
+            if (filterNode) {
+                const freq = Math.min(Math.max(200 + Math.abs(gamma) * 25, 200), 1800);
+                filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            }
         }
     </script>
 </body>
