@@ -1,1 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>オーシャンドラム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Zen+Old+Mincho:wght@400;600&display=swap');
+
+  :root{
+    --night:#0B1E33;
+    --night2:#122A47;
+    --sand:#D9B382;
+    --wood:#6B4A32;
+    --woodDark:#432D1F;
+    --foam:#EDEEF0;
+    --moon:#F4E4C1;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+
+  html,body{
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    background:linear-gradient(180deg,#081625 0%, var(--night) 45%, var(--night2) 100%);
+    font-family:'Zen Maru Gothic', sans-serif;
+    color:var(--foam);
+    -webkit-user-select:none;
+    user-select:none;
+  }
+
+  #stars{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+  }
+  .star{
+    position:absolute; width:2px; height:2px; background:var(--foam);
+    border-radius:50%; opacity:.5; animation:tw 3.5s ease-in-out infinite;
+  }
+  @keyframes tw{ 0%,100%{opacity:.15} 50%{opacity:.8} }
+
+  #moon{
+    position:fixed; top:6%; right:10%; width:52px; height:52px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, var(--moon), #d8bd85 70%);
+    box-shadow:0 0 40px 10px rgba(244,228,193,0.25);
+    z-index:0;
+  }
+
+  main{
+    position:relative; z-index:1;
+    height:100%;
+    display:flex; flex-direction:column; align-items:center;
+    padding:env(safe-area-inset-top) 20px env(safe-area-inset-bottom);
+    justify-content:space-between;
+  }
+
+  header{ text-align:center; padding-top:18px; }
+  h1{
+    font-family:'Zen Old Mincho', serif;
+    font-weight:600; font-size:1.5rem; letter-spacing:.12em;
+    margin:0; color:var(--foam);
+  }
+  .eyebrow{
+    font-size:.68rem; letter-spacing:.35em; color:var(--sand);
+    margin-top:6px; opacity:.8;
+  }
+
+  /* --- scene --- */
+  .scene{
+    perspective:900px;
+    width:min(86vw, 380px);
+    aspect-ratio:1/1;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .basket{
+    position:relative;
+    width:100%; height:78%;
+    transform-style:preserve-3d;
+    transition:transform .12s ease-out;
+    border-radius:18px;
+  }
+  .basket-body{
+    position:absolute; inset:0;
+    border-radius:18px;
+    background:
+      repeating-linear-gradient(90deg, #C89B5C 0 6px, #B8874A 6px 12px),
+      linear-gradient(180deg,#B8874A,#8C6337);
+    border:10px solid var(--wood);
+    box-shadow:
+      inset 0 0 30px rgba(0,0,0,.45),
+      0 25px 40px rgba(0,0,0,.5);
+  }
+  .basket-body::before{
+    content:"";
+    position:absolute; inset:0;
+    border-radius:10px;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 4px, transparent 4px 9px);
+  }
+  #beadCanvas{
+    position:absolute;
+    top:12px; left:12px; right:12px; bottom:12px;
+    border-radius:8px;
+  }
+
+  .readout{
+    margin-top:22px;
+    text-align:center;
+  }
+  .tiltLabel{
+    font-size:.72rem; letter-spacing:.2em; color:var(--sand); opacity:.85;
+  }
+  .waveMeter{
+    margin-top:8px;
+    width:180px; height:5px; border-radius:3px;
+    background:rgba(255,255,255,.12);
+    overflow:hidden;
+  }
+  .waveMeter i{
+    display:block; height:100%; width:0%;
+    background:linear-gradient(90deg,#7FB6C7,var(--foam));
+    transition:width .1s linear;
+  }
+
+  footer{
+    width:100%;
+    display:flex; flex-direction:column; align-items:center;
+    gap:12px; padding-bottom:16px;
+  }
+
+  #startBtn{
+    font-family:'Zen Maru Gothic', sans-serif;
+    font-weight:700; font-size:1rem;
+    padding:16px 40px;
+    border-radius:999px; border:none;
+    background:linear-gradient(180deg,#F4E4C1,#D9B382);
+    color:#3A2A15;
+    box-shadow:0 8px 20px rgba(0,0,0,.35);
+    letter-spacing:.08em;
+  }
+  #startBtn:active{ transform:scale(.97); }
+
+  .hint{
+    font-size:.72rem; color:rgba(237,238,240,.55);
+    text-align:center; line-height:1.6; max-width:280px;
+  }
+
+  #muteBtn{
+    background:none; border:1px solid rgba(255,255,255,.25);
+    color:var(--foam); border-radius:999px;
+    padding:8px 18px; font-size:.75rem; font-family:'Zen Maru Gothic';
+    display:none;
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div id="moon"></div>
+
+<main>
+  <header>
+    <div class="eyebrow">OCEAN DRUM</div>
+    <h1>オーシャンドラム</h1>
+  </header>
+
+  <div class="scene">
+    <div class="basket" id="basket">
+      <div class="basket-body">
+        <canvas id="beadCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="readout">
+    <div class="tiltLabel">波の強さ</div>
+    <div class="waveMeter"><i id="meterFill"></i></div>
+  </div>
+
+  <footer>
+    <button id="startBtn">かごを傾けてみる</button>
+    <div class="hint">スマホを左右にゆっくり傾けると<br>砂の波音が聞こえるで🌊</div>
+    <button id="muteBtn">🔈 ミュート</button>
+  </footer>
+</main>
+
+<script>
+// ---------- stars ----------
+const starsEl = document.getElementById('stars');
+for(let i=0;i<40;i++){
+  const s = document.createElement('div');
+  s.className='star';
+  s.style.left = Math.random()*100+'%';
+  s.style.top = Math.random()*55+'%';
+  s.style.animationDelay = (Math.random()*3.5)+'s';
+  starsEl.appendChild(s);
+}
+
+// ---------- bead canvas (visual sand grains) ----------
+const canvas = document.getElementById('beadCanvas');
+const ctx = canvas.getContext('2d');
+let cw, ch;
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  cw = canvas.width = rect.width * devicePixelRatio;
+  ch = canvas.height = rect.height * devicePixelRatio;
+}
+window.addEventListener('resize', resize);
+
+const N = 220;
+const beads = [];
+for(let i=0;i<N;i++){
+  beads.push({
+    x: Math.random(),
+    y: Math.random(),
+    vx: 0, vy: 0,
+    r: Math.random()*1.6+1
+  });
+}
+
+let gx = 0, gy = 0.6; // gravity direction, default resting
+
+function stepBeads(){
+  resize();
+  for(const b of beads){
+    b.vx += gx*0.0022;
+    b.vy += gy*0.0022;
+    b.vx *= 0.94; b.vy *= 0.94;
+    b.x += b.vx; b.y += b.vy;
+    if(b.x<0){b.x=0;b.vx*=-0.4;} if(b.x>1){b.x=1;b.vx*=-0.4;}
+    if(b.y<0){b.y=0;b.vy*=-0.4;} if(b.y>1){b.y=1;b.vy*=-0.4;}
+  }
+  ctx.clearRect(0,0,cw,ch);
+  ctx.fillStyle = 'rgba(60,40,20,0.35)';
+  ctx.fillRect(0,0,cw,ch);
+  for(const b of beads){
+    ctx.beginPath();
+    ctx.fillStyle = '#3E2A17';
+    ctx.arc(b.x*cw, b.y*ch, b.r*devicePixelRatio, 0, Math.PI*2);
+    ctx.fill();
+  }
+  requestAnimationFrame(stepBeads);
+}
+stepBeads();
+
+// ---------- audio: synthesized wave/noise ----------
+let audioCtx, noiseSrc, filter, gainNode, started=false, muted=false;
+
+function initAudio(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const bufferSize = audioCtx.sampleRate * 2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<bufferSize;i++) data[i] = Math.random()*2-1;
+
+  noiseSrc = audioCtx.createBufferSource();
+  noiseSrc.buffer = buffer;
+  noiseSrc.loop = true;
+
+  filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 400;
+  filter.Q.value = 0.6;
+
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.0001;
+
+  noiseSrc.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  noiseSrc.start();
+}
+
+function setWave(intensity){ // 0..1
+  if(!audioCtx || muted) return;
+  const now = audioCtx.currentTime;
+  const targetGain = Math.min(0.35, intensity*0.5);
+  gainNode.gain.setTargetAtTime(targetGain, now, 0.15);
+  filter.frequency.setTargetAtTime(300 + intensity*900, now, 0.2);
+}
+
+// ---------- tilt handling ----------
+const basketEl = document.getElementById('basket');
+const meterFill = document.getElementById('meterFill');
+let smoothedTilt = 0;
+
+function handleOrientation(e){
+  // gamma: left-right tilt (-90..90), beta: front-back (-180..180)
+  const gamma = e.gamma || 0;
+  const beta = e.beta || 0;
+
+  const rotY = Math.max(-28, Math.min(28, gamma));
+  const rotX = Math.max(-20, Math.min(20, (beta-45)*0.3));
+  basketEl.style.transform = `rotateX(${-rotX}deg) rotateY(${rotY}deg)`;
+
+  gx = Math.max(-1, Math.min(1, gamma/30));
+  gy = 0.5 + Math.max(-1, Math.min(1, (beta-45)/60))*0.5;
+
+  const rawIntensity = Math.min(1, Math.abs(gamma)/25);
+  smoothedTilt += (rawIntensity - smoothedTilt) * 0.12;
+  meterFill.style.width = (smoothedTilt*100)+'%';
+  setWave(smoothedTilt);
+}
+
+const startBtn = document.getElementById('startBtn');
+const muteBtn = document.getElementById('muteBtn');
+
+startBtn.addEventListener('click', async ()=>{
+  if(!started){
+    initAudio();
+    started = true;
+  }
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'){
+    try{
+      const res = await DeviceOrientationEvent.requestPermission();
+      if(res === 'granted'){
+        window.addEventListener('deviceorientation', handleOrientation);
+        startBtn.textContent = '傾けて波音を楽しんでや〜';
+        startBtn.disabled = true;
+        muteBtn.style.display='inline-block';
+      } else {
+        startBtn.textContent = '許可がないと動かへんで😢';
+      }
+    }catch(err){
+      startBtn.textContent = 'エラー: センサー使えへんかった';
+    }
+  } else {
+    // Android / older iOS
+    window.addEventListener('deviceorientation', handleOrientation);
+    startBtn.textContent = '傾けて波音を楽しんでや〜';
+    startBtn.disabled = true;
+    muteBtn.style.display='inline-block';
+  }
+});
+
+muteBtn.addEventListener('click', ()=>{
+  muted = !muted;
+  muteBtn.textContent = muted ? '🔇 ミュート中' : '🔈 ミュート';
+  if(muted && gainNode){
+    gainNode.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.1);
+  }
+});
+</script>
+</body>
+</html>
 
