@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小豆の波おもちゃ（画像版）</title>
+    <title>小豆の波おもちゃ</title>
     <style>
         body {
             margin: 0;
@@ -27,28 +27,17 @@
             border-radius: 8px;
             cursor: pointer;
             margin-bottom: 20px;
-            z-index: 10; /* ボタンを画像の上に表示 */
         }
         .box {
             width: 80vw;
-            max-width: 320px; /* 画像の比率に合わせて少し調整 */
-            height: 400px; /* 縦長の画像に合わせて高く設定 */
-            
-            /* --- 変更点: CSSの設定を画像ベースに変更 --- */
-            background-image: url('azuki_box.png'); /* 保存した画像ファイル名を指定 */
-            background-size: contain; /* 画像全体が枠に収まるように表示 */
-            background-position: center;
-            background-repeat: no-repeat;
-            
-            /* 枠線と背景色は不要になったので削除かコメントアウト */
-            /* border: 4px solid #8B4513; */
-            /* background: #DEB887; */
-            
+            max-width: 300px;
+            height: 150px;
+            border: 4px solid #8B4513;
+            background: #DEB887;
             border-radius: 10px;
             position: relative;
-            /* box-shadow: inset 0 10px 20px rgba(0,0,0,0.3); */ /* 画像に立体感があるので削除 */
+            box-shadow: inset 0 10px 20px rgba(0,0,0,0.3);
             margin-top: 20px;
-            overflow: hidden; /* 豆が画像の外に出ないようにする */
         }
         .bean {
             width: 12px;
@@ -56,17 +45,15 @@
             background: #800020; /* 小豆色 */
             border-radius: 50%;
             position: absolute;
-            top: 50%; /* 画像の中心あたりに配置 */
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: transform 0.1s linear; /* 少し滑らかに */
-            opacity: 0.7; /* 写真になじませるために少し透過 */
+            transition: transform 0.05s linear;
         }
         p {
             font-size: 14px;
             color: #aaa;
             padding: 0 20px;
-            z-index: 10;
         }
     </style>
 </head>
@@ -76,7 +63,6 @@
     <p>スマホを左右に傾けると、小豆が転がって波の音がします。</p>
     
     <div class="box" id="box">
-        <!-- この赤い点は、画像の上で転がる小豆の「代表」です -->
         <div class="bean" id="bean"></div>
     </div>
 
@@ -91,63 +77,88 @@
         const bean = document.getElementById('bean');
         const box = document.getElementById('box');
 
-        // 音の初期設定（前回と同じ）
+        // 音の初期設定（ホワイトノイズを波っぽく加工）
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // ホワイトノイズのバッファ作成
             const bufferSize = audioCtx.sampleRate * 2;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
                 data[i] = Math.random() * 2 - 1;
             }
+
             noiseNode = audioCtx.createBufferSource();
             noiseNode.buffer = buffer;
             noiseNode.loop = true;
+
+            // ローパスフィルターで「ざざー」というこもった音（波や小豆っぽさ）にする
             filterNode = audioCtx.createBiquadFilter();
             filterNode.type = 'lowpass';
             filterNode.frequency.setValueAtTime(400, audioCtx.currentTime);
+
+            // 音量調整
             gainNode = audioCtx.createGain();
             gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+
             noiseNode.connect(filterNode);
             filterNode.connect(gainNode);
             gainNode.connect(audioCtx.destination);
+
             noiseNode.start();
         }
 
+        // スタートボタン
         startButton.addEventListener('click', async () => {
-            if (!audioCtx) initAudio();
-            else if (audioCtx.state === 'suspended') await audioCtx.resume();
+            if (!audioCtx) {
+                initAudio();
+            } else if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+            
+            // iOSなどのセンサー許可をリクエスト
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
                     const response = await DeviceOrientationEvent.requestPermission();
-                    if (response === 'granted') startSensor();
-                    else alert('センサーの許可が必要です');
-                } catch (e) { console.error(e); }
-            } else { startSensor(); }
+                    if (response === 'granted') {
+                        startSensor();
+                    } else {
+                        alert('センサーの許可が必要です');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            } else {
+                startSensor();
+            }
+
             startButton.style.display = 'none';
             isRunning = true;
         });
 
+        // 傾きセンサーの処理
         function startSensor() {
             window.addEventListener('deviceorientation', (event) => {
                 if (!isRunning) return;
+
+                // 左右の傾き (gamma: -90 ～ 90)
                 let gamma = event.gamma || 0; 
                 
-                // --- 変更点: 画像の範囲内で豆が動くように計算を調整 ---
-                // 傾きに応じて移動量を計算 (画像の中心を基準に)
-                let moveX = gamma * 2; // 感度を少し調整
-                
-                // 豆が画像の左右端から出ないように制限 (画像の幅を考慮)
-                const boxWidth = box.clientWidth;
-                const maxMove = (boxWidth / 2) - 20; // 余裕を持たせる
+                // 画面上の小豆の動きを計算（ざるの中で転がるイメージ）
+                let moveX = gamma * 1.5;
+                const maxMove = (box.clientWidth / 2) - 10;
                 if (moveX > maxMove) moveX = maxMove;
                 if (moveX < -maxMove) moveX = -maxMove;
-                
-                // 豆の位置を更新 (画像の中央 + 移動量)
                 bean.style.transform = `translate(calc(-50% + ${moveX}px), -50%)`;
 
-                let tiltRate = Math.abs(gamma) / 90; 
+                // 傾きの「変化のスピードや傾き具合」に応じて音量とフィルターを変化させる
+                let tiltRate = Math.abs(gamma) / 90; // 0 〜 1
+                
+                // 音量（傾けているほど大きく）
                 gainNode.gain.setTargetAtTime(tiltRate * 0.8, audioCtx.currentTime, 0.1);
+                
+                // フィルター周波数（小豆が勢いよく動くイメージ）
                 filterNode.frequency.setTargetAtTime(200 + tiltRate * 800, audioCtx.currentTime, 0.1);
             });
         }
