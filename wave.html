@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zaru Azuki Wave</title>
+    <title>Zaru Azuki App</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a1a">
     <style>
         body {
             margin: 0;
@@ -25,7 +28,6 @@
             margin-bottom: 20px;
             padding: 0 20px;
         }
-        /* 横長のざるの枠組み */
         .zaru {
             position: relative;
             width: 320px;
@@ -37,7 +39,6 @@
             overflow: hidden;
             margin: 0 auto 20px auto;
         }
-        /* 小豆（赤い点）のスタイル */
         .azuki {
             position: absolute;
             width: 12px;
@@ -64,7 +65,6 @@
 
     <p id="status">ボタンを押してスタートしてください</p>
 
-    <!-- 横長のざる -->
     <div class="zaru" id="zaruContainer"></div>
 
     <button class="start-btn" id="startButton">音とセンサーを有効化</button>
@@ -79,12 +79,11 @@
         const statusText = document.getElementById('status');
         const container = document.getElementById('zaruContainer');
 
-        // ざるのサイズ
         const width = 320;
         const height = 180;
-        const margin = 10;
+        const margin = 15;
 
-        // 小豆を30個作成する
+        // 確実に30個生成する処理
         const azukiCount = 30;
         const azukis = [];
 
@@ -105,28 +104,23 @@
         let tiltX = 0;
         let tiltY = 0;
 
-        // 物理アニメーション（小豆がコロコロ転がる動き）
         function updatePhysics() {
             if (isRunning) {
                 for (let a of azukis) {
-                    // 傾きに応じてスピードを加算
-                    a.vx += tiltX * 0.2;
-                    a.vy += tiltY * 0.2;
+                    a.vx += tiltX * 0.25;
+                    a.vy += tiltY * 0.25;
 
-                    // 摩擦で少しずつ減速
-                    a.vx *= 0.82;
-                    a.vy *= 0.82;
+                    a.vx *= 0.8;
+                    a.vy *= 0.8;
 
                     a.x += a.vx;
                     a.y += a.vy;
 
-                    // 壁に当たったら跳ね返る
                     if (a.x < margin) { a.x = margin; a.vx *= -0.5; }
                     if (a.x > width - margin) { a.x = width - margin; a.vx *= -0.5; }
                     if (a.y < margin) { a.y = margin; a.vy *= -0.5; }
                     if (a.y > height - margin) { a.y = height - margin; a.vy *= -0.5; }
 
-                    // 画面の位置に反映
                     a.element.style.left = a.x + 'px';
                     a.element.style.top = a.y + 'px';
                 }
@@ -135,10 +129,8 @@
         }
         updatePhysics();
 
-        // 波の音の準備
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
             const bufferSize = audioCtx.sampleRate * 2;
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
@@ -164,7 +156,6 @@
             noiseNode.start();
         }
 
-        // スタートボタン
         startButton.addEventListener('click', async () => {
             if (!audioCtx) {
                 initAudio();
@@ -194,16 +185,13 @@
             }
         });
 
-        // 傾き検知
         function handleOrientation(event) {
-            const beta = event.beta || 0;   // 前後
-            const gamma = event.gamma || 0; // 左右
+            const beta = event.beta || 0;
+            const gamma = event.gamma || 0;
 
-            // 傾きを物理用に変換
-            tiltX = gamma / 12;
-            tiltY = beta / 12;
+            tiltX = gamma / 10;
+            tiltY = beta / 10;
 
-            // 音のフィルター変更
             if (filterNode) {
                 const freq = Math.min(Math.max(200 + Math.abs(gamma) * 25, 200), 1800);
                 filterNode.frequency.setValueAtTime(freq, audioCtx.currentTime);
