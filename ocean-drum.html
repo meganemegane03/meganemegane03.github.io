@@ -207,14 +207,17 @@ function resize(){
 window.addEventListener('resize', resize);
 resize();
 
-const N = 220;
+const N = 420;
 const beads = [];
 for(let i=0;i<N;i++){
+  const hue = 355 + Math.random()*10;
+  const light = 22 + Math.random()*14;
   beads.push({
     x: Math.random(),
     y: Math.random(),
     vx: 0, vy: 0,
-    r: Math.random()*1.6+1
+    r: Math.random()*1.4+1.6,
+    color: `hsl(${hue.toFixed(0)}, 55%, ${light.toFixed(0)}%)`
   });
 }
 
@@ -230,12 +233,10 @@ function stepBeads(){
     if(b.y<0){b.y=0;b.vy*=-0.4;} if(b.y>1){b.y=1;b.vy*=-0.4;}
   }
   ctx.clearRect(0,0,cw,ch);
-  ctx.fillStyle = 'rgba(60,40,20,0.35)';
-  ctx.fillRect(0,0,cw,ch);
   for(const b of beads){
     ctx.beginPath();
-    ctx.fillStyle = '#3E2A17';
-    ctx.arc(b.x*cw, b.y*ch, b.r*devicePixelRatio, 0, Math.PI*2);
+    ctx.fillStyle = b.color;
+    ctx.ellipse(b.x*cw, b.y*ch, b.r*devicePixelRatio, b.r*0.82*devicePixelRatio, 0, 0, Math.PI*2);
     ctx.fill();
   }
   requestAnimationFrame(stepBeads);
