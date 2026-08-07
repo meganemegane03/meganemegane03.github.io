@@ -66,14 +66,24 @@
 
         function update() {
             if (isRunning) {
-                let totalSpeed = 0; // 全小豆の動きの合計を計算用
+                let totalSpeed = 0;
 
-                // 1. 各小豆の移動と壁の判定
+                // 傾きがごくわずかな場合は完全にゼロとみなす（ノイズカット）
+                let effectiveTiltX = Math.abs(tiltX) > 0.1 ? tiltX : 0;
+                let effectiveTiltY = Math.abs(tiltY) > 0.1 ? tiltY : 0;
+
                 azukis.forEach(a => {
-                    a.vx += tiltX * 0.3; 
-                    a.vy += tiltY * 0.3;
-                    a.vx *= 0.88; 
-                    a.vy *= 0.88;
+                    a.vx += effectiveTiltX * 0.3; 
+                    a.vy += effectiveTiltY * 0.3;
+                    
+                    // 摩擦で減速
+                    a.vx *= 0.85; 
+                    a.vy *= 0.85;
+
+                    // 動きが小さすぎたら完全にピタッと止める
+                    if (Math.abs(a.vx) < 0.05) a.vx = 0;
+                    if (Math.abs(a.vy) < 0.05) a.vy = 0;
+
                     a.x += a.vx; 
                     a.y += a.vy;
 
@@ -82,11 +92,10 @@
                     if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
                     else if (a.y > maxY) { a.y = maxY; a.vy *= -0.7; }
 
-                    // 小豆ごとのスピード（絶対値）を足し合わせていく
                     totalSpeed += Math.abs(a.vx) + Math.abs(a.vy);
                 });
 
-                // 2. 小豆同士の衝突判定
+                // 小豆同士の衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
                         const a1 = azukis[i], a2 = azukis[j];
@@ -106,19 +115,20 @@
                     }
                 }
 
-                // 3. 画面の位置に反映
                 azukis.forEach(a => { 
                     a.el.style.left = (a.x - radius) + 'px'; 
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
 
-                // 4. ★小豆の動きの合計（totalSpeed）に応じて波音の音量をダイレクトに変更
+                // ★音量のコントロール（完全停止時はガッツリ無音にする）
                 if (audio) {
-                    // 動きがほぼゼロなら無音、少し動けば小さめ、大きく動けば大音量
-                    let vol = totalSpeed / 40; 
-                    if (vol > 1.0) vol = 1.0;
-                    if (vol < 0.05) vol = 0.0; // 完全停止時はピタッと無音に
-                    audio.volume = vol;
+                    if (totalSpeed < 0.5) {
+                        audio.volume = 0.0; // 完全に無音
+                    } else {
+                        let vol = totalSpeed / 30;
+                        if (vol > 1.0) vol = 1.0;
+                        audio.volume = vol;
+                    }
                 }
             }
             requestAnimationFrame(update);
@@ -149,7 +159,6 @@
         });
 
         function handleOrientation(e) {
-            // スマホの傾きをそのまま小豆への重力（力の方向）として伝える
             tiltX = (e.gamma || 0) / 10;
             tiltY = (e.beta || 0) / 10;
         }
