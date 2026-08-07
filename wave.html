@@ -23,7 +23,7 @@
         const azukis = [];
         const width = 320, height = 180, radius = 6;
 
-        // 30個の小豆を安全な範囲内に確実に配置
+        // 30個の小豆をバラバラの位置とスピードで生成
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
@@ -32,8 +32,8 @@
                 el: div,
                 x: radius + 20 + Math.random() * (width - (radius + 20) * 2),
                 y: radius + 20 + Math.random() * (height - (radius + 20) * 2),
-                vx: (Math.random() - 0.5) * 2,
-                vy: (Math.random() - 0.5) * 2
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4
             });
         }
 
@@ -41,35 +41,58 @@
 
         function update() {
             if (isRunning) {
+                // 1. 各小豆の移動と壁との衝突
                 azukis.forEach(a => {
                     a.vx += tiltX * 0.3;
                     a.vy += tiltY * 0.3;
 
-                    // 摩擦で減速
-                    a.vx *= 0.88;
-                    a.vy *= 0.88;
+                    a.vx *= 0.92;
+                    a.vy *= 0.92;
 
                     a.x += a.vx;
                     a.y += a.vy;
 
-                    // 壁での跳ね返し処理（絶対に外に出ないようにする）
-                    if (a.x < radius) {
-                        a.x = radius;
-                        a.vx *= -0.7;
-                    } else if (a.x > width - radius) {
-                        a.x = width - radius;
-                        a.vx *= -0.7;
-                    }
+                    // 壁の跳ね返し
+                    if (a.x < radius) { a.x = radius; a.vx *= -0.7; }
+                    else if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.7; }
+                    if (a.y < radius) { a.y = radius; a.vy *= -0.7; }
+                    else if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.7; }
+                });
 
-                    if (a.y < radius) {
-                        a.y = radius;
-                        a.vy *= -0.7;
-                    } else if (a.y > height - radius) {
-                        a.y = height - radius;
-                        a.vy *= -0.7;
+                // 2. 小豆同士の衝突判定（お互いにぶつかって弾け飛ぶ処理）
+                for (let i = 0; i < azukis.length; i++) {
+                    for (let j = i + 1; j < azukis.length; j++) {
+                        const a1 = azukis[i];
+                        const a2 = azukis[j];
+                        const dx = a2.x - a1.x;
+                        const dy = a2.y - a1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        const minDist = radius * 2; // 粒の直径
+
+                        if (dist < minDist) {
+                            // 重なりを解消する
+                            const overlap = minDist - dist;
+                            const angle = Math.atan2(dy, dx);
+                            
+                            // お互いを離す
+                            a1.x -= Math.cos(angle) * overlap * 0.5;
+                            a1.y -= Math.sin(angle) * overlap * 0.5;
+                            a2.x += Math.cos(angle) * overlap * 0.5;
+                            a2.y += Math.sin(angle) * overlap * 0.5;
+
+                            // 速度を交換・反発させる
+                            const tempVx = a1.vx;
+                            const tempVy = a1.vy;
+                            a1.vx = a2.vx * 0.8;
+                            a1.vy = a2.vy * 0.8;
+                            a2.vx = tempVx * 0.8;
+                            a2.vy = tempVy * 0.8;
+                        }
                     }
-                    
-                    // スタイルに反映（左上基準で配置）
+                }
+
+                // 3. 画面上の位置に反映
+                azukis.forEach(a => {
                     a.el.style.left = (a.x - radius) + 'px';
                     a.el.style.top = (a.y - radius) + 'px';
                 });
