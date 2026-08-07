@@ -305,6 +305,7 @@ const startBtn = document.getElementById('startBtn');
 const muteBtn = document.getElementById('muteBtn');
 
 startBtn.addEventListener('click', async ()=>{
+  alert('ボタン反応OK ここから処理始めるで');
   startBtn.textContent = '起動中…';
   try{
     // センサー許可は必ずユーザー操作の直後、一番最初に呼ぶ(iOS Safariの制約)
@@ -329,8 +330,16 @@ startBtn.addEventListener('click', async ()=>{
     muteBtn.style.display='inline-block';
   }catch(err){
     startBtn.textContent = 'エラー発生';
-    alert('エラー内容: ' + (err && err.message ? err.message : err));
+    alert('エラー内容: ' + (err && err.name ? err.name+': ' : '') + (err && err.message ? err.message : err));
   }
+});
+
+// ページ読み込み自体ができてるか確認用（自動実行）
+window.addEventListener('load', ()=>{
+  console.log('ページ読み込み完了');
+});
+window.addEventListener('error', (e)=>{
+  alert('スクリプトエラー: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
 });
 
 muteBtn.addEventListener('click', ()=>{
