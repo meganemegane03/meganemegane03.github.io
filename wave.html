@@ -44,11 +44,11 @@
         const height = 180;
         const radius = 6;
         
-        // ★小豆が手前で見えなくならないよう、少し上寄り（奥側）の見える範囲にエリアを調整
+        // ★下側（maxY）を小豆1個分（+12px）下げて、丁度いい位置に調整
         const minX = 45;
         const maxX = width - 45;
         const minY = 65;
-        const maxY = 105; // 手前の壁にかぶらない安全な位置
+        const maxY = 117; 
 
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
