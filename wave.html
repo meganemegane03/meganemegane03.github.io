@@ -16,7 +16,7 @@
             background-position: center;
             background-repeat: no-repeat;
             border-radius: 12px; 
-            overflow: hidden; /* はみ出しを完全にカット */
+            overflow: hidden; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
         }
         .azuki { 
@@ -40,18 +40,17 @@
         const container = document.getElementById('zaruContainer');
         const azukis = [];
         
-        // カゴの内側にぴったり収まるように可動範囲（幅・高さ）と余白（マージン）を調整
         const width = 320;
         const height = 180;
         const radius = 6;
         
-        // カゴのフチの内側に収めるための安全エリア
-        const minX = radius + 25;
-        const maxX = width - radius - 25;
-        const minY = radius + 40;
-        const maxY = height - radius - 20;
+        // ★木箱の「平らな底面の部分」だけに小豆を収めるための正確な内側エリア
+        const minX = 45;
+        const maxX = width - 45;
+        const minY = 70;
+        const maxY = height - 35;
 
-        // 小豆生成
+        // 小豆を底面の中に生成
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
@@ -60,8 +59,8 @@
                 el: div, 
                 x: minX + Math.random() * (maxX - minX), 
                 y: minY + Math.random() * (maxY - minY), 
-                vx: (Math.random() - 0.5) * 3, 
-                vy: (Math.random() - 0.5) * 3 
+                vx: (Math.random() - 0.5) * 2, 
+                vy: (Math.random() - 0.5) * 2 
             });
         }
 
@@ -72,12 +71,12 @@
                 azukis.forEach(a => {
                     a.vx += tiltX * 0.3; 
                     a.vy += tiltY * 0.3;
-                    a.vx *= 0.90; 
-                    a.vy *= 0.90;
+                    a.vx *= 0.88; 
+                    a.vy *= 0.88;
                     a.x += a.vx; 
                     a.y += a.vy;
 
-                    // カゴの内側の壁でしっかり跳ね返す
+                    // 底面の壁で跳ね返す
                     if (a.x < minX) { a.x = minX; a.vx *= -0.7; } 
                     else if (a.x > maxX) { a.x = maxX; a.vx *= -0.7; }
                     if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
@@ -114,22 +113,46 @@
         update();
 
         document.getElementById('startButton').addEventListener('click', () => {
-            // 小文字の wave.mp3 を再生
+            // wave.mp3 の読み込みと再生設定
             audio = new Audio('wave.mp3');
             audio.loop = true;
+            audio.volume = 0.0; // 最初は無音
             audio.play();
 
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(res => {
-                    if (res === 'granted') window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; });
+                    if (res === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
                 });
             } else {
-                window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; });
+                window.addEventListener('deviceorientation', e => {
+                    handleOrientation(e);
+                });
             }
+
             isRunning = true;
             document.getElementById('startButton').style.display = 'none';
-            document.getElementById('status').textContent = 'スマホを傾けて、小豆と波音を楽しんで！';
+            document.getElementById('status').textContent = 'スマホを傾けると、小豆が転がって波音が鳴ります';
         });
+
+        // 傾きに応じて小豆の動きと音量をコントロール
+        function handleOrientation(e) {
+            const gamma = e.gamma || 0; // 左右の傾き
+            const beta = e.beta || 0;   // 前後の傾き
+
+            tiltX = gamma / 10;
+            tiltY = beta / 10;
+
+            if (audio) {
+                // 傾きの大きさに応じて音量を変化させる（静止時は0、傾けると大きくなる）
+                const tiltAmount = Math.abs(gamma) + Math.abs(beta);
+                let vol = tiltAmount / 35; // 調整用係数
+                if (vol > 1.0) vol = 1.0;
+                if (vol < 0.05) vol = 0.0; // ピタッと止まったら無音にする
+                audio.volume = vol;
+            }
+        }
     </script>
 </body>
 </html>
