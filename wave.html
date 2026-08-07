@@ -44,13 +44,12 @@
         const height = 180;
         const radius = 6;
         
-        // ★木箱の「平らな底面の部分」だけに小豆を収めるための正確な内側エリア
+        // ★小豆が手前で見えなくならないよう、少し上寄り（奥側）の見える範囲にエリアを調整
         const minX = 45;
         const maxX = width - 45;
-        const minY = 70;
-        const maxY = height - 35;
+        const minY = 65;
+        const maxY = 105; // 手前の壁にかぶらない安全な位置
 
-        // 小豆を底面の中に生成
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
@@ -76,14 +75,12 @@
                     a.x += a.vx; 
                     a.y += a.vy;
 
-                    // 底面の壁で跳ね返す
                     if (a.x < minX) { a.x = minX; a.vx *= -0.7; } 
                     else if (a.x > maxX) { a.x = maxX; a.vx *= -0.7; }
                     if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
                     else if (a.y > maxY) { a.y = maxY; a.vy *= -0.7; }
                 });
 
-                // 小豆同士の衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
                         const a1 = azukis[i], a2 = azukis[j];
@@ -113,10 +110,9 @@
         update();
 
         document.getElementById('startButton').addEventListener('click', () => {
-            // wave.mp3 の読み込みと再生設定
             audio = new Audio('wave.mp3');
             audio.loop = true;
-            audio.volume = 0.0; // 最初は無音
+            audio.volume = 0.0;
             audio.play();
 
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -136,20 +132,18 @@
             document.getElementById('status').textContent = 'スマホを傾けると、小豆が転がって波音が鳴ります';
         });
 
-        // 傾きに応じて小豆の動きと音量をコントロール
         function handleOrientation(e) {
-            const gamma = e.gamma || 0; // 左右の傾き
-            const beta = e.beta || 0;   // 前後の傾き
+            const gamma = e.gamma || 0;
+            const beta = e.beta || 0;
 
             tiltX = gamma / 10;
             tiltY = beta / 10;
 
             if (audio) {
-                // 傾きの大きさに応じて音量を変化させる（静止時は0、傾けると大きくなる）
                 const tiltAmount = Math.abs(gamma) + Math.abs(beta);
-                let vol = tiltAmount / 35; // 調整用係数
+                let vol = tiltAmount / 35;
                 if (vol > 1.0) vol = 1.0;
-                if (vol < 0.05) vol = 0.0; // ピタッと止まったら無音にする
+                if (vol < 0.05) vol = 0.0;
                 audio.volume = vol;
             }
         }
