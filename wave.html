@@ -63,39 +63,35 @@
         }
 
         let tiltX = 0, tiltY = 0;
+        let baseGamma = null;
+        let baseBeta = null;
 
         function update() {
             if (isRunning) {
                 let totalSpeed = 0;
 
-                // 傾きがごくわずかな場合は完全にゼロとみなす（ノイズカット）
-                let effectiveTiltX = Math.abs(tiltX) > 0.1 ? tiltX : 0;
-                let effectiveTiltY = Math.abs(tiltY) > 0.1 ? tiltY : 0;
-
                 azukis.forEach(a => {
-                    a.vx += effectiveTiltX * 0.3; 
-                    a.vy += effectiveTiltY * 0.3;
+                    a.vx += tiltX * 0.3; 
+                    a.vy += tiltY * 0.3;
                     
-                    // 摩擦で減速
-                    a.vx *= 0.85; 
-                    a.vy *= 0.85;
+                    a.vx *= 0.80; // 減速を強めにする
+                    a.vy *= 0.80;
 
-                    // 動きが小さすぎたら完全にピタッと止める
-                    if (Math.abs(a.vx) < 0.05) a.vx = 0;
-                    if (Math.abs(a.vy) < 0.05) a.vy = 0;
+                    if (Math.abs(a.vx) < 0.1) a.vx = 0;
+                    if (Math.abs(a.vy) < 0.1) a.vy = 0;
 
                     a.x += a.vx; 
                     a.y += a.vy;
 
-                    if (a.x < minX) { a.x = minX; a.vx *= -0.7; } 
-                    else if (a.x > maxX) { a.x = maxX; a.vx *= -0.7; }
-                    if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
-                    else if (a.y > maxY) { a.y = maxY; a.vy *= -0.7; }
+                    if (a.x < minX) { a.x = minX; a.vx *= -0.5; } 
+                    else if (a.x > maxX) { a.x = maxX; a.vx *= -0.5; }
+                    if (a.y < minY) { a.y = minY; a.vy *= -0.5; } 
+                    else if (a.y > maxY) { a.y = maxY; a.vy *= -0.5; }
 
                     totalSpeed += Math.abs(a.vx) + Math.abs(a.vy);
                 });
 
-                // 小豆同士の衝突判定
+                // 衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
                         const a1 = azukis[i], a2 = azukis[j];
@@ -109,8 +105,8 @@
                             a2.y += Math.sin(angle) * overlap * 0.5;
                             
                             const tempVx = a1.vx, tempVy = a1.vy;
-                            a1.vx = a2.vx * 0.8; a1.vy = a2.vy * 0.8;
-                            a2.vx = tempVx * 0.8; a2.vy = tempVy * 0.8;
+                            a1.vx = a2.vx * 0.7; a1.vy = a2.vy * 0.7;
+                            a2.vx = tempVx * 0.7; a2.vy = tempVy * 0.7;
                         }
                     }
                 }
@@ -120,12 +116,12 @@
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
 
-                // ★音量のコントロール（完全停止時はガッツリ無音にする）
+                // 音量制御（より厳しく無音判定を入れる）
                 if (audio) {
-                    if (totalSpeed < 0.5) {
-                        audio.volume = 0.0; // 完全に無音
+                    if (totalSpeed < 1.0) {
+                        audio.volume = 0.0;
                     } else {
-                        let vol = totalSpeed / 30;
+                        let vol = (totalSpeed - 1.0) / 25;
                         if (vol > 1.0) vol = 1.0;
                         audio.volume = vol;
                     }
@@ -141,16 +137,21 @@
             audio.volume = 0.0;
             audio.play();
 
+            const handleInit = (e) => {
+                // スタートボタンを押した瞬間のスマホの角度を「基準（ゼロ）」にする
+                if (baseGamma === null) baseGamma = e.gamma || 0;
+                if (baseBeta === null) baseBeta = e.beta || 0;
+                calcTilt(e);
+            };
+
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(res => {
                     if (res === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
+                        window.addEventListener('deviceorientation', handleInit);
                     }
                 });
             } else {
-                window.addEventListener('deviceorientation', e => {
-                    handleOrientation(e);
-                });
+                window.addEventListener('deviceorientation', handleInit);
             }
 
             isRunning = true;
@@ -158,9 +159,21 @@
             document.getElementById('status').textContent = 'スマホを傾けると、小豆が転がって波音が鳴ります';
         });
 
-        function handleOrientation(e) {
-            tiltX = (e.gamma || 0) / 10;
-            tiltY = (e.beta || 0) / 10;
+        function calcTilt(e) {
+            const gamma = e.gamma || 0;
+            const beta = e.beta || 0;
+
+            // 基準位置からの「変化量」だけを取り出す
+            let diffGamma = gamma - baseGamma;
+            let diffBeta = beta - baseBeta;
+
+            // 多少の揺れや手ブレは完全に無視するデッドゾーン（しきい値）
+            const deadzone = 3.0;
+            if (Math.abs(diffGamma) < deadzone) diffGamma = 0;
+            if (Math.abs(diffBeta) < deadzone) diffBeta = 0;
+
+            tiltX = diffGamma / 10;
+            tiltY = diffBeta / 10;
         }
     </script>
 </body>
