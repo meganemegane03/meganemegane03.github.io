@@ -116,14 +116,13 @@
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
 
-                // ★音量の調整：ボリュームではなく「ミュート（消音）」の切り替えで確実に制御
+                // ★小豆の動きの大きさに応じたボリューム無段階調整
                 if (audio) {
                     if (totalSpeed < 1.0) {
-                        audio.muted = true;  // 完全に消音
+                        audio.volume = 0.0; // 完全静止時は無音
                     } else {
-                        audio.muted = false; // 音を出す
-                        // 音量は一定（または動きに応じて音量変更）
-                        let vol = (totalSpeed - 1.0) / 20;
+                        // 動きの大きさに比例して音量を変化させる（最大1.0）
+                        let vol = (totalSpeed - 1.0) / 25;
                         if (vol > 1.0) vol = 1.0;
                         audio.volume = vol;
                     }
@@ -136,7 +135,7 @@
         document.getElementById('startButton').addEventListener('click', () => {
             audio = new Audio('wave.mp3');
             audio.loop = true;
-            audio.volume = 1.0; // 音量は最大にしておき、mutedでコントロールする
+            audio.volume = 0.0;
             audio.play();
 
             const handleInit = (e) => {
