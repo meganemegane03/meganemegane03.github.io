@@ -1,32 +1,79 @@
-// ...（省略）...
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaru Azuki App</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; overflow: hidden; }
+        .zaru { position: relative; width: 320px; height: 180px; background: #e5c598; border: 6px solid #8b4513; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .azuki { position: absolute; width: 12px; height: 12px; background: #8b0000; border-radius: 50%; }
+        .start-btn { margin-top: 20px; padding: 15px 30px; font-size: 1.2rem; background: #38bdf8; border: none; border-radius: 30px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <p id="status">ボタンを押してスタート</p>
+    <div class="zaru" id="zaruContainer"></div>
+    <button class="start-btn" id="startButton">音とセンサーを有効化</button>
 
-// 物理演算（updatePhysicsの中身）
-function updatePhysics() {
-    if (isRunning) {
-        for (let a of azukis) {
-            a.vx += tiltX * 0.25;
-            a.vy += tiltY * 0.25;
+    <script>
+        let audioCtx, filterNode, isRunning = false;
+        const container = document.getElementById('zaruContainer');
+        const azukis = [];
+        const width = 320, height = 180, radius = 6;
 
-            a.vx *= 0.8;
-            a.vy *= 0.8;
-
-            a.x += a.vx;
-            a.y += a.vy;
-
-            // ★ここを厳しく修正しました（壁に当たったら絶対戻る）
-            // ざるの枠(width, height)に対して、小豆のサイズ(12px)分だけマージンをとる
-            const radius = 6; 
-            if (a.x < radius) { a.x = radius; a.vx *= -0.8; }
-            if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.8; }
-            if (a.y < radius) { a.y = radius; a.vy *= -0.8; }
-            if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.8; }
-
-            // 画面の位置に反映
-            a.element.style.left = a.x + 'px';
-            a.element.style.top = a.y + 'px';
+        for (let i = 0; i < 30; i++) {
+            const div = document.createElement('div');
+            div.className = 'azuki';
+            container.appendChild(div);
+            azukis.push({ el: div, x: 20 + Math.random() * 280, y: 20 + Math.random() * 140, vx: 0, vy: 0 });
         }
-    }
-    requestAnimationFrame(updatePhysics);
-}
 
-// ...（省略）...
+        let tiltX = 0, tiltY = 0;
+
+        function update() {
+            if (isRunning) {
+                azukis.forEach(a => {
+                    a.vx += tiltX * 0.3; a.vy += tiltY * 0.3;
+                    a.vx *= 0.9; a.vy *= 0.9;
+                    a.x += a.vx; a.y += a.vy;
+
+                    if (a.x < radius) { a.x = radius; a.vx *= -0.8; }
+                    if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.8; }
+                    if (a.y < radius) { a.y = radius; a.vy *= -0.8; }
+                    if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.8; }
+                    
+                    a.el.style.left = a.x + 'px';
+                    a.el.style.top = a.y + 'px';
+                });
+            }
+            requestAnimationFrame(update);
+        }
+        update();
+
+        document.getElementById('startButton').addEventListener('click', async () => {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            filterNode = audioCtx.createBiquadFilter();
+            filterNode.type = 'lowpass';
+            filterNode.frequency.value = 400;
+            const noise = audioCtx.createBufferSource();
+            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+            noise.buffer = buffer; noise.loop = true;
+            noise.connect(filterNode).connect(audioCtx.destination);
+            noise.start();
+
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const res = await DeviceOrientationEvent.requestPermission();
+                if (res === 'granted') window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; filterNode.frequency.value = 200 + Math.abs(e.gamma) * 30; });
+            } else {
+                window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; filterNode.frequency.value = 200 + Math.abs(e.gamma) * 30; });
+            }
+            isRunning = true;
+            document.getElementById('startButton').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
