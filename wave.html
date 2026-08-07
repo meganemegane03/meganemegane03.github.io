@@ -44,7 +44,6 @@
         const height = 180;
         const radius = 6;
         
-        // ★下側（maxY）を小豆1個分（+12px）下げて、丁度いい位置に調整
         const minX = 45;
         const maxX = width - 45;
         const minY = 65;
@@ -58,8 +57,8 @@
                 el: div, 
                 x: minX + Math.random() * (maxX - minX), 
                 y: minY + Math.random() * (maxY - minY), 
-                vx: (Math.random() - 0.5) * 2, 
-                vy: (Math.random() - 0.5) * 2 
+                vx: 0, 
+                vy: 0 
             });
         }
 
@@ -67,6 +66,9 @@
 
         function update() {
             if (isRunning) {
+                let totalSpeed = 0; // 全小豆の動きの合計を計算用
+
+                // 1. 各小豆の移動と壁の判定
                 azukis.forEach(a => {
                     a.vx += tiltX * 0.3; 
                     a.vy += tiltY * 0.3;
@@ -79,8 +81,12 @@
                     else if (a.x > maxX) { a.x = maxX; a.vx *= -0.7; }
                     if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
                     else if (a.y > maxY) { a.y = maxY; a.vy *= -0.7; }
+
+                    // 小豆ごとのスピード（絶対値）を足し合わせていく
+                    totalSpeed += Math.abs(a.vx) + Math.abs(a.vy);
                 });
 
+                // 2. 小豆同士の衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
                         const a1 = azukis[i], a2 = azukis[j];
@@ -100,10 +106,20 @@
                     }
                 }
 
+                // 3. 画面の位置に反映
                 azukis.forEach(a => { 
                     a.el.style.left = (a.x - radius) + 'px'; 
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
+
+                // 4. ★小豆の動きの合計（totalSpeed）に応じて波音の音量をダイレクトに変更
+                if (audio) {
+                    // 動きがほぼゼロなら無音、少し動けば小さめ、大きく動けば大音量
+                    let vol = totalSpeed / 40; 
+                    if (vol > 1.0) vol = 1.0;
+                    if (vol < 0.05) vol = 0.0; // 完全停止時はピタッと無音に
+                    audio.volume = vol;
+                }
             }
             requestAnimationFrame(update);
         }
@@ -133,19 +149,9 @@
         });
 
         function handleOrientation(e) {
-            const gamma = e.gamma || 0;
-            const beta = e.beta || 0;
-
-            tiltX = gamma / 10;
-            tiltY = beta / 10;
-
-            if (audio) {
-                const tiltAmount = Math.abs(gamma) + Math.abs(beta);
-                let vol = tiltAmount / 35;
-                if (vol > 1.0) vol = 1.0;
-                if (vol < 0.05) vol = 0.0;
-                audio.volume = vol;
-            }
+            // スマホの傾きをそのまま小豆への重力（力の方向）として伝える
+            tiltX = (e.gamma || 0) / 10;
+            tiltY = (e.beta || 0) / 10;
         }
     </script>
 </body>
