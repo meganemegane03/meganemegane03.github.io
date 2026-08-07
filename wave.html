@@ -36,7 +36,8 @@
     <button class="start-btn" id="startButton">音と小豆を有効化</button>
 
     <script>
-        let audio, isRunning = false;
+        let audioCtx, gainNode, audioSource, audioBuffer;
+        let isRunning = false;
         const container = document.getElementById('zaruContainer');
         const azukis = [];
         
@@ -116,15 +117,14 @@
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
 
-                // ★小豆の動きの大きさに応じたボリューム無段階調整
-                if (audio) {
+                // ★ Web Audio API の音量ノード（gainNode）で確実にボリュームをコントロール
+                if (gainNode) {
                     if (totalSpeed < 1.0) {
-                        audio.volume = 0.0; // 完全静止時は無音
+                        gainNode.gain.value = 0.0; // 完全無音
                     } else {
-                        // 動きの大きさに比例して音量を変化させる（最大1.0）
                         let vol = (totalSpeed - 1.0) / 25;
                         if (vol > 1.0) vol = 1.0;
-                        audio.volume = vol;
+                        gainNode.gain.value = vol;
                     }
                 }
             }
@@ -132,11 +132,42 @@
         }
         update();
 
-        document.getElementById('startButton').addEventListener('click', () => {
-            audio = new Audio('wave.mp3');
-            audio.loop = true;
-            audio.volume = 0.0;
-            audio.play();
+        // 音声を読み込んでWeb Audio APIで再生する準備
+        async function initAudio() {
+            try {
+                const response = await fetch('wave.mp3');
+                const arrayBuffer = await response.arrayBuffer();
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                playLoopAudio();
+            } catch (e) {
+                console.error("音声の読み込みに失敗しました", e);
+                alert("wave.mp3の読み込みに失敗しました");
+            }
+        }
+
+        function playLoopAudio() {
+            if (!audioCtx) return;
+            audioSource = audioCtx.createBufferSource();
+            audioSource.buffer = audioBuffer;
+            audioSource.loop = true;
+
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0.0; // 最初は無音
+
+            audioSource.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            audioSource.start(0);
+        }
+
+        document.getElementById('startButton').addEventListener('click', async () => {
+            if (!audioCtx) {
+                await initAudio();
+            } else if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
 
             const handleInit = (e) => {
                 if (baseGamma === null) baseGamma = e.gamma || 0;
