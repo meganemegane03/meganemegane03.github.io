@@ -305,33 +305,31 @@ const startBtn = document.getElementById('startBtn');
 const muteBtn = document.getElementById('muteBtn');
 
 startBtn.addEventListener('click', async ()=>{
-  if(!started){
-    initAudio();
-    started = true;
-  }
-  if(audioCtx.state==='suspended') await audioCtx.resume();
-
-  if (typeof DeviceOrientationEvent !== 'undefined' &&
-      typeof DeviceOrientationEvent.requestPermission === 'function'){
-    try{
+  startBtn.textContent = '起動中…';
+  try{
+    // センサー許可は必ずユーザー操作の直後、一番最初に呼ぶ(iOS Safariの制約)
+    if (typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function'){
       const res = await DeviceOrientationEvent.requestPermission();
-      if(res === 'granted'){
-        window.addEventListener('deviceorientation', handleOrientation);
-        startBtn.textContent = '傾けて波音を楽しんでや〜';
-        startBtn.disabled = true;
-        muteBtn.style.display='inline-block';
-      } else {
+      if(res !== 'granted'){
         startBtn.textContent = '許可がないと動かへんで😢';
+        return;
       }
-    }catch(err){
-      startBtn.textContent = 'エラー: センサー使えへんかった';
     }
-  } else {
-    // Android / older iOS
+
+    if(!started){
+      initAudio();
+      started = true;
+    }
+    if(audioCtx.state==='suspended') await audioCtx.resume();
+
     window.addEventListener('deviceorientation', handleOrientation);
     startBtn.textContent = '傾けて波音を楽しんでや〜';
     startBtn.disabled = true;
     muteBtn.style.display='inline-block';
+  }catch(err){
+    startBtn.textContent = 'エラー発生';
+    alert('エラー内容: ' + (err && err.message ? err.message : err));
   }
 });
 
@@ -345,4 +343,3 @@ muteBtn.addEventListener('click', ()=>{
 </script>
 </body>
 </html>
-
