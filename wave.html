@@ -40,170 +40,85 @@
         let isRunning = false;
         const container = document.getElementById('zaruContainer');
         const azukis = [];
-        
         const width = 320;
         const height = 180;
         const radius = 6;
-        
-        const minX = 45;
-        const maxX = width - 45;
-        const minY = 65;
-        const maxY = 117; 
+        const minX = 45, maxX = 275, minY = 65, maxY = 117; 
 
+        // 小豆の初期化
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
             container.appendChild(div);
-            azukis.push({ 
-                el: div, 
-                x: minX + Math.random() * (maxX - minX), 
-                y: minY + Math.random() * (maxY - minY), 
-                vx: 0, 
-                vy: 0 
-            });
+            azukis.push({ el: div, x: minX + Math.random()*(maxX-minX), y: minY + Math.random()*(maxY-minY), vx: 0, vy: 0 });
         }
 
-        let tiltX = 0, tiltY = 0;
-        let baseGamma = null;
-        let baseBeta = null;
+        let tiltX = 0, tiltY = 0, baseGamma = null, baseBeta = null;
 
         function update() {
             if (isRunning) {
                 let totalSpeed = 0;
-
                 azukis.forEach(a => {
-                    a.vx += tiltX * 0.3; 
-                    a.vy += tiltY * 0.3;
-                    
-                    a.vx *= 0.80; 
-                    a.vy *= 0.80;
+                    // 傾きを加速に変換（少し強めに）
+                    a.vx += tiltX * 0.8; 
+                    a.vy += tiltY * 0.8;
+                    a.vx *= 0.92; a.vy *= 0.92; // 摩擦
+                    a.x += a.vx; a.y += a.vy;
 
-                    if (Math.abs(a.vx) < 0.1) a.vx = 0;
-                    if (Math.abs(a.vy) < 0.1) a.vy = 0;
+                    // 壁判定
+                    if (a.x < minX) { a.x = minX; a.vx *= -0.5; } else if (a.x > maxX) { a.x = maxX; a.vx *= -0.5; }
+                    if (a.y < minY) { a.y = minY; a.vy *= -0.5; } else if (a.y > maxY) { a.y = maxY; a.vy *= -0.5; }
 
-                    a.x += a.vx; 
-                    a.y += a.vy;
-
-                    if (a.x < minX) { a.x = minX; a.vx *= -0.5; } 
-                    else if (a.x > maxX) { a.x = maxX; a.vx *= -0.5; }
-                    if (a.y < minY) { a.y = minY; a.vy *= -0.5; } 
-                    else if (a.y > maxY) { a.y = maxY; a.vy *= -0.5; }
-
-                    totalSpeed += Math.abs(a.vx) + Math.abs(a.vy);
+                    totalSpeed += Math.sqrt(a.vx*a.vx + a.vy*a.vy);
+                    a.el.style.left = (a.x - radius) + 'px';
+                    a.el.style.top = (a.y - radius) + 'px';
                 });
 
-                // 衝突判定
-                for (let i = 0; i < azukis.length; i++) {
-                    for (let j = i + 1; j < azukis.length; j++) {
-                        const a1 = azukis[i], a2 = azukis[j];
-                        const dx = a2.x - a1.x, dy = a2.y - a1.y, dist = Math.sqrt(dx*dx + dy*dy);
-                        if (dist < radius * 2) {
-                            const angle = Math.atan2(dy, dx);
-                            const overlap = (radius * 2) - dist;
-                            a1.x -= Math.cos(angle) * overlap * 0.5;
-                            a1.y -= Math.sin(angle) * overlap * 0.5;
-                            a2.x += Math.cos(angle) * overlap * 0.5;
-                            a2.y += Math.sin(angle) * overlap * 0.5;
-                            
-                            const tempVx = a1.vx, tempVy = a1.vy;
-                            a1.vx = a2.vx * 0.7; a1.vy = a2.vy * 0.7;
-                            a2.vx = tempVx * 0.7; a2.vy = tempVy * 0.7;
-                        }
-                    }
-                }
-
-                azukis.forEach(a => { 
-                    a.el.style.left = (a.x - radius) + 'px'; 
-                    a.el.style.top = (a.y - radius) + 'px'; 
-                });
-
-                // ★ Web Audio API の音量ノード（gainNode）で確実にボリュームをコントロール
+                // ボリューム更新
                 if (gainNode) {
-                    if (totalSpeed < 1.0) {
-                        gainNode.gain.value = 0.0; // 完全無音
-                    } else {
-                        let vol = (totalSpeed - 1.0) / 25;
-                        if (vol > 1.0) vol = 1.0;
-                        gainNode.gain.value = vol;
-                    }
+                    // スピードに合わせて滑らかに変化
+                    let vol = Math.min(totalSpeed / 15, 1.0);
+                    gainNode.gain.setTargetAtTime(vol < 0.05 ? 0 : vol, audioCtx.currentTime, 0.1);
                 }
             }
             requestAnimationFrame(update);
         }
         update();
 
-        // 音声を読み込んでWeb Audio APIで再生する準備
         async function initAudio() {
-            try {
-                const response = await fetch('wave.mp3');
-                const arrayBuffer = await response.arrayBuffer();
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-                playLoopAudio();
-            } catch (e) {
-                console.error("音声の読み込みに失敗しました", e);
-                alert("wave.mp3の読み込みに失敗しました");
-            }
-        }
-
-        function playLoopAudio() {
-            if (!audioCtx) return;
+            const response = await fetch('wave.mp3');
+            const data = await response.arrayBuffer();
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            audioBuffer = await audioCtx.decodeAudioData(data);
             audioSource = audioCtx.createBufferSource();
             audioSource.buffer = audioBuffer;
             audioSource.loop = true;
-
             gainNode = audioCtx.createGain();
-            gainNode.gain.value = 0.0; // 最初は無音
-
+            gainNode.gain.value = 0;
             audioSource.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-
             audioSource.start(0);
         }
 
         document.getElementById('startButton').addEventListener('click', async () => {
-            if (!audioCtx) {
-                await initAudio();
-            } else if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
-            }
+            if (!audioCtx) await initAudio();
+            else audioCtx.resume();
 
-            const handleInit = (e) => {
-                if (baseGamma === null) baseGamma = e.gamma || 0;
-                if (baseBeta === null) baseBeta = e.beta || 0;
-                calcTilt(e);
+            const handle = (e) => {
+                if (baseGamma === null) { baseGamma = e.gamma || 0; baseBeta = e.beta || 0; }
+                tiltX = (e.gamma - baseGamma) / 10;
+                tiltY = (e.beta - baseBeta) / 10;
             };
 
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(res => {
-                    if (res === 'granted') {
-                        window.addEventListener('deviceorientation', handleInit);
-                    }
-                });
+                const res = await DeviceOrientationEvent.requestPermission();
+                if (res === 'granted') window.addEventListener('deviceorientation', handle);
             } else {
-                window.addEventListener('deviceorientation', handleInit);
+                window.addEventListener('deviceorientation', handle);
             }
-
             isRunning = true;
             document.getElementById('startButton').style.display = 'none';
-            document.getElementById('status').textContent = 'スマホを傾けると、小豆が転がって波音が鳴ります';
         });
-
-        function calcTilt(e) {
-            const gamma = e.gamma || 0;
-            const beta = e.beta || 0;
-
-            let diffGamma = gamma - baseGamma;
-            let diffBeta = beta - baseBeta;
-
-            const deadzone = 3.0;
-            if (Math.abs(diffGamma) < deadzone) diffGamma = 0;
-            if (Math.abs(diffBeta) < deadzone) diffBeta = 0;
-
-            tiltX = diffGamma / 10;
-            tiltY = diffBeta / 10;
-        }
     </script>
 </body>
 </html>
