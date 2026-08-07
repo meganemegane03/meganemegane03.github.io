@@ -74,7 +74,7 @@
                     a.vx += tiltX * 0.3; 
                     a.vy += tiltY * 0.3;
                     
-                    a.vx *= 0.80; // 減速を強めにする
+                    a.vx *= 0.80; 
                     a.vy *= 0.80;
 
                     if (Math.abs(a.vx) < 0.1) a.vx = 0;
@@ -116,12 +116,14 @@
                     a.el.style.top = (a.y - radius) + 'px'; 
                 });
 
-                // 音量制御（より厳しく無音判定を入れる）
+                // ★音量の調整：ボリュームではなく「ミュート（消音）」の切り替えで確実に制御
                 if (audio) {
                     if (totalSpeed < 1.0) {
-                        audio.volume = 0.0;
+                        audio.muted = true;  // 完全に消音
                     } else {
-                        let vol = (totalSpeed - 1.0) / 25;
+                        audio.muted = false; // 音を出す
+                        // 音量は一定（または動きに応じて音量変更）
+                        let vol = (totalSpeed - 1.0) / 20;
                         if (vol > 1.0) vol = 1.0;
                         audio.volume = vol;
                     }
@@ -134,11 +136,10 @@
         document.getElementById('startButton').addEventListener('click', () => {
             audio = new Audio('wave.mp3');
             audio.loop = true;
-            audio.volume = 0.0;
+            audio.volume = 1.0; // 音量は最大にしておき、mutedでコントロールする
             audio.play();
 
             const handleInit = (e) => {
-                // スタートボタンを押した瞬間のスマホの角度を「基準（ゼロ）」にする
                 if (baseGamma === null) baseGamma = e.gamma || 0;
                 if (baseBeta === null) baseBeta = e.beta || 0;
                 calcTilt(e);
@@ -163,11 +164,9 @@
             const gamma = e.gamma || 0;
             const beta = e.beta || 0;
 
-            // 基準位置からの「変化量」だけを取り出す
             let diffGamma = gamma - baseGamma;
             let diffBeta = beta - baseBeta;
 
-            // 多少の揺れや手ブレは完全に無視するデッドゾーン（しきい値）
             const deadzone = 3.0;
             if (Math.abs(diffGamma) < deadzone) diffGamma = 0;
             if (Math.abs(diffBeta) < deadzone) diffBeta = 0;
