@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Shake Confetti!</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; }
+        .confetti { position: absolute; width: 10px; height: 10px; border-radius: 50%; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <p>スマホを激しく振ってみて！</p>
+
+    <script>
+        // 紙吹雪を生成
+        function createConfetti(x, y) {
+            const el = document.createElement('div');
+            el.className = 'confetti';
+            el.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+
+            let vy = -5;
+            let vx = (Math.random() - 0.5) * 10;
+            
+            function move() {
+                vy += 0.5; // 重力
+                x += vx;
+                y += vy;
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                if (y < window.innerHeight) requestAnimationFrame(move);
+                else el.remove();
+            }
+            move();
+        }
+
+        // シェイク検知（加速度センサー）
+        let lastX, lastY, lastZ;
+        window.addEventListener('devicemotion', (e) => {
+            const acc = e.accelerationIncludingGravity;
+            if (lastX && Math.abs(acc.x - lastX) > 20) {
+                createConfetti(window.innerWidth / 2, window.innerHeight / 2);
+            }
+            lastX = acc.x; lastY = acc.y; lastZ = acc.z;
+        });
+    </script>
+</body>
+</html>
