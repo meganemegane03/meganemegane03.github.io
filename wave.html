@@ -7,132 +7,90 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; overflow: hidden; }
-        .zaru { position: relative; width: 320px; height: 180px; background: #e5c598; border: 6px solid #8b4513; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .azuki { position: absolute; width: 12px; height: 12px; background: #8b0000; border-radius: 50%; }
+        /* ざるの画像を表示する枠 */
+        .zaru { 
+            position: relative; 
+            width: 320px; 
+            height: 180px; 
+            background-image: url('wood-box.PNG'); 
+            background-size: cover;
+            background-position: center;
+            border: 6px solid #8b4513; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
+        }
+        .azuki { position: absolute; width: 12px; height: 12px; background: #8b0000; border-radius: 50%; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
         .start-btn { margin-top: 20px; padding: 15px 30px; font-size: 1.2rem; background: #38bdf8; border: none; border-radius: 30px; cursor: pointer; color: #0f172a; font-weight: bold; }
     </style>
 </head>
 <body>
     <p id="status">ボタンを押してスタート</p>
     <div class="zaru" id="zaruContainer"></div>
-    <button class="start-btn" id="startButton">音とセンサーを有効化</button>
+    <button class="start-btn" id="startButton">音と小豆を有効化</button>
 
     <script>
-        let audioCtx, filterNode, isRunning = false;
+        let audio, audioCtx, gainNode, isRunning = false;
         const container = document.getElementById('zaruContainer');
         const azukis = [];
         const width = 320, height = 180, radius = 6;
 
-        // 30個の小豆をバラバラの位置とスピードで生成
+        // 小豆生成
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
             container.appendChild(div);
-            azukis.push({
-                el: div,
-                x: radius + 20 + Math.random() * (width - (radius + 20) * 2),
-                y: radius + 20 + Math.random() * (height - (radius + 20) * 2),
-                vx: (Math.random() - 0.5) * 4,
-                vy: (Math.random() - 0.5) * 4
-            });
+            azukis.push({ el: div, x: radius + 50, y: radius + 50, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 });
         }
 
         let tiltX = 0, tiltY = 0;
 
         function update() {
             if (isRunning) {
-                // 1. 各小豆の移動と壁との衝突
                 azukis.forEach(a => {
-                    a.vx += tiltX * 0.3;
-                    a.vy += tiltY * 0.3;
-
-                    a.vx *= 0.92;
-                    a.vy *= 0.92;
-
-                    a.x += a.vx;
-                    a.y += a.vy;
-
-                    // 壁の跳ね返し
-                    if (a.x < radius) { a.x = radius; a.vx *= -0.7; }
-                    else if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.7; }
-                    if (a.y < radius) { a.y = radius; a.vy *= -0.7; }
-                    else if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.7; }
+                    a.vx += tiltX * 0.3; a.vy += tiltY * 0.3;
+                    a.vx *= 0.92; a.vy *= 0.92;
+                    a.x += a.vx; a.y += a.vy;
+                    if (a.x < radius) { a.x = radius; a.vx *= -0.7; } else if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.7; }
+                    if (a.y < radius) { a.y = radius; a.vy *= -0.7; } else if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.7; }
                 });
 
-                // 2. 小豆同士の衝突判定（お互いにぶつかって弾け飛ぶ処理）
+                // 衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
-                        const a1 = azukis[i];
-                        const a2 = azukis[j];
-                        const dx = a2.x - a1.x;
-                        const dy = a2.y - a1.y;
-                        const dist = Math.sqrt(dx * dx + dy * dy);
-                        const minDist = radius * 2; // 粒の直径
-
-                        if (dist < minDist) {
-                            // 重なりを解消する
-                            const overlap = minDist - dist;
+                        const a1 = azukis[i], a2 = azukis[j];
+                        const dx = a2.x - a1.x, dy = a2.y - a1.y, dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < radius * 2) {
                             const angle = Math.atan2(dy, dx);
-                            
-                            // お互いを離す
-                            a1.x -= Math.cos(angle) * overlap * 0.5;
-                            a1.y -= Math.sin(angle) * overlap * 0.5;
-                            a2.x += Math.cos(angle) * overlap * 0.5;
-                            a2.y += Math.sin(angle) * overlap * 0.5;
-
-                            // 速度を交換・反発させる
-                            const tempVx = a1.vx;
-                            const tempVy = a1.vy;
-                            a1.vx = a2.vx * 0.8;
-                            a1.vy = a2.vy * 0.8;
-                            a2.vx = tempVx * 0.8;
-                            a2.vy = tempVy * 0.8;
+                            a1.x -= Math.cos(angle); a1.y -= Math.sin(angle);
+                            a2.x += Math.cos(angle); a2.y += Math.sin(angle);
+                            [a1.vx, a2.vx] = [a2.vx * 0.8, a1.vx * 0.8];
+                            [a1.vy, a2.vy] = [a2.vy * 0.8, a1.vy * 0.8];
                         }
                     }
                 }
-
-                // 3. 画面上の位置に反映
-                azukis.forEach(a => {
-                    a.el.style.left = (a.x - radius) + 'px';
-                    a.el.style.top = (a.y - radius) + 'px';
-                });
+                azukis.forEach(a => { a.el.style.left = (a.x - radius) + 'px'; a.el.style.top = (a.y - radius) + 'px'; });
             }
             requestAnimationFrame(update);
         }
         update();
 
-        document.getElementById('startButton').addEventListener('click', async () => {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            filterNode = audioCtx.createBiquadFilter();
-            filterNode.type = 'lowpass';
-            filterNode.frequency.value = 400;
-            const noise = audioCtx.createBufferSource();
-            const buffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-            noise.buffer = buffer; noise.loop = true;
-            noise.connect(filterNode).connect(audioCtx.destination);
-            noise.start();
+        document.getElementById('startButton').addEventListener('click', () => {
+            // Wave.mp3を再生
+            audio = new Audio('Wave.mp3');
+            audio.loop = true;
+            audio.play();
 
             if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                const res = await DeviceOrientationEvent.requestPermission();
-                if (res === 'granted') {
-                    window.addEventListener('deviceorientation', e => {
-                        tiltX = (e.gamma || 0) / 10;
-                        tiltY = (e.beta || 0) / 10;
-                        filterNode.frequency.value = 200 + Math.abs(e.gamma || 0) * 30;
-                    });
-                }
-            } else {
-                window.addEventListener('deviceorientation', e => {
-                    tiltX = (e.gamma || 0) / 10;
-                    tiltY = (e.beta || 0) / 10;
-                    filterNode.frequency.value = 200 + Math.abs(e.gamma || 0) * 30;
+                DeviceOrientationEvent.requestPermission().then(res => {
+                    if (res === 'granted') window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; });
                 });
+            } else {
+                window.addEventListener('deviceorientation', e => { tiltX = e.gamma / 10; tiltY = e.beta / 10; });
             }
             isRunning = true;
             document.getElementById('startButton').style.display = 'none';
-            document.getElementById('status').textContent = 'スマホを傾けると小豆が転がります';
+            document.getElementById('status').textContent = 'スマホを傾けて、小豆と波音を楽しんで！';
         });
     </script>
 </body>
