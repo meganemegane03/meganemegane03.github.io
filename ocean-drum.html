@@ -177,9 +177,6 @@
   </div>
 
   <footer>
-    <button onclick="alert('シンプルボタンは反応するで')" style="font-size:1rem; padding:14px 30px; border-radius:999px; border:2px solid red; background:white; color:red;">
-      テスト用ボタン（まずコレ押して）
-    </button>
     <button id="startBtn">かごを傾けてみる</button>
     <div class="hint">スマホを左右にゆっくり傾けると<br>砂の波音が聞こえるで🌊</div>
     <button id="muteBtn">🔈 ミュート</button>
@@ -187,7 +184,6 @@
 </main>
 
 <script>
-alert('スクリプト実行開始');
 // ---------- stars ----------
 const starsEl = document.getElementById('stars');
 for(let i=0;i<40;i++){
@@ -209,6 +205,7 @@ function resize(){
   ch = canvas.height = rect.height * devicePixelRatio;
 }
 window.addEventListener('resize', resize);
+resize();
 
 const N = 220;
 const beads = [];
@@ -224,7 +221,6 @@ for(let i=0;i<N;i++){
 let gx = 0, gy = 0.6; // gravity direction, default resting
 
 function stepBeads(){
-  resize();
   for(const b of beads){
     b.vx += gx*0.0022;
     b.vy += gy*0.0022;
@@ -309,7 +305,6 @@ const startBtn = document.getElementById('startBtn');
 const muteBtn = document.getElementById('muteBtn');
 
 startBtn.addEventListener('click', async ()=>{
-  alert('ボタン反応OK ここから処理始めるで');
   startBtn.textContent = '起動中…';
   try{
     // センサー許可は必ずユーザー操作の直後、一番最初に呼ぶ(iOS Safariの制約)
@@ -338,14 +333,6 @@ startBtn.addEventListener('click', async ()=>{
   }
 });
 
-// ページ読み込み自体ができてるか確認用（自動実行）
-window.addEventListener('load', ()=>{
-  console.log('ページ読み込み完了');
-});
-window.addEventListener('error', (e)=>{
-  alert('スクリプトエラー: ' + e.message + ' (' + e.filename + ':' + e.lineno + ')');
-});
-
 muteBtn.addEventListener('click', ()=>{
   muted = !muted;
   muteBtn.textContent = muted ? '🔇 ミュート中' : '🔈 ミュート';
@@ -353,7 +340,6 @@ muteBtn.addEventListener('click', ()=>{
     gainNode.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.1);
   }
 });
-alert('スクリプト実行完了、ボタンの準備できたで');
 </script>
 </body>
 </html>
