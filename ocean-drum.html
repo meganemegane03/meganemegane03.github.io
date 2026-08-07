@@ -99,9 +99,9 @@
   }
   #beadCanvas{
     position:absolute;
-    top:12px; left:12px; right:12px; bottom:12px;
+    top:12px; left:12px;
     border-radius:8px;
-    border:3px solid lime; /* ★デバッグ用：キャンバスの実際の範囲を確認 */
+    border:3px solid lime; /* ★デバッグ用 */
   }
 
   .readout{
@@ -199,12 +199,18 @@ for(let i=0;i<40;i++){
 
 // ---------- bead canvas (visual sand grains) ----------
 const canvas = document.getElementById('beadCanvas');
+const basketBodyEl = document.querySelector('.basket-body');
 const ctx = canvas.getContext('2d');
 let cw, ch;
 function resize(){
-  const rect = canvas.getBoundingClientRect();
-  cw = canvas.width = rect.width * devicePixelRatio;
-  ch = canvas.height = rect.height * devicePixelRatio;
+  // 親要素(basket-body)の実サイズから、直接ピクセル単位でキャンバスの表示サイズを決める
+  const parentRect = basketBodyEl.getBoundingClientRect();
+  const dispW = Math.max(10, parentRect.width - 24);
+  const dispH = Math.max(10, parentRect.height - 24);
+  canvas.style.width = dispW + 'px';
+  canvas.style.height = dispH + 'px';
+  cw = canvas.width = dispW * devicePixelRatio;
+  ch = canvas.height = dispH * devicePixelRatio;
 }
 window.addEventListener('resize', resize);
 resize();
