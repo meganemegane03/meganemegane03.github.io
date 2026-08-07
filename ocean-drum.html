@@ -321,7 +321,13 @@ startBtn.addEventListener('click', async ()=>{
       initAudio();
       started = true;
     }
-    if(audioCtx.state==='suspended') await audioCtx.resume();
+    if(audioCtx.state==='suspended'){
+      // resume()がiOSで固まることがあるので、タイムアウト付きで待つ
+      await Promise.race([
+        audioCtx.resume(),
+        new Promise(resolve => setTimeout(resolve, 1200))
+      ]);
+    }
 
     window.addEventListener('deviceorientation', handleOrientation);
     startBtn.textContent = '傾けて波音を楽しんでや〜';
