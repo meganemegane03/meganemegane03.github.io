@@ -7,20 +7,26 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
         body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; overflow: hidden; }
-        /* ざるの画像を表示する枠 */
         .zaru { 
             position: relative; 
             width: 320px; 
             height: 180px; 
             background-image: url('wood-box.PNG'); 
-            background-size: cover;
+            background-size: 100% 100%;
             background-position: center;
-            border: 6px solid #8b4513; 
+            background-repeat: no-repeat;
             border-radius: 12px; 
-            overflow: hidden; 
+            overflow: hidden; /* はみ出しを完全にカット */
             box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
         }
-        .azuki { position: absolute; width: 12px; height: 12px; background: #8b0000; border-radius: 50%; box-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .azuki { 
+            position: absolute; 
+            width: 12px; 
+            height: 12px; 
+            background: #8b0000; 
+            border-radius: 50%; 
+            box-shadow: inset -1px -1px 2px rgba(0,0,0,0.6); 
+        }
         .start-btn { margin-top: 20px; padding: 15px 30px; font-size: 1.2rem; background: #38bdf8; border: none; border-radius: 30px; cursor: pointer; color: #0f172a; font-weight: bold; }
     </style>
 </head>
@@ -30,17 +36,33 @@
     <button class="start-btn" id="startButton">音と小豆を有効化</button>
 
     <script>
-        let audio, audioCtx, gainNode, isRunning = false;
+        let audio, isRunning = false;
         const container = document.getElementById('zaruContainer');
         const azukis = [];
-        const width = 320, height = 180, radius = 6;
+        
+        // カゴの内側にぴったり収まるように可動範囲（幅・高さ）と余白（マージン）を調整
+        const width = 320;
+        const height = 180;
+        const radius = 6;
+        
+        // カゴのフチの内側に収めるための安全エリア
+        const minX = radius + 25;
+        const maxX = width - radius - 25;
+        const minY = radius + 40;
+        const maxY = height - radius - 20;
 
         // 小豆生成
         for (let i = 0; i < 30; i++) {
             const div = document.createElement('div');
             div.className = 'azuki';
             container.appendChild(div);
-            azukis.push({ el: div, x: radius + 50, y: radius + 50, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4 });
+            azukis.push({ 
+                el: div, 
+                x: minX + Math.random() * (maxX - minX), 
+                y: minY + Math.random() * (maxY - minY), 
+                vx: (Math.random() - 0.5) * 3, 
+                vy: (Math.random() - 0.5) * 3 
+            });
         }
 
         let tiltX = 0, tiltY = 0;
@@ -48,36 +70,52 @@
         function update() {
             if (isRunning) {
                 azukis.forEach(a => {
-                    a.vx += tiltX * 0.3; a.vy += tiltY * 0.3;
-                    a.vx *= 0.92; a.vy *= 0.92;
-                    a.x += a.vx; a.y += a.vy;
-                    if (a.x < radius) { a.x = radius; a.vx *= -0.7; } else if (a.x > width - radius) { a.x = width - radius; a.vx *= -0.7; }
-                    if (a.y < radius) { a.y = radius; a.vy *= -0.7; } else if (a.y > height - radius) { a.y = height - radius; a.vy *= -0.7; }
+                    a.vx += tiltX * 0.3; 
+                    a.vy += tiltY * 0.3;
+                    a.vx *= 0.90; 
+                    a.vy *= 0.90;
+                    a.x += a.vx; 
+                    a.y += a.vy;
+
+                    // カゴの内側の壁でしっかり跳ね返す
+                    if (a.x < minX) { a.x = minX; a.vx *= -0.7; } 
+                    else if (a.x > maxX) { a.x = maxX; a.vx *= -0.7; }
+                    if (a.y < minY) { a.y = minY; a.vy *= -0.7; } 
+                    else if (a.y > maxY) { a.y = maxY; a.vy *= -0.7; }
                 });
 
-                // 衝突判定
+                // 小豆同士の衝突判定
                 for (let i = 0; i < azukis.length; i++) {
                     for (let j = i + 1; j < azukis.length; j++) {
                         const a1 = azukis[i], a2 = azukis[j];
                         const dx = a2.x - a1.x, dy = a2.y - a1.y, dist = Math.sqrt(dx*dx + dy*dy);
                         if (dist < radius * 2) {
                             const angle = Math.atan2(dy, dx);
-                            a1.x -= Math.cos(angle); a1.y -= Math.sin(angle);
-                            a2.x += Math.cos(angle); a2.y += Math.sin(angle);
-                            [a1.vx, a2.vx] = [a2.vx * 0.8, a1.vx * 0.8];
-                            [a1.vy, a2.vy] = [a2.vy * 0.8, a1.vy * 0.8];
+                            const overlap = (radius * 2) - dist;
+                            a1.x -= Math.cos(angle) * overlap * 0.5;
+                            a1.y -= Math.sin(angle) * overlap * 0.5;
+                            a2.x += Math.cos(angle) * overlap * 0.5;
+                            a2.y += Math.sin(angle) * overlap * 0.5;
+                            
+                            const tempVx = a1.vx, tempVy = a1.vy;
+                            a1.vx = a2.vx * 0.8; a1.vy = a2.vy * 0.8;
+                            a2.vx = tempVx * 0.8; a2.vy = tempVy * 0.8;
                         }
                     }
                 }
-                azukis.forEach(a => { a.el.style.left = (a.x - radius) + 'px'; a.el.style.top = (a.y - radius) + 'px'; });
+
+                azukis.forEach(a => { 
+                    a.el.style.left = (a.x - radius) + 'px'; 
+                    a.el.style.top = (a.y - radius) + 'px'; 
+                });
             }
             requestAnimationFrame(update);
         }
         update();
 
         document.getElementById('startButton').addEventListener('click', () => {
-            // Wave.mp3を再生
-            audio = new Audio('Wave.mp3');
+            // 小文字の wave.mp3 を再生
+            audio = new Audio('wave.mp3');
             audio.loop = true;
             audio.play();
 
