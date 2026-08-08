@@ -3,70 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Samon Zen Garden App</title>
+    <title>Ultimate Zen Garden App</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <style>
-        body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; overflow: hidden; }
+        body { margin: 0; background: #1a1a1a; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; font-family: sans-serif; overflow: hidden; user-select: none; }
+        .garden-wrapper { position: relative; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-radius: 12px; overflow: hidden; border: 8px solid #5c4033; }
         .garden { 
             position: relative; 
             width: 320px; 
             height: 220px; 
             background: #d4c5b9; 
-            border: 8px solid #5c4033; 
-            border-radius: 8px; 
             overflow: hidden; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
+        }
+        canvas.trail-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
         }
         .sand { 
             position: absolute; 
-            width: 5px; 
-            height: 5px; 
+            width: 4px; 
+            height: 4px; 
             background: #b5a495; 
             border-radius: 50%; 
+            pointer-events: none;
         }
-        .btn-container { display: flex; gap: 10px; margin-top: 20px; }
-        .action-btn { padding: 12px 24px; font-size: 1rem; background: #38bdf8; border: none; border-radius: 30px; cursor: pointer; color: #0f172a; font-weight: bold; }
+        .stone {
+            position: absolute;
+            width: 24px;
+            height: 18px;
+            background: #475569;
+            border-radius: 50% 40% 60% 50%;
+            box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6), 0 4px 6px rgba(0,0,0,0.3);
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            cursor: grab;
+        }
+        .ui-container { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; align-items: center; width: 320px; }
+        .btn-row { display: flex; gap: 8px; width: 100%; justify-content: center; }
+        .action-btn { padding: 10px 16px; font-size: 0.9rem; background: #38bdf8; border: none; border-radius: 20px; cursor: pointer; color: #0f172a; font-weight: bold; flex: 1; }
         .reset-btn { background: #e2e8f0; }
+        .theme-btn { background: #cbd5e1; }
     </style>
 </head>
 <body>
     <p id="status">ボタンを押して砂庭を起動</p>
-    <div class="garden" id="gardenContainer"></div>
-    <div class="btn-container">
-        <button class="action-btn" id="startButton">砂庭を有効化</button>
-        <button class="action-btn reset-btn" id="resetButton" style="display:none;">砂をならす</button>
+    <div class="garden-wrapper">
+        <div class="garden" id="gardenContainer">
+            <canvas class="trail-canvas" id="trailCanvas" width="320" height="220"></canvas>
+        </div>
+    </div>
+    <div class="ui-container">
+        <div class="btn-row">
+            <button class="action-btn" id="startButton">砂庭を有効化</button>
+            <button class="action-btn reset-btn" id="resetButton" style="display:none;">砂をならす</button>
+        </div>
+        <div class="btn-row">
+            <button class="action-btn theme-btn" id="themeButton" style="display:none;">テーマ変更</button>
+            <button class="action-btn" id="stoneButton" style="display:none;">石を追加/消去</button>
+        </div>
     </div>
 
     <script>
         let audio, isRunning = false;
         const container = document.getElementById('gardenContainer');
+        const canvas = document.getElementById('trailCanvas');
+        const ctx = canvas.getContext('2d');
         const sands = [];
+        const stones = [];
         
         const width = 320;
         const height = 220;
-        const radius = 2.5; // 粒も少し小さくして密に表現
+        const radius = 2.0; 
         
-        const minX = 12;
-        const maxX = width - 12;
-        const minY = 12;
-        const maxY = height - 12; 
+        const minX = 10, maxX = width - 10;
+        const minY = 10, maxY = height - 10; 
 
-        // 砂の数を大幅に増やす（250粒）
-        const sandCount = 250;
+        // 砂の数を豪華に「480粒」に倍増！
+        const sandCount = 480;
+
+        // テーマ切替用（0: 通常, 1: 夜の庭, 2: 雪景色）
+        let currentTheme = 0;
+        const themes = [
+            { bg: '#d4c5b9', sand: '#b5a495', border: '#5c4033', trail: 'rgba(120, 105, 95, 0.15)' },
+            { bg: '#1e293b', sand: '#64748b', border: '#0f172a', trail: 'rgba(100, 116, 139, 0.2)' },
+            { bg: '#f8fafc', sand: '#cbd5e1', border: '#475569', trail: 'rgba(148, 163, 184, 0.25)' }
+        ];
+
+        function setTheme(themeIndex) {
+            currentTheme = themeIndex;
+            const t = themes[currentTheme];
+            container.style.background = t.bg;
+            container.parentElement.style.borderColor = t.border;
+            sands.forEach(s => s.el.style.background = t.sand);
+        }
 
         function resetSands() {
             sands.forEach((s, i) => {
-                const cols = 16; // 1行あたりの粒を増やして敷き詰める
+                const cols = 24; 
                 const xIndex = i % cols;
                 const yIndex = Math.floor(i / cols);
                 
-                s.x = minX + 8 + xIndex * 18 + (Math.random() * 2 - 1);
-                s.y = minY + 8 + yIndex * 13 + (Math.random() * 2 - 1);
+                s.x = minX + 6 + xIndex * 13 + (Math.random() * 2 - 1);
+                s.y = minY + 6 + yIndex * 10 + (Math.random() * 2 - 1);
                 s.vx = 0;
                 s.vy = 0;
             });
+            ctx.clearRect(0, 0, width, height);
         }
 
+        // 砂の初期化
         for (let i = 0; i < sandCount; i++) {
             const div = document.createElement('div');
             div.className = 'sand';
@@ -77,17 +126,83 @@
 
         let tiltX = 0, tiltY = 0;
         let baseGamma = null, baseBeta = null;
+        let isTouching = false;
+        let touchX = 0, touchY = 0;
+        let stoneMode = false;
+
+        // タッチ（指でなぞる）操作
+        container.addEventListener('pointerdown', (e) => {
+            if (!isRunning) return;
+            const rect = container.getBoundingClientRect();
+            touchX = e.clientX - rect.left;
+            touchY = e.clientY - rect.top;
+
+            if (stoneMode) {
+                // 石モードのときはタッチした場所に石を置く（最大3個までローテーション）
+                if (stones.length >= 3) {
+                    const oldStone = stones.shift();
+                    oldStone.el.remove();
+                }
+                const stoneDiv = document.createElement('div');
+                stoneDiv.className = 'stone';
+                stoneDiv.style.left = touchX + 'px';
+                stoneDiv.style.top = touchY + 'px';
+                container.appendChild(stoneDiv);
+                stones.push({ x: touchX, y: touchY, el: stoneDiv });
+                return;
+            }
+
+            isTouching = true;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isTouching) return;
+            const rect = container.getBoundingClientRect();
+            touchX = e.clientX - rect.left;
+            touchY = e.clientY - rect.top;
+        });
+
+        window.addEventListener('pointerup', () => { isTouching = false; });
 
         function update() {
             if (isRunning) {
                 let totalSpeed = 0;
 
+                // 軌跡を描くために少しずつ半透明でクリアしていく（砂紋が残る演出）
+                ctx.fillStyle = themes[currentTheme].trail;
+                ctx.fillRect(0, 0, width, height);
+
                 sands.forEach(s => {
                     s.vx += tiltX * 0.4; 
                     s.vy += tiltY * 0.4;
+
+                    // 指でなぞっているとき、指に引き寄せられる（砂を掻き分ける）力
+                    if (isTouching) {
+                        const dx = touchX - s.x;
+                        const dy = touchY - s.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 40 && dist > 0) {
+                            s.vx -= (dx / dist) * 1.5;
+                            s.vy -= (dy / dist) * 1.5;
+                        }
+                    }
+
+                    // 石との衝突・回避判定
+                    stones.forEach(stone => {
+                        const sdx = s.x - stone.x;
+                        const sdy = s.y - stone.y;
+                        const sdist = Math.sqrt(sdx*sdx + sdy*sdy);
+                        if (sdist < 18) {
+                            const angle = Math.atan2(sdy, sdx);
+                            s.x = stone.x + Math.cos(angle) * 18;
+                            s.y = stone.y + Math.sin(angle) * 18;
+                            s.vx *= -0.3;
+                            s.vy *= -0.3;
+                        }
+                    });
                     
-                    s.vx *= 0.75; 
-                    s.vy *= 0.75;
+                    s.vx *= 0.72; 
+                    s.vy *= 0.72;
 
                     if (Math.abs(s.vx) < 0.05) s.vx = 0;
                     if (Math.abs(s.vy) < 0.05) s.vy = 0;
@@ -101,9 +216,17 @@
                     else if (s.y > maxY) { s.y = maxY; s.vy *= -0.3; }
 
                     totalSpeed += Math.abs(s.vx) + Math.abs(s.vy);
+
+                    // 動いている砂の軌跡をcanvasに描画
+                    if (Math.abs(s.vx) > 0.2 || Math.abs(s.vy) > 0.2) {
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+                        ctx.fillStyle = themes[currentTheme].sand;
+                        ctx.fill();
+                    }
                 });
 
-                // 砂粒同士の押し出し合い（粒サイズに合わせて調整）
+                // 砂粒同士の押し出し合い
                 for (let i = 0; i < sands.length; i++) {
                     for (let j = i + 1; j < sands.length; j++) {
                         const s1 = sands[i], s2 = sands[j];
@@ -125,11 +248,11 @@
                 });
 
                 if (audio) {
-                    if (totalSpeed < 0.5) {
+                    if (totalSpeed < 0.5 && !isTouching) {
                         audio.muted = true;
                     } else {
                         audio.muted = false;
-                        let vol = (totalSpeed - 0.5) / 15;
+                        let vol = (totalSpeed + (isTouching ? 5 : 0) - 0.5) / 15;
                         if (vol > 1.0) vol = 1.0;
                         audio.volume = vol;
                     }
@@ -164,11 +287,35 @@
             isRunning = true;
             document.getElementById('startButton').style.display = 'none';
             document.getElementById('resetButton').style.display = 'inline-block';
-            document.getElementById('status').textContent = 'スマホを傾けて砂を動かそう';
+            document.getElementById('themeButton').style.display = 'inline-block';
+            document.getElementById('stoneButton').style.display = 'inline-block';
+            document.getElementById('status').textContent = 'スマホを傾けるか、指で砂をなぞろう';
         });
 
         document.getElementById('resetButton').addEventListener('click', () => {
             resetSands();
+            // 石もすべてクリア
+            stones.forEach(s => s.el.remove());
+            stones.length = 0;
+        });
+
+        document.getElementById('themeButton').addEventListener('click', () => {
+            const nextTheme = (currentTheme + 1) % themes.length;
+            setTheme(nextTheme);
+        });
+
+        document.getElementById('stoneButton').addEventListener('click', () => {
+            stoneMode = !stoneMode;
+            const btn = document.getElementById('stoneButton');
+            if (stoneMode) {
+                btn.style.background = '#38bdf8';
+                btn.style.color = '#0f172a';
+                document.getElementById('status').textContent = '【石モード】庭をタップして石を配置しよう';
+            } else {
+                btn.style.background = '';
+                btn.style.color = '';
+                document.getElementById('status').textContent = 'スマホを傾けるか、指で砂をなぞろう';
+            }
         });
 
         function calcTilt(e) {
