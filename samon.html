@@ -25,8 +25,8 @@
         }
         .sand { 
             position: absolute; 
-            width: 3.5px; 
-            height: 3.5px; 
+            width: 3px; 
+            height: 3px; 
             background: #b5a495; 
             border-radius: 50%; 
             pointer-events: none;
@@ -89,23 +89,23 @@
         const canvas = document.getElementById('trailCanvas');
         const ctx = canvas.getContext('2d');
         const sands = [];
-        const obstacles = []; // 石と木をまとめて管理
+        const obstacles = [];
         
         const width = 320;
         const height = 220;
-        const radius = 1.8; 
+        const radius = 1.5; 
         
-        const minX = 8, maxX = width - 8;
-        const minY = 8, maxY = height - 8; 
+        const minX = 6, maxX = width - 6;
+        const minY = 6, maxY = height - 6; 
 
-        // 砂の数を一気に「1000粒」に増量して隙間を完全になくす！
-        const sandCount = 1000;
+        // 砂の数を圧倒的な「2000粒」に！
+        const sandCount = 2000;
 
         let currentTheme = 0;
         const themes = [
-            { bg: '#d4c5b9', sand: '#b5a495', border: '#5c4033', trail: 'rgba(120, 105, 95, 0.12)' },
-            { bg: '#1e293b', sand: '#64748b', border: '#0f172a', trail: 'rgba(100, 116, 139, 0.18)' },
-            { bg: '#f8fafc', sand: '#cbd5e1', border: '#475569', trail: 'rgba(148, 163, 184, 0.2)' }
+            { bg: '#d4c5b9', sand: '#b5a495', border: '#5c4033', trail: 'rgba(120, 105, 95, 0.1)' },
+            { bg: '#1e293b', sand: '#64748b', border: '#0f172a', trail: 'rgba(100, 116, 139, 0.15)' },
+            { bg: '#f8fafc', sand: '#cbd5e1', border: '#475569', trail: 'rgba(148, 163, 184, 0.18)' }
         ];
 
         function setTheme(themeIndex) {
@@ -118,12 +118,12 @@
 
         function resetSands() {
             sands.forEach((s, i) => {
-                const cols = 33; 
+                const cols = 50; 
                 const xIndex = i % cols;
                 const yIndex = Math.floor(i / cols);
                 
-                s.x = minX + 4 + xIndex * 9.3 + (Math.random() * 1 - 0.5);
-                s.y = minY + 4 + yIndex * 7.2 + (Math.random() * 1 - 0.5);
+                s.x = minX + 3 + xIndex * 6.2 + (Math.random() * 0.8 - 0.4);
+                s.y = minY + 3 + yIndex * 5.2 + (Math.random() * 0.8 - 0.4);
                 s.vx = 0;
                 s.vy = 0;
             });
@@ -142,7 +142,7 @@
         let baseGamma = null, baseBeta = null;
         let isTouching = false;
         let touchX = 0, touchY = 0;
-        let currentMode = 'none'; // 'none', 'stone', 'tree'
+        let currentMode = 'none';
 
         container.addEventListener('pointerdown', (e) => {
             if (!isRunning) return;
@@ -200,7 +200,6 @@
                         }
                     }
 
-                    // 障害物（石・木）との衝突判定
                     obstacles.forEach(obs => {
                         const odx = s.x - obs.x;
                         const ody = s.y - obs.y;
@@ -239,17 +238,18 @@
                     }
                 });
 
-                for (let i = 0; i < sands.length; i++) {
-                    for (let j = i + 1; j < sands.length; j++) {
+                // 2000粒なので負荷対策として衝突判定は少し間引くか軽量化
+                for (let i = 0; i < sands.length; i += 2) {
+                    for (let j = i + 1; j < sands.length; j += 2) {
                         const s1 = sands[i], s2 = sands[j];
                         const dx = s2.x - s1.x, dy = s2.y - s1.y, dist = Math.sqrt(dx*dx + dy*dy);
-                        if (dist < radius * 2) {
+                        if (dist < radius * 2.2) {
                             const angle = Math.atan2(dy, dx);
-                            const overlap = (radius * 2) - dist;
-                            s1.x -= Math.cos(angle) * overlap * 0.5;
-                            s1.y -= Math.sin(angle) * overlap * 0.5;
-                            s2.x += Math.cos(angle) * overlap * 0.5;
-                            s2.y += Math.sin(angle) * overlap * 0.5;
+                            const overlap = (radius * 2.2) - dist;
+                            s1.x -= Math.cos(angle) * overlap * 0.4;
+                            s1.y -= Math.sin(angle) * overlap * 0.4;
+                            s2.x += Math.cos(angle) * overlap * 0.4;
+                            s2.y += Math.sin(angle) * overlap * 0.4;
                         }
                     }
                 }
