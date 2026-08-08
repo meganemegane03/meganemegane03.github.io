@@ -11,17 +11,17 @@
             position: relative; 
             width: 320px; 
             height: 220px; 
-            background: #d4c5b9; /* 乾いた砂のような色 */
-            border: 8px solid #5c4033; /* 枯山水の木枠をイメージ */
+            background: #d4c5b9; 
+            border: 8px solid #5c4033; 
             border-radius: 8px; 
             overflow: hidden; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
         }
         .sand { 
             position: absolute; 
-            width: 6px; 
-            height: 6px; 
-            background: #b5a495; /* 砂粒の色 */
+            width: 5px; 
+            height: 5px; 
+            background: #b5a495; 
             border-radius: 50%; 
         }
         .btn-container { display: flex; gap: 10px; margin-top: 20px; }
@@ -44,21 +44,24 @@
         
         const width = 320;
         const height = 220;
-        const radius = 3;
+        const radius = 2.5; // 粒も少し小さくして密に表現
         
-        const minX = 15;
-        const maxX = width - 15;
-        const minY = 15;
-        const maxY = height - 15; 
+        const minX = 12;
+        const maxX = width - 12;
+        const minY = 12;
+        const maxY = height - 12; 
 
-        // 砂粒の数を多め（80粒）にしてサラサラ感を演出
-        const sandCount = 80;
+        // 砂の数を大幅に増やす（250粒）
+        const sandCount = 250;
 
         function resetSands() {
             sands.forEach((s, i) => {
-                // 綺麗にグリッド状に初期配置、またはランダムに散らす
-                s.x = minX + (i % 10) * 28 + Math.random() * 5;
-                s.y = minY + Math.floor(i / 10) * 22 + Math.random() * 5;
+                const cols = 16; // 1行あたりの粒を増やして敷き詰める
+                const xIndex = i % cols;
+                const yIndex = Math.floor(i / cols);
+                
+                s.x = minX + 8 + xIndex * 18 + (Math.random() * 2 - 1);
+                s.y = minY + 8 + yIndex * 13 + (Math.random() * 2 - 1);
                 s.vx = 0;
                 s.vy = 0;
             });
@@ -83,7 +86,7 @@
                     s.vx += tiltX * 0.4; 
                     s.vy += tiltY * 0.4;
                     
-                    s.vx *= 0.75; // 砂の摩擦（すぐに止まる）
+                    s.vx *= 0.75; 
                     s.vy *= 0.75;
 
                     if (Math.abs(s.vx) < 0.05) s.vx = 0;
@@ -100,7 +103,7 @@
                     totalSpeed += Math.abs(s.vx) + Math.abs(s.vy);
                 });
 
-                // 砂粒同士の軽い押し出し合い
+                // 砂粒同士の押し出し合い（粒サイズに合わせて調整）
                 for (let i = 0; i < sands.length; i++) {
                     for (let j = i + 1; j < sands.length; j++) {
                         const s1 = sands[i], s2 = sands[j];
@@ -121,7 +124,6 @@
                     s.el.style.top = (s.y - radius) + 'px'; 
                 });
 
-                // 音の制御（静止時は無音）
                 if (audio) {
                     if (totalSpeed < 0.5) {
                         audio.muted = true;
@@ -138,7 +140,7 @@
         update();
 
         document.getElementById('startButton').addEventListener('click', () => {
-            audio = new Audio('wave.mp3'); // 音源は必要に応じて変更可能
+            audio = new Audio('wave.mp3');
             audio.loop = true;
             audio.volume = 1.0;
             audio.play();
@@ -165,7 +167,6 @@
             document.getElementById('status').textContent = 'スマホを傾けて砂を動かそう';
         });
 
-        // 「砂をならす」ボタンで初期位置へリセット
         document.getElementById('resetButton').addEventListener('click', () => {
             resetSands();
         });
