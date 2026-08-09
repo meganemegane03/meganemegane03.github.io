@@ -186,6 +186,22 @@
     70%{transform:scale(0.96) rotate(3deg);}
     100%{transform:scale(1);}
   }
+  .face-wrap.rare{
+    border-color:transparent;
+    background:
+      linear-gradient(#fff,#fff) padding-box,
+      conic-gradient(from 0deg, #ff5c5c, #ffb84d, #ffe75c, #7be08a, #5cc7ff, #a78bfa, #ff5c5c) border-box;
+    animation: rareSpin 1.4s linear infinite, rarePop .6s ease;
+  }
+  @keyframes rareSpin{
+    to{ filter:hue-rotate(360deg); }
+  }
+  @keyframes rarePop{
+    0%{transform:scale(1);}
+    30%{transform:scale(1.22) rotate(-6deg);}
+    60%{transform:scale(0.94) rotate(5deg);}
+    100%{transform:scale(1);}
+  }
 
   .textbox{
     flex:1;
@@ -240,6 +256,20 @@
     55%{ transform:rotate(-9deg) scale(0.92); opacity:1; }
     75%{ transform:rotate(-5deg) scale(1.06); }
     100%{ transform:rotate(-6deg) scale(1); opacity:1; }
+  }
+  .verdict.rare{
+    color:#a9720c;
+    border-color:transparent;
+    background:
+      linear-gradient(rgba(255,255,255,0.55),rgba(255,255,255,0.55)) padding-box,
+      conic-gradient(from 0deg, #ff5c5c, #ffb84d, #ffe75c, #7be08a, #5cc7ff, #a78bfa, #ff5c5c) border-box;
+    border-width:4px;
+    font-size:20px;
+    animation: stamp .45s cubic-bezier(.2,1.6,.4,1) forwards, rareBorder 1.6s linear infinite;
+    mix-blend-mode:normal;
+  }
+  @keyframes rareBorder{
+    to{ filter:hue-rotate(360deg); }
   }
 
   .counter{
@@ -398,6 +428,21 @@
 
   const VERDICT_NORMAL = ["セーフ", "大目に見たる", "保留", "次は無いで"];
   const VERDICT_YABAI = ["アウト!!", "始末書コース", "説教確定", "一発レッドカード"];
+  const VERDICT_RARE = ["伝説の言い訳", "神対応", "殿堂入り", "編集長も感動"];
+
+  const RARE_CHANCE = 0.05;
+  const RARE_EXCUSES = [
+    "タイムマシンで戻ってきたら故障して秒読み遅れた",
+    "異世界に転生してる間に地球の時間が進んどった",
+    "宇宙から届いた緊急信号の解読に追われてた",
+    "平行世界の自分と入れ替わって帰ってこれんかった",
+    "UFOに一瞬攫われて宇宙人と話し込んでた",
+    "神様に「ちょっと来い」言われて天界会議に出席してた",
+    "未来の自分からの警告メールに対応してた",
+    "ドラゴンに道を塞がれて交渉が長引いた",
+    "玄関に開いた異次元ポータルの処理に追われた",
+    "時空にバグが起きて今日だけ26時間あった"
+  ];
 
   let currentCat = EXCUSES.categories[0];
   let count = parseInt(localStorage.getItem('ossan_iiwake_count') || '0', 10);
@@ -522,7 +567,30 @@
     }catch(e){}
   }
 
+  function playFanfare(){
+    try{
+      const ctx = ensureAudio();
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const t = ctx.currentTime + idx * 0.11;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'triangle';
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.11, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.42);
+      });
+    }catch(e){}
+  }
+
   function pickExcuse(){
+    if (Math.random() < RARE_CHANCE){
+      const text = RARE_EXCUSES[Math.floor(Math.random()*RARE_EXCUSES.length)];
+      return { cat: currentCat, text: text, yabai: false, rare: true };
+    }
     const pool = EXCUSES.items.filter(x => x.cat === currentCat);
     return pool[Math.floor(Math.random()*pool.length)];
   }
@@ -570,16 +638,26 @@
     lastExcuseText = "「" + picked.text + "」";
 
     faceImgEl.src = picked.yabai ? FACE.angry : FACE.surprised;
-    faceWrapEl.classList.remove('shake','pop');
+    faceWrapEl.classList.remove('shake','pop','rare');
     void faceWrapEl.offsetWidth;
-    faceWrapEl.classList.add(picked.yabai ? 'shake' : 'pop');
+    faceWrapEl.classList.add(picked.rare ? 'rare' : (picked.yabai ? 'shake' : 'pop'));
+
+    verdictEl.classList.remove('rare');
 
     typeText(lastExcuseText, () => {
-      const pool = picked.yabai ? VERDICT_YABAI : VERDICT_NORMAL;
-      const verdict = pool[Math.floor(Math.random()*pool.length)];
+      let verdict, isRare = !!picked.rare;
+      if (isRare){
+        verdict = VERDICT_RARE[Math.floor(Math.random()*VERDICT_RARE.length)];
+        verdictEl.classList.add('rare');
+        playFanfare();
+      } else {
+        const pool = picked.yabai ? VERDICT_YABAI : VERDICT_NORMAL;
+        verdict = pool[Math.floor(Math.random()*pool.length)];
+        playStamp(picked.yabai);
+      }
       verdictEl.textContent = verdict;
       verdictEl.classList.add('show');
-      playStamp(picked.yabai);
+      if (isRare) showToast('激レア出た〜✨');
 
       count++;
       countEl.textContent = count;
