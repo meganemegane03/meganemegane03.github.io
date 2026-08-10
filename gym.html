@@ -577,6 +577,13 @@
       o.start(); o.stop(ctx.currentTime + 0.35);
     }catch(e){}
   }
+  function playFanfareFile(){
+    try{
+      const se = new Audio('se-fanfare.mp3');
+      se.volume = 0.9;
+      se.play().catch(() => { playFanfare(); });
+    }catch(e){ playFanfare(); }
+  }
   function playFanfare(){
     try{
       const ctx = ensureAudio();
@@ -866,7 +873,7 @@
     if (bgmOn) { bgmAudio.pause(); bgmOn = false; bgmToggle.classList.remove('on'); bgmToggle.textContent = '▶'; }
     showView('view-finish');
     const msg = PRAISE_MESSAGES[Math.floor(Math.random()*PRAISE_MESSAGES.length)];
-    typeFinishText(msg, () => { playFanfare(); });
+    typeFinishText(msg, () => { playFanfareFile(); });
   }
 
   retryBtn.addEventListener('click', () => {
