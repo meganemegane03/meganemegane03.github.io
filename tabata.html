@@ -8,14 +8,14 @@
 <!-- OGP -->
 <meta property="og:title" content="おっさんタバタ - 20秒×8セット">
 <meta property="og:description" content="有酸素タバタトレーニング。20秒運動+10秒休憩を8セット、約4分。運まかせのガチャで種目決定">
-<meta property="og:image" content="https://meganemegane03.github.io/gym-hero.PNG">
+<meta property="og:image" content="https://meganemegane03.github.io/gym-run.PNG">
 <meta property="og:url" content="https://meganemegane03.github.io/tabata.html">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 
 <!-- PWA -->
 <link rel="manifest" href="tabata-manifest.json">
-<meta name="theme-color" content="#161d27">
+<meta name="theme-color" content="#1a1024">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="おっさんタバタ">
@@ -26,16 +26,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=DM+Mono:wght@500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#161d27;
-    --bg2:#1d2733;
-    --panel:#232f3f;
-    --panel-line:#334255;
-    --lime:#c6ff4d;
-    --lime-dark:#8fce1f;
-    --orange:#ff7a45;
-    --orange-dark:#d85a28;
-    --text:#eef1f5;
-    --text-dim:#8f9db0;
+    --bg:#1a1024;
+    --bg2:#241633;
+    --panel:#301c40;
+    --panel-line:#4a2f5c;
+    --lime:#ff3b6e;
+    --lime-dark:#c41f4f;
+    --orange:#2fe4ff;
+    --orange-dark:#12a8c4;
+    --text:#f6eefb;
+    --text-dim:#b79cc9;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
@@ -71,7 +71,7 @@
   }
   .sub{
     font-size:13px;
-    color:#c3ccd9;
+    color:#d8c6e6;
     margin-bottom:22px;
     text-align:center;
   }
@@ -151,9 +151,9 @@
   .btn-lime{
     color:#111;
     background:linear-gradient(180deg, var(--lime), var(--lime-dark));
-    box-shadow:0 5px 0 #6a9a15, 0 10px 18px rgba(0,0,0,0.3);
+    box-shadow:0 5px 0 #8a1236, 0 10px 18px rgba(0,0,0,0.3);
   }
-  .btn-lime:active{ transform:translateY(5px); box-shadow:0 0 0 #6a9a15; }
+  .btn-lime:active{ transform:translateY(5px); box-shadow:0 0 0 #8a1236; }
   .btn-outline{
     color:var(--text);
     background:transparent;
@@ -234,7 +234,7 @@
     width:120px; height:120px;
     margin:6px auto 14px;
     border-radius:50%;
-    background:conic-gradient(from 0deg, var(--lime), #5cc7ff, var(--orange), var(--lime));
+    background:conic-gradient(from 0deg, var(--lime), #2fe4ff, var(--orange), var(--lime));
     display:flex; align-items:center; justify-content:center;
     animation: badgespin 3s linear infinite, badgepop .5s ease;
   }
@@ -254,7 +254,7 @@
   }
   .finish-title{ text-align:center; font-family:'Oswald', sans-serif; font-size:24px; font-weight:700; margin-bottom:4px; }
   .finish-sub{
-    text-align:center; font-size:13px; color:#c3ccd9; margin-bottom:18px;
+    text-align:center; font-size:13px; color:#d8c6e6; margin-bottom:18px;
     min-height:34px; line-height:1.6; padding:0 12px;
   }
   .finish-sub .placeholder{ color:var(--text-dim); }
@@ -344,7 +344,7 @@
 
   </div>
 
-  <img class="hero-photo" src="gym-hero.PNG" alt="気合の入ったおっさん">
+  <img class="hero-photo" src="gym-run.PNG" alt="走るおっさん">
 
   <div class="footnote">
     有酸素の連続動作系メニュー。無理のない範囲でな。<br>
@@ -501,6 +501,21 @@
       se.play().catch(() => { playFanfare(); });
     }catch(e){ playFanfare(); }
   }
+  function playSwitch(isWork){
+    try{
+      const ctx = ensureAudio();
+      const freqs = isWork ? [880, 1320] : [660, 440];
+      freqs.forEach((f, idx) => {
+        const t = ctx.currentTime + idx * 0.11;
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'square'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.09, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.11);
+      });
+    }catch(e){}
+  }
 
   // ---------- Gacha (2-reel) ----------
   function buildReel(index){
@@ -637,11 +652,13 @@
       phaseLabelEl.textContent = 'トレーニング中';
       phaseLabelEl.classList.add('work');
       ringWrapEl.classList.remove('rest');
+      playSwitch(true);
       playWhistleStart();
     } else if (ph.type === 'rest'){
       phaseLabelEl.textContent = '休憩';
       phaseLabelEl.classList.remove('work');
       ringWrapEl.classList.add('rest');
+      playSwitch(false);
       playBuzzRest();
     } else {
       phaseLabelEl.textContent = '準備';
