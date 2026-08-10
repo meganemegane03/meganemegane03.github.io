@@ -453,7 +453,7 @@
 
   <div class="bgm-bar">
     <button id="bgmToggle">▶</button>
-    <span id="bgmLabel">BGM: 未設定(音声ファイルを追加すると再生できます)</span>
+    <span id="bgmLabel">BGM: bgm-work.mp3 / bgm-rest.mp3 を同じフォルダに置くと自動再生されます</span>
   </div>
   <audio id="bgmAudio" loop></audio>
 
@@ -501,6 +501,16 @@
 
   const bgmToggle = document.getElementById('bgmToggle');
   const bgmAudio = document.getElementById('bgmAudio');
+  const BGM_FILES = { work: 'bgm-work.mp3', rest: 'bgm-rest.mp3' };
+  let currentBgmKey = null;
+  function updateBgmForPhase(phaseType){
+    const key = (phaseType === 'rest') ? 'rest' : 'work';
+    if (key !== currentBgmKey){
+      currentBgmKey = key;
+      bgmAudio.src = BGM_FILES[key];
+      if (bgmOn) bgmAudio.play().catch(()=>{});
+    }
+  }
   const toastEl = document.getElementById('toast');
 
   let chosen = [];
@@ -723,14 +733,11 @@
     pauseBtn.textContent = '一時停止';
     buildDots();
     showView('view-workout');
+    bgmOn = true;
+    bgmToggle.classList.add('on');
+    bgmToggle.textContent = '❚❚';
+    currentBgmKey = null;
     enterPhase();
-    if (bgmAudio.src){
-      bgmAudio.currentTime = 0;
-      bgmAudio.play().catch(()=>{});
-      bgmOn = true;
-      bgmToggle.classList.add('on');
-      bgmToggle.textContent = '❚❚';
-    }
   }
   startBtn.addEventListener('click', () => { ensureAudio(); startWorkout(); });
 
@@ -745,6 +752,7 @@
     infoBtn.textContent = 'やり方を見る';
     infoBtn.style.display = (ph.type === 'work') ? 'block' : 'none';
     updateDots();
+    updateBgmForPhase(ph.type);
 
     if (ph.type === 'work'){
       phaseLabelEl.textContent = 'トレーニング中';
@@ -884,8 +892,8 @@
   });
 
   // ---------- BGM hook (add your own file later) ----------
-  // 使い方: bgmAudio.src に音声ファイルのURL(またはbase64)をセットするだけでOK
-  // 例: document.getElementById('bgmAudio').src = 'data:audio/mp3;base64,....';
+  // 使い方: bgm-work.mp3 と bgm-rest.mp3 をこのHTMLと同じフォルダに置くだけでOK
+  // ファイル名を変える場合は上のBGM_FILESを書き換えてな
   let bgmOn = false;
   bgmToggle.addEventListener('click', () => {
     if (!bgmAudio.src){
