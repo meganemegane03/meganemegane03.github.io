@@ -1,0 +1,12 @@
+{
+  "name": "おっさんタバタ - 20秒×8セット",
+  "short_name": "おっさんタバタ",
+  "start_url": "./tabata.html",
+  "display": "standalone",
+  "background_color": "#161d27",
+  "theme_color": "#161d27",
+  "icons": [
+    { "src": "gym-icon-192.PNG", "sizes": "192x192", "type": "image/png" },
+    { "src": "gym-icon-512.PNG", "sizes": "512x512", "type": "image/png" }
+  ]
+}
