@@ -18,8 +18,8 @@
 <meta name="theme-color" content="#1a1024">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="おっさんタバタ">
-<link rel="apple-touch-icon" href="gym-icon-192.PNG">
+<meta name="apple-mobile-web-app-title" content="おっさんジム2">
+<link rel="apple-touch-icon" href="gym-icon-0192.PNG">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -293,7 +293,7 @@
 <body>
 
   <div class="eyebrow">MEGANE NO OSSAN GYM</div>
-  <h1>おっさんタバタ</h1>
+  <h1>タバタ式タイマー</h1>
   <div class="sub">20秒運動+10秒休憩×8セット、約4分。運まかせで種目決定や</div>
 
   <div class="card">
@@ -504,15 +504,16 @@
   function playSwitch(isWork){
     try{
       const ctx = ensureAudio();
-      const freqs = isWork ? [880, 1320] : [660, 440];
+      const freqs = isWork ? [880, 1320, 1760] : [660, 440, 330];
       freqs.forEach((f, idx) => {
-        const t = ctx.currentTime + idx * 0.11;
+        const t = ctx.currentTime + idx * 0.13;
         const o = ctx.createOscillator(); const g = ctx.createGain();
         o.type = 'square'; o.frequency.value = f;
-        g.gain.setValueAtTime(0.09, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.35, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
         o.connect(g); g.connect(ctx.destination);
-        o.start(t); o.stop(t + 0.11);
+        o.start(t); o.stop(t + 0.23);
       });
     }catch(e){}
   }
@@ -653,13 +654,11 @@
       phaseLabelEl.classList.add('work');
       ringWrapEl.classList.remove('rest');
       playSwitch(true);
-      playWhistleStart();
     } else if (ph.type === 'rest'){
       phaseLabelEl.textContent = '休憩';
       phaseLabelEl.classList.remove('work');
       ringWrapEl.classList.add('rest');
       playSwitch(false);
-      playBuzzRest();
     } else {
       phaseLabelEl.textContent = '準備';
       phaseLabelEl.classList.remove('work');
