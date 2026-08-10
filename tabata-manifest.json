@@ -1,12 +1,12 @@
 {
-  "name": "おっさんタバタ - 20秒×8セット",
-  "short_name": "おっさんタバタ",
+  "name": "おっさんジム2 - タバタ式タイマー",
+  "short_name": "おっさんジム2",
   "start_url": "./tabata.html",
   "display": "standalone",
   "background_color": "#1a1024",
   "theme_color": "#1a1024",
   "icons": [
-    { "src": "gym-icon-192.PNG", "sizes": "192x192", "type": "image/png" },
-    { "src": "gym-icon-512.PNG", "sizes": "512x512", "type": "image/png" }
+    { "src": "gym-icon-0192.PNG", "sizes": "192x192", "type": "image/png" },
+    { "src": "gym-icon-0512.PNG", "sizes": "512x512", "type": "image/png" }
   ]
 }
