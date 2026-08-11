@@ -8,7 +8,7 @@
 <!-- OGP -->
 <meta property="og:title" content="ウォーキングガチャ">
 <meta property="og:description" content="ガチャで時間とペースを決めて歩くだけ。メトロノーム付きのウォーキングタイマー">
-<meta property="og:image" content="https://meganemegane03.github.io/gym-run.PNG">
+<meta property="og:image" content="https://meganemegane03.github.io/walk-hero.PNG">
 <meta property="og:url" content="https://meganemegane03.github.io/walk.html">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -222,6 +222,10 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
   .footnote{ margin-top:20px; font-size:10.5px; color:var(--text-dim); text-align:center; line-height:1.6; }
+  .hero-photo{
+    display:block; width:100%; max-width:440px; margin-top:16px;
+    border-radius:16px; box-shadow:0 12px 28px rgba(31,120,168,0.18); border:1px solid var(--panel-line);
+  }
 
   @media (prefers-reduced-motion: reduce){
     *{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
@@ -294,6 +298,8 @@
     </div>
 
   </div>
+
+  <img class="hero-photo" src="walk-hero.PNG">
 
   <div class="footnote">
     信号や車には十分気をつけて、無理のないペースでな。
