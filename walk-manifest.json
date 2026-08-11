@@ -1,0 +1,12 @@
+{
+  "name": "お散歩コンパニオン",
+  "short_name": "おっさん散歩",
+  "start_url": "./walk.html",
+  "display": "standalone",
+  "background_color": "#eaf6f1",
+  "theme_color": "#eaf6f1",
+  "icons": [
+    { "src": "gym-icon-0192.PNG", "sizes": "192x192", "type": "image/png" },
+    { "src": "gym-icon-0512.PNG", "sizes": "512x512", "type": "image/png" }
+  ]
+}
