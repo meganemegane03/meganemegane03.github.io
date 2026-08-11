@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>お散歩コンパニオン</title>
+<title>ウォーキングガチャ</title>
 
 <!-- OGP -->
-<meta property="og:title" content="お散歩コンパニオン">
-<meta property="og:description" content="ガチャで時間とペースを決めて歩くだけ。メトロノーム付きのお散歩タイマー">
+<meta property="og:title" content="ウォーキングガチャ">
+<meta property="og:description" content="ガチャで時間とペースを決めて歩くだけ。メトロノーム付きのウォーキングタイマー">
 <meta property="og:image" content="https://meganemegane03.github.io/gym-run.PNG">
 <meta property="og:url" content="https://meganemegane03.github.io/walk.html">
 <meta property="og:type" content="website">
@@ -18,8 +18,8 @@
 <meta name="theme-color" content="#eaf6f1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="おっさん散歩">
-<link rel="apple-touch-icon" href="gym-icon-0192.PNG">
+<meta name="apple-mobile-web-app-title" content="03walk">
+<link rel="apple-touch-icon" href="walk-icon-192.PNG">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -164,6 +164,12 @@
   }
   .metro-label{ font-size:12.5px; color:var(--text); }
   .metro-label span{ color:var(--text-dim); font-size:11px; display:block; margin-top:1px; }
+  .metro-controls{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .bpm-btn{
+    width:28px; height:28px; border-radius:50%; border:1.5px solid var(--panel-line);
+    background:#fff; color:var(--text); font-size:15px; line-height:1; cursor:pointer;
+  }
+  .bpm-btn:active{ transform:scale(0.92); }
   .metro-toggle{
     width:46px; height:26px; border-radius:20px; border:none;
     background:#d7e6df; position:relative; cursor:pointer; flex:0 0 auto;
@@ -225,7 +231,7 @@
 <body>
 
   <div class="eyebrow">MEGANE NO OSSAN WALK</div>
-  <h1>お散歩コンパニオン</h1>
+  <h1>ウォーキングガチャ</h1>
   <div class="sub">ガチャで時間とペースを決めて、あとは歩くだけや</div>
 
   <div class="card">
@@ -262,7 +268,11 @@
 
       <div class="metro-row">
         <div class="metro-label">ペースメトロノーム<span id="bpmLabel">115 BPM</span></div>
-        <button class="metro-toggle" id="metroToggle"></button>
+        <div class="metro-controls">
+          <button class="bpm-btn" id="bpmMinus">−</button>
+          <button class="metro-toggle" id="metroToggle"></button>
+          <button class="bpm-btn" id="bpmPlus">+</button>
+        </div>
       </div>
 
       <div class="workout-btns">
@@ -309,6 +319,8 @@
   const missionNameEl = document.getElementById('missionName');
   const missionMsgEl = document.getElementById('missionMsg');
   const bpmLabelEl = document.getElementById('bpmLabel');
+  const bpmMinus = document.getElementById('bpmMinus');
+  const bpmPlus = document.getElementById('bpmPlus');
   const metroToggle = document.getElementById('metroToggle');
   const pauseBtn = document.getElementById('pauseBtn');
   const quitBtn = document.getElementById('quitBtn');
@@ -322,6 +334,7 @@
   const toastEl = document.getElementById('toast');
 
   let chosenTime = null, chosenPace = null;
+  let currentBpm = 115;
   let totalSec = 0, remaining = 0, elapsed = 0;
   let paused = false;
   let tickHandle = null;
@@ -477,7 +490,8 @@
     pauseBtn.textContent = '一時停止';
     missionNameEl.textContent = chosenTime + '分 ・ ' + chosenPace.name;
     missionMsgEl.textContent = '歩き出したら、あとはおっさんに任せとき';
-    bpmLabelEl.textContent = chosenPace.bpm + ' BPM';
+    currentBpm = chosenPace.bpm;
+    bpmLabelEl.textContent = currentBpm + ' BPM';
     timerNumEl.textContent = fmt(remaining);
     ringWrapEl.style.setProperty('--p', 0);
     metroOn = false;
@@ -537,7 +551,7 @@
 
   function startMetro(){
     if (metroHandle) clearInterval(metroHandle);
-    const intervalMs = 60000 / chosenPace.bpm;
+    const intervalMs = 60000 / currentBpm;
     playMetroBeat();
     metroHandle = setInterval(playMetroBeat, intervalMs);
   }
@@ -545,6 +559,13 @@
     if (metroHandle) clearInterval(metroHandle);
     metroHandle = null;
   }
+  function adjustBpm(delta){
+    currentBpm = Math.max(60, Math.min(180, currentBpm + delta));
+    bpmLabelEl.textContent = currentBpm + ' BPM';
+    if (metroOn && !paused) startMetro();
+  }
+  bpmMinus.addEventListener('click', () => adjustBpm(-5));
+  bpmPlus.addEventListener('click', () => adjustBpm(5));
   metroToggle.addEventListener('click', () => {
     ensureAudio();
     metroOn = !metroOn;
@@ -601,7 +622,7 @@
     const shareText = 'お散歩コンパニオンで' + fmt(elapsed) + '歩いたで(' + chosenPace.name + 'ペース)';
     const url = location.href;
     if (navigator.share){
-      try{ await navigator.share({ title:'お散歩コンパニオン', text:shareText, url }); }catch(e){}
+      try{ await navigator.share({ title:'ウォーキングガチャ', text:shareText, url }); }catch(e){}
     } else {
       try{ await navigator.clipboard.writeText(shareText + ' ' + url); showToast('コピーしたで📋'); }
       catch(e){ showToast('共有に対応してへんブラウザや…'); }
