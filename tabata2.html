@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MEGANE NO OSSAN GYM</title>
+    
+    <!-- SNSシェア時のプレビュー表示（OGP設定） -->
+    <meta property="og:title" content="MEGANE NO OSSAN GYM - タバタ式タイマー">
+    <meta property="og:description" content="おっさんと一緒にタバタ式トレーニング（20秒運動+10秒休憩×8セット）で汗を流そうぜ！ランダム2種目交互！">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content=""> <!-- ※必要に応じて公開中のURLを入れてもOKやで -->
+    <meta property="og:image" content="gym-icon-00192.PNG">
+    <meta name="twitter:card" content="summary_large_image">
+
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="gym-icon-00192.PNG">
     <style>
@@ -274,7 +283,6 @@
                 let gainNode = audioCtx.createGain();
                 
                 osc.type = 'triangle';
-                // ピッチをランダムに変化させてガチャっぽくする
                 let startTime = audioCtx.currentTime;
                 for (let i = 0; i < 15; i++) {
                     osc.frequency.setValueAtTime(300 + Math.random() * 600, startTime + (i * 0.18));
@@ -298,7 +306,6 @@
             let gachaBtn = document.getElementById('btn-gacha');
             gachaBtn.disabled = true;
             
-            // Web Audio APIでガチャ音を鳴らす
             playGachaSound();
 
             let slot1 = document.getElementById('slot-1');
