@@ -118,18 +118,36 @@
             max-height: 100%;
             object-fit: contain;
         }
+        /* 円形プログレスゲージ用スタイル */
         .timer-circle-container {
             position: relative;
-            width: 160px;
-            height: 160px;
+            width: 140px;
+            height: 140px;
             margin: 10px auto;
             display: flex;
             align-items: center;
             justify-content: center;
         }
+        .timer-circle-container svg {
+            transform: rotate(-90deg);
+            width: 140px;
+            height: 140px;
+        }
+        .timer-circle-container circle {
+            fill: none;
+            stroke-width: 10;
+        }
+        .circle-bg {
+            stroke: #110c1a;
+        }
+        .circle-progress {
+            stroke: var(--accent-pink);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.9s linear;
+        }
         .timer-text {
             position: absolute;
-            font-size: 42px;
+            font-size: 38px;
             font-weight: bold;
         }
         .timer-label {
@@ -183,7 +201,7 @@
             <div id="slot-2" class="slot-box">？</div>
         </div>
         <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">推定タイム 約4分00秒</div>
-        <button class="btn-primary" onclick="spinGacha()">ガチャを回す</button>
+        <button id="btn-gacha" class="btn-primary" onclick="spinGacha()">ガチャを回す</button>
         <button id="btn-start" class="btn-secondary" onclick="startCountdown()" disabled style="opacity: 0.5;">この内容でスタート</button>
     </div>
 
@@ -191,14 +209,25 @@
     <div id="screen-timer" class="card hidden">
         <div id="phase-label" class="timer-label">準備</div>
         <div class="timer-circle-container">
+            <svg>
+                <circle class="circle-bg" cx="70" cy="70" r="60"></circle>
+                <circle id="circle-progress" class="circle-progress" cx="70" cy="70" r="60" stroke-dasharray="376.99" stroke-dashoffset="0"></circle>
+            </svg>
             <div id="timer-number" class="timer-text">3</div>
         </div>
         <div id="round-indicator" class="round-info">ROUND 1 / 8</div>
         <div id="current-exercise-name" class="phase-title">スタート準備</div>
         <div id="exercise-sub" style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">姿勢整えて、いつでも行けるようにな</div>
-        <div class="action-buttons">
+        
+        <div id="timer-action-btns" class="action-buttons">
             <button onclick="pauseTimer()">一時停止</button>
             <button onclick="skipPhase()">スキップ</button>
+        </div>
+        
+        <!-- 終了後用のボタン群 -->
+        <div id="end-action-btns" class="action-buttons hidden">
+            <button class="btn-primary" onclick="resetToHome()" style="margin:0;">もう一度ガチャを回す</button>
+            <button onclick="shareApp()" style="background: #25D366; border:none; font-weight:bold;">シェアする</button>
         </div>
     </div>
 
@@ -210,6 +239,7 @@
     <!-- オーディオ要素 -->
     <audio id="bgm-work" src="bgm-work.mp3" loop></audio>
     <audio id="bgm-rest" src="bgm-rest.mp3" loop></audio>
+    <audio id="se-fanfare" src="se-fanfare.mp3"></audio>
 
     <script>
         const exercisesPool = [
@@ -222,24 +252,54 @@
         let currentRound = 1;
         let isWorking = true;
         let timeLeft = 20;
+        let totalPhaseTime = 20;
         let timerId = null;
         let isPaused = false;
         let prepCount = 3;
 
+        const circumference = 2 * Math.PI * 60; // 輪っかの円周 (r=60)
+        const progressCircle = document.getElementById('circle-progress');
+        progressCircle.style.strokeDasharray = circumference;
+
+        function setCircleProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        // 3秒間のスロット演出ガチャ
         function spinGacha() {
-            let shuffled = [...exercisesPool].sort(() => 0.5 - Math.random());
-            selectedExercises = [shuffled[0], shuffled[1]];
+            let gachaBtn = document.getElementById('btn-gacha');
+            gachaBtn.disabled = true;
+            
+            let slot1 = document.getElementById('slot-1');
+            let slot2 = document.getElementById('slot-2');
+            
+            let counter = 0;
+            let slotInterval = setInterval(() => {
+                let rand1 = exercisesPool[Math.floor(Math.random() * exercisesPool.length)].name;
+                let rand2 = exercisesPool[Math.floor(Math.random() * exercisesPool.length)].name;
+                slot1.innerText = rand1;
+                slot2.innerText = rand2;
+                counter++;
+                
+                if (counter > 15) { // 約3秒間回転
+                    clearInterval(slotInterval);
+                    // 最終決定（被りなし）
+                    let shuffled = [...exercisesPool].sort(() => 0.5 - Math.random());
+                    selectedExercises = [shuffled[0], shuffled[1]];
+                    slot1.innerText = selectedExercises[0].name;
+                    slot2.innerText = selectedExercises[1].name;
+                    document.getElementById('ossan-img').src = "taiki.PNG";
 
-            document.getElementById('slot-1').innerText = selectedExercises[0].name;
-            document.getElementById('slot-2').innerText = selectedExercises[1].name;
-            document.getElementById('ossan-img').src = "taiki.PNG";
-
-            let startBtn = document.getElementById('btn-start');
-            startBtn.disabled = false;
-            startBtn.style.opacity = "1";
-            startBtn.style.background = "#271b38";
-            startBtn.style.color = "#fff";
-            startBtn.style.border = "1px solid var(--accent-pink)";
+                    let startBtn = document.getElementById('btn-start');
+                    startBtn.disabled = false;
+                    startBtn.style.opacity = "1";
+                    startBtn.style.background = "#271b38";
+                    startBtn.style.color = "#fff";
+                    startBtn.style.border = "1px solid var(--accent-pink)";
+                    gachaBtn.disabled = false;
+                }
+            }, 180);
         }
 
         function startCountdown() {
@@ -249,8 +309,10 @@
             document.getElementById('screen-timer').classList.remove('hidden');
 
             prepCount = 3;
+            totalPhaseTime = 3;
             document.getElementById('phase-label').innerText = "準備";
             document.getElementById('timer-number').innerText = prepCount;
+            setCircleProgress(100);
             document.getElementById('round-indicator').innerText = "まもなく開始";
             document.getElementById('current-exercise-name').innerText = "スタート準備";
             document.getElementById('exercise-sub').innerText = "姿勢を整えてや！";
@@ -260,6 +322,7 @@
                 prepCount--;
                 if (prepCount > 0) {
                     document.getElementById('timer-number').innerText = prepCount;
+                    setCircleProgress((prepCount / totalPhaseTime) * 100);
                 } else {
                     clearInterval(timerId);
                     startTabata();
@@ -283,6 +346,7 @@
 
             if (isWorking) {
                 timeLeft = 20;
+                totalPhaseTime = 20;
                 document.getElementById('phase-label').innerText = "トレーニング中";
                 document.getElementById('round-indicator').innerText = `ROUND ${currentRound} / 8`;
                 document.getElementById('current-exercise-name').innerText = currentEx.name;
@@ -294,6 +358,7 @@
                 document.getElementById('bgm-work').play().catch(e => console.log(e));
             } else {
                 timeLeft = 10;
+                totalPhaseTime = 10;
                 document.getElementById('phase-label').innerText = "休憩";
                 document.getElementById('round-indicator').innerText = `ROUND ${currentRound} / 8`;
                 document.getElementById('current-exercise-name').innerText = "休憩";
@@ -302,8 +367,6 @@
                 if (nextRoundNum <= 8) {
                     let nextEx = (nextRoundNum % 2 !== 0) ? selectedExercises[0] : selectedExercises[1];
                     document.getElementById('exercise-sub').innerText = `次は「${nextEx.name}」やで`;
-                } else {
-                    document.getElementById('exercise-sub').innerText = "次で最後や！気張れ！";
                 }
                 
                 document.getElementById('ossan-img').src = "kyukei.PNG";
@@ -314,18 +377,27 @@
             }
 
             document.getElementById('timer-number').innerText = timeLeft;
+            setCircleProgress(100);
 
             timerId = setInterval(() => {
                 if (!isPaused) {
                     timeLeft--;
                     document.getElementById('timer-number').innerText = timeLeft;
+                    setCircleProgress((timeLeft / totalPhaseTime) * 100);
 
                     if (timeLeft <= 0) {
                         clearInterval(timerId);
                         if (isWorking) {
-                            isWorking = false;
-                            runPhase();
+                            if (currentRound === 8) {
+                                // 8回目のトレーニング終了時は休憩を挟まず即クリアへ！
+                                endWorkout();
+                            } else {
+                                // 通常は休憩へ
+                                isWorking = false;
+                                runPhase();
+                            }
                         } else {
+                            // 休憩終了 -> 次のラウンドの運動へ
                             isWorking = true;
                             currentRound++;
                             runPhase();
@@ -342,8 +414,12 @@
         function skipPhase() {
             clearInterval(timerId);
             if (isWorking) {
-                isWorking = false;
-                runPhase();
+                if (currentRound === 8) {
+                    endWorkout();
+                } else {
+                    isWorking = false;
+                    runPhase();
+                }
             } else {
                 isWorking = true;
                 currentRound++;
@@ -355,16 +431,36 @@
             document.getElementById('bgm-work').pause();
             document.getElementById('bgm-rest').pause();
             
+            // ファンファーレ再生
+            document.getElementById('se-fanfare').play().catch(e => console.log(e));
+            
             document.getElementById('phase-label').innerText = "完了！";
             document.getElementById('timer-number').innerText = "🎉";
+            setCircleProgress(100);
             document.getElementById('round-indicator').innerText = "お疲れ様でした！";
             document.getElementById('current-exercise-name').innerText = "全セット終了！";
             document.getElementById('exercise-sub').innerText = "よくやり切ったな！ビールが美味いで！";
             document.getElementById('ossan-img').src = "kyukei.PNG";
 
-            setTimeout(() => {
-                location.reload();
-            }, 5000);
+            // ボタンの切り替え（一時停止・スキップを消してガチャ・シェアボタンを表示）
+            document.getElementById('timer-action-btns').classList.add('hidden');
+            document.getElementById('end-action-btns').classList.remove('hidden');
+        }
+
+        function resetToHome() {
+            location.reload();
+        }
+
+        function shareApp() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'MEGANE NO OSSAN GYM',
+                    text: 'おっさんと一緒にタバタ式トレーニングで汗を流そうぜ！',
+                    url: window.location.href,
+                }).catch((error) => console.log('シェア失敗', error));
+            } else {
+                alert('このブラウザではシェア機能が使えへんみたいやから、URLをコピーしてシェアしてな！\n' + window.location.href);
+            }
         }
     </script>
 </body>
