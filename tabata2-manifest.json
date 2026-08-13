@@ -1,0 +1,15 @@
+{
+  "name": "おっさんジム3",
+  "short_name": "おっさんジム3",
+  "start_url": "tabata2.html",
+  "display": "standalone",
+  "background_color": "#0d1a14",
+  "theme_color": "#0d1a14",
+  "icons": [
+    {
+      "src": "gym-icon-00192.PNG",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
