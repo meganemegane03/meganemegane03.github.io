@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEGANE NO OSSAN GYM</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="gym-icon-00192.PNG">
+    <style>
+        :root {
+            --bg-color: #1a1325;
+            --card-bg: #271b38;
+            --accent-pink: #ff2a6d;
+            --text-color: #ffffff;
+            --text-sub: #b8b8b8;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .gym-title-sub {
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--accent-pink);
+            font-weight: bold;
+        }
+        h1 {
+            font-size: 22px;
+            margin: 2px 0;
+        }
+        .subtitle {
+            font-size: 11px;
+            color: var(--text-sub);
+            margin-bottom: 10px;
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 15px;
+            width: 100%;
+            max-width: 380px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .slot-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .slot-box {
+            background: #110c1a;
+            border: 2px solid var(--accent-pink);
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            flex: 1;
+            color: #fff;
+            min-height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff2a6d, #d81b5b);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 42, 109, 0.4);
+            margin-bottom: 8px;
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid #44335c;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            width: 100%;
+            cursor: pointer;
+        }
+        .image-card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 260px;
+        }
+        .image-card img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .timer-circle-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            margin: 10px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .timer-text {
+            position: absolute;
+            font-size: 42px;
+            font-weight: bold;
+        }
+        .timer-label {
+            font-size: 12px;
+            color: var(--accent-pink);
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+        .phase-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        .round-info {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 5px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .action-buttons button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #44335c;
+            background: #110c1a;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="gym-title-sub">MEGANE NO OSSAN GYM</div>
+        <h1>タバタ式タイマー</h1>
+        <div class="subtitle">20秒運動+10秒休憩×8セット、約4分。ランダム2種目交互や！</div>
+    </header>
+
+    <!-- メイン画面（設定・ガチャ） -->
+    <div id="screen-setup" class="card">
+        <div class="slot-container">
+            <div id="slot-1" class="slot-box">？</div>
+            <div id="slot-2" class="slot-box">？</div>
+        </div>
+        <div style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">推定タイム 約4分00秒</div>
+        <button class="btn-primary" onclick="spinGacha()">ガチャを回す</button>
+        <button id="btn-start" class="btn-secondary" onclick="startCountdown()" disabled style="opacity: 0.5;">この内容でスタート</button>
+    </div>
+
+    <!-- カウントダウン / タイマー画面 -->
+    <div id="screen-timer" class="card hidden">
+        <div id="phase-label" class="timer-label">準備</div>
+        <div class="timer-circle-container">
+            <div id="timer-number" class="timer-text">3</div>
+        </div>
+        <div id="round-indicator" class="round-info">ROUND 1 / 8</div>
+        <div id="current-exercise-name" class="phase-title">スタート準備</div>
+        <div id="exercise-sub" style="font-size: 11px; color: var(--text-sub); margin-bottom: 10px;">姿勢整えて、いつでも行けるようにな</div>
+        <div class="action-buttons">
+            <button onclick="pauseTimer()">一時停止</button>
+            <button onclick="skipPhase()">スキップ</button>
+        </div>
+    </div>
+
+    <!-- キャラクター画像エリア -->
+    <div class="image-card">
+        <img id="ossan-img" src="taiki.PNG" alt="おっさん">
+    </div>
+
+    <!-- オーディオ要素 -->
+    <audio id="bgm-work" src="bgm-work.mp3" loop></audio>
+    <audio id="bgm-rest" src="bgm-rest.mp3" loop></audio>
+
+    <script>
+        const exercisesPool = [
+            { name: "腕立て伏せ", image: "udetate.PNG" },
+            { name: "腹筋", image: "fukkin.PNG" },
+            { name: "スクワット", image: "sukuwatto.PNG" }
+        ];
+
+        let selectedExercises = [];
+        let currentRound = 1;
+        let isWorking = true;
+        let timeLeft = 20;
+        let timerId = null;
+        let isPaused = false;
+        let prepCount = 3;
+
+        function spinGacha() {
+            let shuffled = [...exercisesPool].sort(() => 0.5 - Math.random());
+            selectedExercises = [shuffled[0], shuffled[1]];
+
+            document.getElementById('slot-1').innerText = selectedExercises[0].name;
+            document.getElementById('slot-2').innerText = selectedExercises[1].name;
+            document.getElementById('ossan-img').src = "taiki.PNG";
+
+            let startBtn = document.getElementById('btn-start');
+            startBtn.disabled = false;
+            startBtn.style.opacity = "1";
+            startBtn.style.background = "#271b38";
+            startBtn.style.color = "#fff";
+            startBtn.style.border = "1px solid var(--accent-pink)";
+        }
+
+        function startCountdown() {
+            if (selectedExercises.length === 0) return;
+
+            document.getElementById('screen-setup').classList.add('hidden');
+            document.getElementById('screen-timer').classList.remove('hidden');
+
+            prepCount = 3;
+            document.getElementById('phase-label').innerText = "準備";
+            document.getElementById('timer-number').innerText = prepCount;
+            document.getElementById('round-indicator').innerText = "まもなく開始";
+            document.getElementById('current-exercise-name').innerText = "スタート準備";
+            document.getElementById('exercise-sub').innerText = "姿勢を整えてや！";
+            document.getElementById('ossan-img').src = "taiki.PNG";
+
+            timerId = setInterval(() => {
+                prepCount--;
+                if (prepCount > 0) {
+                    document.getElementById('timer-number').innerText = prepCount;
+                } else {
+                    clearInterval(timerId);
+                    startTabata();
+                }
+            }, 1000);
+        }
+
+        function startTabata() {
+            currentRound = 1;
+            isWorking = true;
+            runPhase();
+        }
+
+        function runPhase() {
+            if (currentRound > 8) {
+                endWorkout();
+                return;
+            }
+
+            let currentEx = (currentRound % 2 !== 0) ? selectedExercises[0] : selectedExercises[1];
+
+            if (isWorking) {
+                timeLeft = 20;
+                document.getElementById('phase-label').innerText = "トレーニング中";
+                document.getElementById('round-indicator').innerText = `ROUND ${currentRound} / 8`;
+                document.getElementById('current-exercise-name').innerText = currentEx.name;
+                document.getElementById('exercise-sub').innerText = "全力で動けや！";
+                document.getElementById('ossan-img').src = currentEx.image;
+
+                document.getElementById('bgm-rest').pause();
+                document.getElementById('bgm-rest').currentTime = 0;
+                document.getElementById('bgm-work').play().catch(e => console.log(e));
+            } else {
+                timeLeft = 10;
+                document.getElementById('phase-label').innerText = "休憩";
+                document.getElementById('round-indicator').innerText = `ROUND ${currentRound} / 8`;
+                document.getElementById('current-exercise-name').innerText = "休憩";
+                
+                let nextRoundNum = currentRound + 1;
+                if (nextRoundNum <= 8) {
+                    let nextEx = (nextRoundNum % 2 !== 0) ? selectedExercises[0] : selectedExercises[1];
+                    document.getElementById('exercise-sub').innerText = `次は「${nextEx.name}」やで`;
+                } else {
+                    document.getElementById('exercise-sub').innerText = "次で最後や！気張れ！";
+                }
+                
+                document.getElementById('ossan-img').src = "kyukei.PNG";
+
+                document.getElementById('bgm-work').pause();
+                document.getElementById('bgm-work').currentTime = 0;
+                document.getElementById('bgm-rest').play().catch(e => console.log(e));
+            }
+
+            document.getElementById('timer-number').innerText = timeLeft;
+
+            timerId = setInterval(() => {
+                if (!isPaused) {
+                    timeLeft--;
+                    document.getElementById('timer-number').innerText = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(timerId);
+                        if (isWorking) {
+                            isWorking = false;
+                            runPhase();
+                        } else {
+                            isWorking = true;
+                            currentRound++;
+                            runPhase();
+                        }
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isPaused = !isPaused;
+        }
+
+        function skipPhase() {
+            clearInterval(timerId);
+            if (isWorking) {
+                isWorking = false;
+                runPhase();
+            } else {
+                isWorking = true;
+                currentRound++;
+                runPhase();
+            }
+        }
+
+        function endWorkout() {
+            document.getElementById('bgm-work').pause();
+            document.getElementById('bgm-rest').pause();
+            
+            document.getElementById('phase-label').innerText = "完了！";
+            document.getElementById('timer-number').innerText = "🎉";
+            document.getElementById('round-indicator').innerText = "お疲れ様でした！";
+            document.getElementById('current-exercise-name').innerText = "全セット終了！";
+            document.getElementById('exercise-sub').innerText = "よくやり切ったな！ビールが美味いで！";
+            document.getElementById('ossan-img').src = "kyukei.PNG";
+
+            setTimeout(() => {
+                location.reload();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
