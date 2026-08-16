@@ -5,6 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>褒めるだけの鏡</title>
 
+<!-- OGP -->
+<meta property="og:title" content="褒めるだけの鏡">
+<meta property="og:description" content="カメラに顔を映すと、AIが表情を読み取っておっさんが全力で褒めてくれる鏡アプリ">
+<meta property="og:image" content="https://meganemegane03.github.io/mirror-512.PNG">
+<meta property="og:url" content="https://meganemegane03.github.io/mirror.html">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- PWA -->
+<link rel="manifest" href="mirror-manifest.json">
+<meta name="theme-color" content="#1a1428">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="褒める鏡">
+<link rel="apple-touch-icon" href="mirror-192.PNG">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
@@ -67,7 +83,7 @@
     gap:14px;
   }
   .veil p{ font-size:13px; color:var(--text-dim); line-height:1.7; margin:0; max-width:280px; }
-  .veil .icon{ font-size:38px; }
+  .veil .icon{ font-size:78px; }
 
   .status-pill{
     position:absolute; top:14px; left:50%; transform:translateX(-50%);
@@ -95,6 +111,15 @@
     transition: opacity .35s ease, transform .35s ease;
   }
   .compliment.show{ opacity:1; transform:translateY(0) scale(1); }
+  .compliment.rare{
+    border-color:transparent;
+    background:
+      linear-gradient(rgba(20,14,32,0.82),rgba(20,14,32,0.82)) padding-box,
+      conic-gradient(from 0deg, #ff8fc7, #ffd76a, #7be0ff, #b79cff, #ff8fc7) border-box;
+    border-width:2px;
+    animation: rareGlow 1.8s linear infinite;
+  }
+  @keyframes rareGlow{ to{ filter:hue-rotate(360deg); } }
   .compliment .expr-tag{
     font-size:10.5px;
     color:var(--gold);
@@ -128,6 +153,34 @@
   .btn:active{ transform:translateY(6px); box-shadow:0 0 0 #a24a80; }
   .btn[disabled]{ opacity:.5; pointer-events:none; }
 
+  .save-btn{
+    position:absolute; top:14px; right:14px;
+    width:38px; height:38px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.45);
+    color:#fff;
+    font-size:16px;
+    cursor:pointer;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease;
+    backdrop-filter: blur(4px);
+  }
+  .save-btn.show{ opacity:1; pointer-events:auto; }
+
+  .sparkle{
+    position:absolute;
+    font-size:18px;
+    pointer-events:none;
+    animation: sparkleFloat 1.1s ease-out forwards;
+  }
+  @keyframes sparkleFloat{
+    0%{ transform:translateY(0) scale(0.6) rotate(0deg); opacity:0; }
+    30%{ opacity:1; }
+    100%{ transform:translateY(-60px) scale(1.2) rotate(60deg); opacity:0; }
+  }
+
   .privacy-note{
     margin-top:14px;
     font-size:10.5px;
@@ -148,9 +201,10 @@
   <h1>褒めるだけの鏡</h1>
   <div class="sub">カメラに顔を映すと、おっさんが全力で褒めてくれるで</div>
 
-  <div class="mirror-wrap">
+  <div class="mirror-wrap" id="mirrorWrap">
     <video id="video" autoplay playsinline muted></video>
     <div class="status-pill" id="statusPill">準備中…</div>
+    <button class="save-btn" id="saveBtn" title="保存">📸</button>
     <div class="compliment" id="complimentBox">
       <div class="expr-tag" id="exprTag">SMILE</div>
       <div class="msg" id="complimentMsg">ええ笑顔やん!</div>
@@ -160,6 +214,7 @@
       <p>下のボタンを押すとカメラが起動するで。顔をカメラに映してくれたら、おっさんが褒めまくるで📷</p>
     </div>
   </div>
+  <canvas id="captureCanvas" style="display:none;"></canvas>
 
   <button class="btn" id="startBtn">鏡を起動する</button>
 
@@ -170,12 +225,15 @@
 
 <script>
   const video = document.getElementById('video');
+  const mirrorWrap = document.getElementById('mirrorWrap');
   const veil = document.getElementById('veil');
   const startBtn = document.getElementById('startBtn');
   const statusPill = document.getElementById('statusPill');
   const complimentBox = document.getElementById('complimentBox');
   const complimentMsg = document.getElementById('complimentMsg');
   const exprTag = document.getElementById('exprTag');
+  const saveBtn = document.getElementById('saveBtn');
+  const captureCanvas = document.getElementById('captureCanvas');
 
   const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
 
@@ -188,7 +246,15 @@
       "眩しいわ、サングラスいるレベルや",
       "笑顔の才能あるで、ほんまに",
       "そのニヤけ方、才能の塊やん",
-      "今日イチのええ表情や"
+      "今日イチのええ表情や",
+      "その笑顔、見てるこっちまで元気出るわ",
+      "口角上がってる時のその顔、最強や",
+      "笑顔一つで場が明るくなるタイプやろ",
+      "その表情、写真に残しときたいレベルや",
+      "笑ろてる顔、才能の域やで",
+      "その笑い方、クセになるわ",
+      "ずっとその顔でおってほしいくらいええ笑顔や",
+      "その笑顔、今日の主役級やで"
     ],
     neutral: [
       "その落ち着いた顔、めっちゃ様になっとるで",
@@ -198,7 +264,15 @@
       "自然体のその顔、一番ええと思うで",
       "ただ映っとるだけで様になるの、なかなかできんで",
       "その佇まい、できる人の顔しとるわ",
-      "普通の顔がもう完成されとる"
+      "普通の顔がもう完成されとる",
+      "涼しい顔してるその感じ、渋いで",
+      "落ち着いとる雰囲気、頼れる感じやな",
+      "その表情、絵になるわほんまに",
+      "自然な顔がもう一番ええ顔なんちゃう",
+      "力抜けてるその顔、逆にかっこええで",
+      "凛としたその顔、ようやっとるわ",
+      "その佇まいだけで信頼感あるで",
+      "何にも構えてないその顔が一番魅力的や"
     ],
     surprised: [
       "おっ、その驚き顔もかわいいやんけ",
@@ -208,7 +282,15 @@
       "表情筋仕事しすぎやろ、褒めたるわ",
       "そのハッとした顔、魅力的やで",
       "驚き顔、意外とレアで貴重やで",
-      "リアクション芸人の才能あるんちゃう?"
+      "リアクション芸人の才能あるんちゃう?",
+      "その二度見したくなる顔、おもろいで",
+      "びっくりしてる顔、素直でええな",
+      "その表情の変化、見てて楽しいわ",
+      "驚き顔さえも様になるとか反則や",
+      "そのリアクションの良さ、才能やで",
+      "はっとした顔、めちゃくちゃ人間味あるわ",
+      "その表情豊かさ、見てるだけで飽きひん",
+      "驚いた顔、そのままでもう面白コンテンツや"
     ],
     gentle: [
       "その顔も含めて、ようやっとるで今日も",
@@ -218,7 +300,25 @@
       "気張らんでええ、今日はもう十分頑張った",
       "その顔見せてくれただけで、おっさんは安心したで",
       "無理に笑わんでええ、そのままでええんやで",
-      "今日もお疲れさん、よう頑張った"
+      "今日もお疲れさん、よう頑張った",
+      "しんどい日でも、ここまで頑張った自分褒めたって",
+      "その顔で今日一日耐えてきたんやな、お疲れさん",
+      "疲れた顔も含めて、今日のあんたはようやった",
+      "無理して笑わんでええ、そのままの顔で十分や",
+      "その表情、今日の頑張りの証やと思うで",
+      "しんどい時こそ、ちゃんと休んでな",
+      "弱った顔見せてくれてありがとうな、それも強さや",
+      "今のその顔、ようここまで耐えたなって思うで"
+    ],
+    rare: [
+      "今の顔、ここ一年で一番ええ顔かもしれん",
+      "その表情、殿堂入りさせてもらうで",
+      "神が宿った顔しとるわ、今",
+      "これは伝説の一枚になる予感がするで",
+      "その顔、額に飾りたいレベルや",
+      "今この瞬間のその顔、奇跡的にかっこええ",
+      "その表情、一生の宝物にしてええレベルやで",
+      "おっさん、こんなにええ顔久々に見たわ"
     ]
   };
 
@@ -231,8 +331,24 @@
     happy: 'SMILE',
     neutral: 'CALM',
     surprised: 'SURPRISED',
-    gentle: 'GENTLE'
+    gentle: 'GENTLE',
+    rare: 'RARE ✨'
   };
+  const RARE_CHANCE = 0.08;
+
+  function spawnSparkles(){
+    const chars = ['✨','⭐','💫'];
+    for (let i=0;i<6;i++){
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      s.textContent = chars[Math.floor(Math.random()*chars.length)];
+      s.style.left = (10 + Math.random()*80) + '%';
+      s.style.bottom = (20 + Math.random()*20) + '%';
+      s.style.animationDelay = (Math.random()*0.3) + 's';
+      mirrorWrap.appendChild(s);
+      setTimeout(() => s.remove(), 1400);
+    }
+  }
 
   function showToastStatus(text, on){
     statusPill.textContent = text;
@@ -250,14 +366,22 @@
   }
 
   function showCompliment(bucket){
-    const pool = COMPLIMENTS[bucket];
+    const isRare = Math.random() < RARE_CHANCE;
+    const pool = isRare ? COMPLIMENTS.rare : COMPLIMENTS[bucket];
     const msg = pool[Math.floor(Math.random()*pool.length)];
     complimentMsg.textContent = msg;
-    exprTag.textContent = EXPR_LABEL[bucket];
-    complimentBox.classList.remove('show');
+    exprTag.textContent = isRare ? EXPR_LABEL.rare : EXPR_LABEL[bucket];
+    complimentBox.classList.remove('show', 'rare');
     void complimentBox.offsetWidth;
     complimentBox.classList.add('show');
-    playChime();
+    if (isRare){
+      complimentBox.classList.add('rare');
+      spawnSparkles();
+      playFanfareChime();
+    } else {
+      playChime();
+    }
+    saveBtn.classList.add('show');
   }
 
   let actx;
@@ -278,6 +402,23 @@
         g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
         o.connect(g); g.connect(ctx.destination);
         o.start(t); o.stop(t + 0.37);
+      });
+    }catch(e){}
+  }
+
+  function playFanfareChime(){
+    try{
+      const ctx = ensureAudio();
+      const notes = [880, 1108.7, 1318.5, 1760, 2217.5];
+      notes.forEach((f, idx) => {
+        const t = ctx.currentTime + idx * 0.12;
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'triangle'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.18, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.52);
       });
     }catch(e){}
   }
@@ -337,6 +478,45 @@
       startBtn.disabled = false;
       showToastStatus('起動できひんかったで', false);
     }
+  });
+
+  saveBtn.addEventListener('click', () => {
+    const w = video.videoWidth, h = video.videoHeight;
+    if (!w || !h) return;
+    captureCanvas.width = w;
+    captureCanvas.height = h;
+    const ctx = captureCanvas.getContext('2d');
+    ctx.save();
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0, w, h);
+    ctx.restore();
+
+    const barH = Math.round(h * 0.16);
+    ctx.fillStyle = 'rgba(20,14,32,0.78)';
+    ctx.fillRect(0, h - barH, w, barH);
+    ctx.fillStyle = '#ffd76a';
+    ctx.font = 'bold ' + Math.round(h*0.022) + 'px sans-serif';
+    ctx.fillText(exprTag.textContent, w*0.05, h - barH*0.55);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + Math.round(h*0.038) + 'px sans-serif';
+    ctx.fillText(complimentMsg.textContent, w*0.05, h - barH*0.18, w*0.9);
+
+    captureCanvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], 'ossan-mirror.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })){
+        try{ await navigator.share({ files: [file], title: '褒めるだけの鏡' }); return; }catch(e){}
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ossan-mirror.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }, 'image/png');
   });
 </script>
 </body>
