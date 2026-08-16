@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>褒めるだけの鏡</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+  :root{
+    --bg1:#2a1f3d;
+    --bg2:#1a1428;
+    --pink:#ff8fc7;
+    --pink-dark:#e26bab;
+    --lav:#b79cff;
+    --gold:#ffd76a;
+    --text:#fdf5ff;
+    --text-dim:#c7b8dd;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background: radial-gradient(circle at 50% -10%, rgba(183,156,255,0.25), transparent 55%), linear-gradient(180deg, var(--bg1), var(--bg2));
+    color:var(--text);
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 14px 40px;
+  }
+
+  .eyebrow{ font-size:11px; letter-spacing:.28em; color:var(--lav); font-weight:700; }
+  h1{
+    font-family:'Yomogi', cursive;
+    font-size:28px;
+    margin:6px 0 2px;
+    color:#fff;
+  }
+  .sub{ font-size:12.5px; color:var(--text-dim); margin-bottom:18px; text-align:center; }
+
+  .mirror-wrap{
+    position:relative;
+    width:100%;
+    max-width:420px;
+    aspect-ratio: 3 / 4;
+    border-radius:28px;
+    overflow:hidden;
+    background:#120c1c;
+    box-shadow:0 20px 44px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,143,199,0.25);
+  }
+  video{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    transform:scaleX(-1);
+  }
+  .veil{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:20px;
+    background:rgba(20,14,32,0.72);
+    gap:14px;
+  }
+  .veil p{ font-size:13px; color:var(--text-dim); line-height:1.7; margin:0; max-width:280px; }
+  .veil .icon{ font-size:38px; }
+
+  .status-pill{
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    background:rgba(0,0,0,0.45);
+    border:1px solid rgba(255,255,255,0.18);
+    color:var(--text-dim);
+    font-size:11px;
+    padding:6px 14px;
+    border-radius:20px;
+    letter-spacing:.05em;
+    backdrop-filter: blur(4px);
+  }
+  .status-pill.on{ color:var(--gold); border-color:rgba(255,215,106,0.4); }
+
+  .compliment{
+    position:absolute; left:12px; right:12px; bottom:16px;
+    background:rgba(20,14,32,0.78);
+    border:1px solid rgba(255,143,199,0.35);
+    border-radius:18px;
+    padding:16px 18px;
+    text-align:center;
+    backdrop-filter: blur(6px);
+    opacity:0;
+    transform:translateY(10px) scale(0.97);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .compliment.show{ opacity:1; transform:translateY(0) scale(1); }
+  .compliment .expr-tag{
+    font-size:10.5px;
+    color:var(--gold);
+    letter-spacing:.1em;
+    margin-bottom:6px;
+    font-weight:700;
+  }
+  .compliment .msg{
+    font-family:'Yomogi', cursive;
+    font-size:19px;
+    line-height:1.5;
+    color:#fff;
+  }
+
+  .btn{
+    margin-top:20px;
+    width:100%;
+    max-width:420px;
+    font-family:'Yomogi', cursive;
+    font-size:18px;
+    font-weight:700;
+    color:#2a1233;
+    background:linear-gradient(180deg, var(--pink), var(--pink-dark));
+    border:none;
+    border-radius:50px;
+    padding:15px 10px;
+    box-shadow:0 6px 0 #a24a80, 0 10px 18px rgba(0,0,0,0.3);
+    cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease;
+  }
+  .btn:active{ transform:translateY(6px); box-shadow:0 0 0 #a24a80; }
+  .btn[disabled]{ opacity:.5; pointer-events:none; }
+
+  .privacy-note{
+    margin-top:14px;
+    font-size:10.5px;
+    color:var(--text-dim);
+    text-align:center;
+    line-height:1.7;
+    max-width:400px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.001ms !important; transition-duration:.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="eyebrow">MEGANE NO OSSAN MIRROR</div>
+  <h1>褒めるだけの鏡</h1>
+  <div class="sub">カメラに顔を映すと、おっさんが全力で褒めてくれるで</div>
+
+  <div class="mirror-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="status-pill" id="statusPill">準備中…</div>
+    <div class="compliment" id="complimentBox">
+      <div class="expr-tag" id="exprTag">SMILE</div>
+      <div class="msg" id="complimentMsg">ええ笑顔やん!</div>
+    </div>
+    <div class="veil" id="veil">
+      <div class="icon">🪞</div>
+      <p>下のボタンを押すとカメラが起動するで。顔をカメラに映してくれたら、おっさんが褒めまくるで📷</p>
+    </div>
+  </div>
+
+  <button class="btn" id="startBtn">鏡を起動する</button>
+
+  <div class="privacy-note">
+    映像はこの端末の中だけで処理されて、どこにも送信・保存されへんで。<br>
+    カメラの許可はブラウザから求められるので、許可してな。
+  </div>
+
+<script>
+  const video = document.getElementById('video');
+  const veil = document.getElementById('veil');
+  const startBtn = document.getElementById('startBtn');
+  const statusPill = document.getElementById('statusPill');
+  const complimentBox = document.getElementById('complimentBox');
+  const complimentMsg = document.getElementById('complimentMsg');
+  const exprTag = document.getElementById('exprTag');
+
+  const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+
+  const COMPLIMENTS = {
+    happy: [
+      "ええ笑顔やん!それだけで今日勝ちや",
+      "その笑顔、反則やろ",
+      "笑うと10歳若返って見えるで",
+      "その顔、周り明るくするタイプやな",
+      "眩しいわ、サングラスいるレベルや",
+      "笑顔の才能あるで、ほんまに",
+      "そのニヤけ方、才能の塊やん",
+      "今日イチのええ表情や"
+    ],
+    neutral: [
+      "その落ち着いた顔、めっちゃ様になっとるで",
+      "何気ない顔でもオーラ出とるな",
+      "その真剣な顔、かっこええで",
+      "堂々としててええ感じやん",
+      "自然体のその顔、一番ええと思うで",
+      "ただ映っとるだけで様になるの、なかなかできんで",
+      "その佇まい、できる人の顔しとるわ",
+      "普通の顔がもう完成されとる"
+    ],
+    surprised: [
+      "おっ、その驚き顔もかわいいやんけ",
+      "びっくりした顔、表情豊かでええな",
+      "そのリアクション、見てて飽きひんわ",
+      "驚いた顔すらサマになっとる",
+      "表情筋仕事しすぎやろ、褒めたるわ",
+      "そのハッとした顔、魅力的やで",
+      "驚き顔、意外とレアで貴重やで",
+      "リアクション芸人の才能あるんちゃう?"
+    ],
+    gentle: [
+      "その顔も含めて、ようやっとるで今日も",
+      "疲れとる時ほど、無理せんでええからな",
+      "しんどい顔しとっても、ここまで来たんは立派や",
+      "その表情、隠さんでええで。おっさんは味方や",
+      "気張らんでええ、今日はもう十分頑張った",
+      "その顔見せてくれただけで、おっさんは安心したで",
+      "無理に笑わんでええ、そのままでええんやで",
+      "今日もお疲れさん、よう頑張った"
+    ]
+  };
+
+  let modelsReady = false;
+  let running = false;
+  let lastComplimentAt = 0;
+  let currentExprBucket = null;
+
+  const EXPR_LABEL = {
+    happy: 'SMILE',
+    neutral: 'CALM',
+    surprised: 'SURPRISED',
+    gentle: 'GENTLE'
+  };
+
+  function showToastStatus(text, on){
+    statusPill.textContent = text;
+    statusPill.classList.toggle('on', !!on);
+  }
+
+  function bucketFromExpressions(expressions){
+    // expressions: {neutral, happy, sad, angry, fearful, disgusted, surprised}
+    const sorted = Object.entries(expressions).sort((a,b) => b[1]-a[1]);
+    const top = sorted[0][0];
+    if (top === 'happy') return 'happy';
+    if (top === 'surprised') return 'surprised';
+    if (top === 'sad' || top === 'angry' || top === 'fearful' || top === 'disgusted') return 'gentle';
+    return 'neutral';
+  }
+
+  function showCompliment(bucket){
+    const pool = COMPLIMENTS[bucket];
+    const msg = pool[Math.floor(Math.random()*pool.length)];
+    complimentMsg.textContent = msg;
+    exprTag.textContent = EXPR_LABEL[bucket];
+    complimentBox.classList.remove('show');
+    void complimentBox.offsetWidth;
+    complimentBox.classList.add('show');
+    playChime();
+  }
+
+  let actx;
+  function ensureAudio(){
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function playChime(){
+    try{
+      const ctx = ensureAudio();
+      [880, 1108.7, 1318.5].forEach((f, idx) => {
+        const t = ctx.currentTime + idx * 0.09;
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(0.16, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.37);
+      });
+    }catch(e){}
+  }
+
+  async function loadModels(){
+    showToastStatus('AIモデルを読み込み中…', false);
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+    modelsReady = true;
+  }
+
+  async function startCamera(){
+    try{
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false
+      });
+      video.srcObject = stream;
+      await video.play();
+    }catch(e){
+      showToastStatus('カメラ許可が必要やで', false);
+      throw e;
+    }
+  }
+
+  function detectLoop(){
+    if (!running) return;
+    const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+    faceapi.detectSingleFace(video, opts).withFaceExpressions().then(result => {
+      if (result && result.expressions){
+        showToastStatus('検出中', true);
+        const bucket = bucketFromExpressions(result.expressions);
+        const now = Date.now();
+        if (now - lastComplimentAt > 4200){
+          lastComplimentAt = now;
+          showCompliment(bucket);
+        }
+      } else {
+        showToastStatus('顔をカメラに向けてや', false);
+      }
+    }).catch(() => {}).finally(() => {
+      if (running) setTimeout(detectLoop, 700);
+    });
+  }
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    ensureAudio();
+    try{
+      showToastStatus('起動準備中…', false);
+      await Promise.all([loadModels(), startCamera()]);
+      veil.style.display = 'none';
+      running = true;
+      showToastStatus('検出中', true);
+      detectLoop();
+    }catch(e){
+      startBtn.disabled = false;
+      showToastStatus('起動できひんかったで', false);
+    }
+  });
+</script>
+</body>
+</html>
