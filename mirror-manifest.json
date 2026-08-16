@@ -1,0 +1,12 @@
+{
+  "name": "褒めるだけの鏡",
+  "short_name": "褒める鏡",
+  "start_url": "./mirror.html",
+  "display": "standalone",
+  "background_color": "#1a1428",
+  "theme_color": "#1a1428",
+  "icons": [
+    { "src": "mirror-192.PNG", "sizes": "192x192", "type": "image/png" },
+    { "src": "mirror-512.PNG", "sizes": "512x512", "type": "image/png" }
+  ]
+}
