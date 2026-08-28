@@ -1,0 +1,12 @@
+{
+  "name": "晩ごはんルーレット",
+  "short_name": "メシルーレット",
+  "start_url": "./meshi.html",
+  "display": "standalone",
+  "background_color": "#2b1810",
+  "theme_color": "#2b1810",
+  "icons": [
+    { "src": "gym-icon-0192.PNG", "sizes": "192x192", "type": "image/png" },
+    { "src": "gym-icon-0512.PNG", "sizes": "512x512", "type": "image/png" }
+  ]
+}
