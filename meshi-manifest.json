@@ -6,7 +6,7 @@
   "background_color": "#2b1810",
   "theme_color": "#2b1810",
   "icons": [
-    { "src": "gym-icon-0192.PNG", "sizes": "192x192", "type": "image/png" },
-    { "src": "gym-icon-0512.PNG", "sizes": "512x512", "type": "image/png" }
+    { "src": "normal-icon-192.JPG", "sizes": "192x192", "type": "image/png" },
+    { "src": "normal-icon-512.JPG", "sizes": "512x512", "type": "image/png" }
   ]
 }
