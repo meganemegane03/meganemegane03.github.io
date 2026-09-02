@@ -1,0 +1,12 @@
+{
+  "name": "おっさんのことわざ辞典",
+  "short_name": "ことわざ辞典",
+  "start_url": "./kotowaza.html",
+  "display": "standalone",
+  "background_color": "#1c2b3a",
+  "theme_color": "#1c2b3a",
+  "icons": [
+    { "src": "normal-icon-192.JPG", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "normal-icon-512.JPG", "sizes": "512x512", "type": "image/jpeg" }
+  ]
+}
