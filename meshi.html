@@ -224,9 +224,9 @@
   <div class="toast" id="toast"></div>
 
 <script>
-  const DATA = {"categories": ["和食", "洋食", "中華", "ヘルシー"], "moods": ["がっつり", "あっさり"], "dishes": {"和食|がっつり": [{"n": "豚の生姜焼き", "i": "豚肉/玉ねぎ/生姜/醤油/みりん"}, {"n": "カツ丼", "i": "豚カツ/卵/玉ねぎ/だし/ご飯"}, {"n": "すき焼き", "i": "牛肉/白菜/豆腐/しらたき/割り下"}], "和食|あっさり": [{"n": "湯豆腐", "i": "豆腐/昆布/ポン酢/薬味"}, {"n": "塩鮭定食", "i": "鮭/大根おろし/ご飯/味噌汁"}, {"n": "ほうれん草の煮浸し", "i": "ほうれん草/だし/醤油/油揚げ"}], "洋食|がっつり": [{"n": "ハンバーグ", "i": "合い挽き肉/玉ねぎ/卵/パン粉/デミグラスソース"}, {"n": "オムライス", "i": "卵/ご飯/鶏肉/ケチャップ/玉ねぎ"}, {"n": "ビーフシチュー", "i": "牛肉/にんじん/じゃがいも/玉ねぎ/シチュールー"}], "洋食|あっさり": [{"n": "カルパッチョ", "i": "白身魚 or サーモン/オリーブオイル/レモン/塩"}, {"n": "チキンのハーブ焼き", "i": "鶏むね肉/ハーブ/オリーブオイル/塩胡椒"}, {"n": "野菜たっぷりミネストローネ", "i": "トマト缶/玉ねぎ/にんじん/セロリ/豆"}], "中華|がっつり": [{"n": "回鍋肉", "i": "豚肉/キャベツ/ピーマン/甜麺醤"}, {"n": "麻婆豆腐", "i": "豆腐/挽き肉/豆板醤/ねぎ"}, {"n": "酢豚", "i": "豚肉/パイナップル/ピーマン/玉ねぎ/酢豚ソース"}], "中華|あっさり": [{"n": "中華風冷奴", "i": "豆腐/ザーサイ/ねぎ/ごま油"}, {"n": "野菜炒め", "i": "キャベツ/もやし/にんじん/豚肉少々/塩胡椒"}, {"n": "春雨サラダ", "i": "春雨/きゅうり/ハム/中華ドレッシング"}], "ヘルシー|がっつり": [{"n": "鶏むね肉のグリル", "i": "鶏むね肉/スパイス/オリーブオイル"}, {"n": "豆腐ハンバーグ", "i": "豆腐/鶏挽き肉/玉ねぎ/大根おろし"}, {"n": "サラダチキン丼", "i": "サラダチキン/ご飯 or 雑穀米/温泉卵/野菜"}], "ヘルシー|あっさり": [{"n": "野菜たっぷりスープ", "i": "キャベツ/にんじん/玉ねぎ/コンソメ"}, {"n": "冷しゃぶサラダ", "i": "豚しゃぶしゃぶ肉/レタス/トマト/ポン酢"}, {"n": "蒸し鶏と温野菜", "i": "鶏むね肉/ブロッコリー/にんじん/ポン酢 or ごまだれ"}]}};
+  const DATA = {"categories": ["和食", "洋食", "中華", "ヘルシー"], "moods_by_cat": {"和食": ["がっつり", "あっさり"], "洋食": ["がっつり", "あっさり"], "中華": ["がっつり", "あっさり"], "ヘルシー": ["たんぱく質しっかり", "野菜たっぷり"]}, "dishes": {"和食|がっつり": [{"n": "豚の生姜焼き", "i": "豚肉/玉ねぎ/生姜/醤油/みりん"}, {"n": "カツ丼", "i": "豚カツ/卵/玉ねぎ/だし/ご飯"}, {"n": "すき焼き", "i": "牛肉/白菜/豆腐/しらたき/割り下"}], "和食|あっさり": [{"n": "湯豆腐", "i": "豆腐/昆布/ポン酢/薬味"}, {"n": "塩鮭定食", "i": "鮭/大根おろし/ご飯/味噌汁"}, {"n": "ほうれん草の煮浸し", "i": "ほうれん草/だし/醤油/油揚げ"}], "洋食|がっつり": [{"n": "ハンバーグ", "i": "合い挽き肉/玉ねぎ/卵/パン粉/デミグラスソース"}, {"n": "オムライス", "i": "卵/ご飯/鶏肉/ケチャップ/玉ねぎ"}, {"n": "ビーフシチュー", "i": "牛肉/にんじん/じゃがいも/玉ねぎ/シチュールー"}], "洋食|あっさり": [{"n": "カルパッチョ", "i": "白身魚 or サーモン/オリーブオイル/レモン/塩"}, {"n": "チキンのハーブ焼き", "i": "鶏むね肉/ハーブ/オリーブオイル/塩胡椒"}, {"n": "野菜たっぷりミネストローネ", "i": "トマト缶/玉ねぎ/にんじん/セロリ/豆"}], "中華|がっつり": [{"n": "回鍋肉", "i": "豚肉/キャベツ/ピーマン/甜麺醤"}, {"n": "麻婆豆腐", "i": "豆腐/挽き肉/豆板醤/ねぎ"}, {"n": "酢豚", "i": "豚肉/パイナップル/ピーマン/玉ねぎ/酢豚ソース"}], "中華|あっさり": [{"n": "中華風冷奴", "i": "豆腐/ザーサイ/ねぎ/ごま油"}, {"n": "野菜炒め", "i": "キャベツ/もやし/にんじん/豚肉少々/塩胡椒"}, {"n": "春雨サラダ", "i": "春雨/きゅうり/ハム/中華ドレッシング"}], "ヘルシー|たんぱく質しっかり": [{"n": "鶏むね肉のグリル", "i": "鶏むね肉/スパイス/オリーブオイル"}, {"n": "豆腐ハンバーグ", "i": "豆腐/鶏挽き肉/玉ねぎ/大根おろし"}, {"n": "サラダチキン丼", "i": "サラダチキン/ご飯 or 雑穀米/温泉卵/野菜"}], "ヘルシー|野菜たっぷり": [{"n": "野菜たっぷりスープ", "i": "キャベツ/にんじん/玉ねぎ/コンソメ"}, {"n": "冷しゃぶサラダ", "i": "豚しゃぶしゃぶ肉/レタス/トマト/ポン酢"}, {"n": "蒸し鶏と温野菜", "i": "鶏むね肉/ブロッコリー/にんじん/ポン酢 or ごまだれ"}]}, "eatout": {"和食": ["寿司", "しゃぶしゃぶ", "天ぷら"], "洋食": ["イタリアン", "ステーキ", "ハンバーガー"], "中華": ["中華料理店", "餃子専門店", "ラーメン屋"], "ヘルシー": ["サラダ専門店", "豆腐料理店", "蕎麦屋"]}, "budgets": [{"n": "安め", "c": "財布に優しめでいこか"}, {"n": "普通", "c": "いつも通りの感じでな"}, {"n": "ちょい贅沢", "c": "たまにはこれくらいご褒美あってええで"}]};
   const CATS = DATA.categories;
-  const MOODS = DATA.moods;
+  const BUDGETS = DATA.budgets;
 
   let eatOut = false;
   const modeCook = document.getElementById('modeCook');
@@ -260,8 +260,9 @@
 
   const WHEEL_COLORS = ['#e6543f','#f2b544','#6ab04c','#4a90c9','#a86bd8','#e07b3d'];
 
-  let stage = 0; // 0=category, 1=mood, 2=dish
-  let pickedCat = null, pickedMood = null, pickedDish = null;
+  // stage: 0=category, 1=mood(自炊) or restaurant(外食), 2=dish(自炊のみ), 3=budget, 4=done
+  let stage = 0;
+  let pickedCat = null, pickedMood = null, pickedDish = null, pickedRestaurant = null, pickedBudget = null;
   let currentRotation = 0;
 
   function showView(id){
@@ -359,10 +360,10 @@
 
   function resetFlow(){
     stage = 0;
-    pickedCat = null; pickedMood = null; pickedDish = null;
+    pickedCat = null; pickedMood = null; pickedDish = null; pickedRestaurant = null; pickedBudget = null;
     chipCat.textContent = 'カテゴリ'; chipCat.classList.remove('on');
-    chipMood.textContent = '気分'; chipMood.classList.remove('on');
-    chipDish.textContent = 'メニュー'; chipDish.classList.remove('on');
+    chipMood.textContent = eatOut ? 'お店' : '気分'; chipMood.classList.remove('on');
+    chipDish.textContent = eatOut ? '予算感' : 'メニュー'; chipDish.classList.remove('on');
     spinBtn.disabled = false;
     spinBtn.textContent = 'ルーレットを回す';
     stepLabel.textContent = 'まずはカテゴリから回すで';
@@ -381,27 +382,41 @@
         pickedCat = CATS[idx];
         chipCat.textContent = pickedCat; chipCat.classList.add('on');
         spinBtn.disabled = false;
+        stage = 1;
         if (eatOut){
-          // 外食モードはカテゴリだけで完結
-          showEatOutResult();
+          stepLabel.textContent = '次はお店のタイプやで';
+          buildWheel(DATA.eatout[pickedCat]);
         } else {
-          stage = 1;
-          stepLabel.textContent = '次は気分(がっつり/あっさり)やで';
-          buildWheel(MOODS);
+          stepLabel.textContent = '次は気分を回すで';
+          buildWheel(DATA.moods_by_cat[pickedCat]);
         }
       });
     } else if (stage === 1){
-      const idx = Math.floor(Math.random()*MOODS.length);
-      spinToIndex(MOODS.length, idx, () => {
-        pickedMood = MOODS[idx];
-        chipMood.textContent = pickedMood; chipMood.classList.add('on');
-        spinBtn.disabled = false;
-        stage = 2;
-        stepLabel.textContent = '最後にメニューを決めるで';
-        const key = pickedCat + '|' + pickedMood;
-        const pool = DATA.dishes[key];
-        buildWheel(pool.map(d => d.n));
-      });
+      if (eatOut){
+        const opts = DATA.eatout[pickedCat];
+        const idx = Math.floor(Math.random()*opts.length);
+        spinToIndex(opts.length, idx, () => {
+          pickedRestaurant = opts[idx];
+          chipMood.textContent = pickedRestaurant; chipMood.classList.add('on');
+          spinBtn.disabled = false;
+          stage = 3;
+          stepLabel.textContent = '最後に予算感を回すで';
+          buildWheel(BUDGETS.map(b => b.n));
+        });
+      } else {
+        const opts = DATA.moods_by_cat[pickedCat];
+        const idx = Math.floor(Math.random()*opts.length);
+        spinToIndex(opts.length, idx, () => {
+          pickedMood = opts[idx];
+          chipMood.textContent = pickedMood; chipMood.classList.add('on');
+          spinBtn.disabled = false;
+          stage = 2;
+          stepLabel.textContent = '次はメニューを決めるで';
+          const key = pickedCat + '|' + pickedMood;
+          const pool = DATA.dishes[key];
+          buildWheel(pool.map(d => d.n));
+        });
+      }
     } else if (stage === 2){
       const key = pickedCat + '|' + pickedMood;
       const pool = DATA.dishes[key];
@@ -414,22 +429,32 @@
         pickedDish = chosen;
         chipDish.textContent = pickedDish.n; chipDish.classList.add('on');
         pushRecentDish(pickedDish.n);
+        spinBtn.disabled = false;
+        stage = 3;
+        stepLabel.textContent = '最後に予算感を回すで';
+        buildWheel(BUDGETS.map(b => b.n));
+      });
+    } else if (stage === 3){
+      const idx = Math.floor(Math.random()*BUDGETS.length);
+      spinToIndex(BUDGETS.length, idx, () => {
+        pickedBudget = BUDGETS[idx];
         showResult();
       });
     }
   });
 
   function showResult(){
-    resultTitle.textContent = pickedDish.n;
-    resultSub.textContent = pickedCat + ' ・ ' + pickedMood;
-    ingredientText.textContent = pickedDish.i;
-    ingredientBox.style.display = 'block';
-    showView('view-result');
-  }
-  function showEatOutResult(){
-    resultTitle.textContent = '今日は「' + pickedCat + '」系で外食や';
-    resultSub.textContent = '外食モード';
-    ingredientBox.style.display = 'none';
+    if (eatOut){
+      resultTitle.textContent = '今日は「' + pickedRestaurant + '」やな';
+      resultSub.textContent = pickedCat + ' ・ ' + pickedBudget.n;
+      ingredientBox.style.display = 'block';
+      ingredientText.textContent = pickedBudget.c;
+    } else {
+      resultTitle.textContent = pickedDish.n;
+      resultSub.textContent = pickedCat + ' ・ ' + pickedMood;
+      ingredientBox.style.display = 'block';
+      ingredientText.textContent = pickedDish.i + '(' + pickedBudget.c + ')';
+    }
     showView('view-result');
   }
 
@@ -437,8 +462,8 @@
 
   shareBtn.addEventListener('click', async () => {
     const shareText = eatOut
-      ? '今日の晩ごはんは「' + pickedCat + '系の外食」に決まったで(晩ごはんルーレット)'
-      : '今日の晩ごはんは「' + pickedDish.n + '」に決まったで(' + pickedCat + '・' + pickedMood + ')';
+      ? '今日の晩ごはんは「' + pickedRestaurant + '」に決まったで(' + pickedCat + '・' + pickedBudget.n + ')'
+      : '今日の晩ごはんは「' + pickedDish.n + '」に決まったで(' + pickedCat + '・' + pickedMood + '・' + pickedBudget.n + ')';
     const url = location.href;
     if (navigator.share){
       try{ await navigator.share({ title:'晩ごはんルーレット', text:shareText, url }); }catch(e){}
@@ -458,17 +483,21 @@
     weekResult = [];
     for (let i=0;i<7;i++){
       const cat = CATS[Math.floor(Math.random()*CATS.length)];
+      const budget = BUDGETS[Math.floor(Math.random()*BUDGETS.length)];
       if (eatOut){
-        weekResult.push({ day: DAY_NAMES[i], cat, mood:null, dish:null });
+        const opts = DATA.eatout[cat];
+        const restaurant = opts[Math.floor(Math.random()*opts.length)];
+        weekResult.push({ day: DAY_NAMES[i], cat, restaurant, budget: budget.n });
         continue;
       }
-      const mood = MOODS[Math.floor(Math.random()*MOODS.length)];
+      const moodOpts = DATA.moods_by_cat[cat];
+      const mood = moodOpts[Math.floor(Math.random()*moodOpts.length)];
       const pool = DATA.dishes[cat + '|' + mood];
       let candidates = pool.filter(d => !recent.includes(d.n));
       if (candidates.length === 0) candidates = pool;
       const dish = candidates[Math.floor(Math.random()*candidates.length)];
       recent = [dish.n, ...recent].slice(0,4);
-      weekResult.push({ day: DAY_NAMES[i], cat, mood, dish: dish.n });
+      weekResult.push({ day: DAY_NAMES[i], cat, mood, dish: dish.n, budget: budget.n });
     }
     renderWeekTable();
     playChime();
@@ -483,8 +512,8 @@
       tdDay.textContent = r.day;
       const tdContent = document.createElement('td');
       tdContent.textContent = eatOut
-        ? (r.cat + '系で外食')
-        : (r.dish + '(' + r.cat + '・' + r.mood + ')');
+        ? (r.restaurant + '(' + r.cat + '・' + r.budget + ')')
+        : (r.dish + '(' + r.cat + '・' + r.mood + '・' + r.budget + ')');
       tr.appendChild(tdDay); tr.appendChild(tdContent);
       weekTable.appendChild(tr);
     });
@@ -493,7 +522,7 @@
   weekBackBtn.addEventListener('click', () => { resetFlow(); });
 
   weekShareBtn.addEventListener('click', async () => {
-    const lines = weekResult.map(r => r.day + ':' + (eatOut ? (r.cat+'系で外食') : r.dish));
+    const lines = weekResult.map(r => r.day + ':' + (eatOut ? r.restaurant : r.dish));
     const shareText = '今週の献立決めたで📅\n' + lines.join('\n');
     const url = location.href;
     if (navigator.share){
