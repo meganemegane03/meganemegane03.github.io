@@ -58,7 +58,7 @@ button{font-family:inherit;}
 /* ---------- HOME ---------- */
 #home{
   align-items:center;justify-content:center;
-  padding:28px 20px 40px;
+  padding:calc(28px + env(safe-area-inset-top)) 20px 40px;
   gap:22px;
   text-align:center;
 }
@@ -105,10 +105,12 @@ button{font-family:inherit;}
 #studio{padding:0;}
 .top-bar{
   display:flex;align-items:center;justify-content:space-between;
-  padding:10px 12px;
+  padding:calc(10px + env(safe-area-inset-top)) 12px 10px;
   background:var(--paper2);
   border-bottom:2px solid var(--ink);
   gap:8px;
+  position:relative;
+  z-index:5;
 }
 .icon-btn{
   border:2px solid var(--ink);
@@ -407,10 +409,29 @@ function clearBoard(){
   }
 }
 function saveImage(){
-  const link = document.createElement('a');
-  link.download = 'nurie-'+Date.now()+'.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  canvas.toBlob(async (blob)=>{
+    if(!blob) return;
+    const fileName = 'nurie-'+Date.now()+'.png';
+    const file = new File([blob], fileName, {type:'image/png'});
+
+    // Preferred: native share sheet -> "画像を保存" works even in standalone PWA mode
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:'ぬりえ'});
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return; // user cancelled share, don't fall through
+      }
+    }
+
+    // Fallback: open image in a new tab so it can be long-pressed and saved
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, '_blank');
+    if(!win){
+      alert('保存できひんかった…設定でポップアップを許可してもう一回試してみて');
+    }
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }, 'image/png');
 }
 
 /* ================= PALETTE ================= */
