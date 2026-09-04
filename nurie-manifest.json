@@ -1,0 +1,22 @@
+{
+  "name": "ぬりえ | めがねのおっさん",
+  "short_name": "ぬりえ",
+  "description": "好きな線画・写真・自分の落書きに色を塗れる、のんびりぬりえアプリ",
+  "start_url": "./nurie.html",
+  "display": "standalone",
+  "background_color": "#f6efe0",
+  "theme_color": "#f6efe0",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "nurie-192.JPG",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "nurie-512.JPG",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
