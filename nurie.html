@@ -195,6 +195,9 @@ button{font-family:inherit;}
 .draw-tools{
   display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap;
 }
+.paint-tool-row{
+  display:flex;gap:8px;padding:10px 12px 0;
+}
 .tool-btn{
   border:2px solid var(--ink);background:var(--panel);
   border-radius:12px;padding:8px 12px;font-size:13px;font-weight:700;
@@ -317,6 +320,11 @@ button{font-family:inherit;}
     <button class="tool-btn" id="toolDone" onclick="finishDrawing()" style="margin-left:auto;background:var(--accent);color:#fff;">ぬりえにする ✓</button>
   </div>
 
+  <div class="paint-tool-row" id="paintToolRow" style="display:none;">
+    <button class="tool-btn active" id="fillToolBtn" onclick="setPaintTool('fill')">🪣 ぬりつぶし</button>
+    <button class="tool-btn" id="pencilToolBtn" onclick="setPaintTool('pencil')">✏️ いろえんぴつ</button>
+  </div>
+
   <div class="canvas-wrap">
     <canvas id="board" width="600" height="600"></canvas>
     <div class="hint-badge" id="hintBadge">タップして色を塗ろう🎨</div>
@@ -325,7 +333,7 @@ button{font-family:inherit;}
   <div class="paint-bar">
     <div class="palette" id="palette"></div>
     <div class="controls-row">
-      <div class="brush-row" id="brushRow">
+      <div class="brush-row" id="brushRow" style="display:none;">
         <span>ふとさ</span>
         <input type="range" id="brushSize" min="4" max="40" value="10">
       </div>
@@ -354,6 +362,9 @@ let drawStart = null;
 let isDrawingShape = false;
 let freehandPoints = null;
 let isDrawStage = false; // true while in "じぶんでかく" pre-fill drawing stage
+let paintTool = 'fill'; // 'fill' | 'pencil' — used only outside draw stage
+let isPencilStroke = false;
+let lastPencilPos = null;
 
 const PALETTE = [
   '#3a332a','#ffffff','#e8623f','#f2b94a','#f7e26b',
@@ -382,6 +393,7 @@ function goDraw(){
   isDrawStage = true;
   resetCanvasWhite();
   document.getElementById('drawTools').style.display = 'flex';
+  document.getElementById('paintToolRow').style.display = 'none';
   document.getElementById('palette').style.display = 'none';
   document.getElementById('brushRow').style.display = 'none';
   document.getElementById('studioTitle').textContent = 'せんがをつくる';
@@ -444,11 +456,19 @@ function saveImage(){
 }
 
 /* ================= PALETTE ================= */
+function setPaintTool(t){
+  paintTool = t;
+  document.getElementById('fillToolBtn').classList.toggle('active', t==='fill');
+  document.getElementById('pencilToolBtn').classList.toggle('active', t==='pencil');
+  document.getElementById('brushRow').style.display = (t==='pencil') ? 'flex' : 'none';
+}
 function buildPalette(){
+  paintTool = 'fill';
+  document.getElementById('paintToolRow').style.display = 'flex';
+  setPaintTool('fill');
   const wrap = document.getElementById('palette');
   wrap.innerHTML = '';
   wrap.style.display = 'flex';
-  document.getElementById('brushRow').style.display = 'flex';
   PALETTE.forEach(c=>{
     const sw = document.createElement('div');
     sw.className = 'swatch' + (c===currentColor?' selected':'');
@@ -473,6 +493,12 @@ const PRESETS = [
   {name:'まる模様', draw: drawMandala},
   {name:'いえ', draw: drawHouse},
   {name:'ちょうちょ', draw: drawButterfly},
+  {name:'いぬ', draw: drawDog},
+  {name:'うさぎ', draw: drawRabbit},
+  {name:'たいよう', draw: drawSun},
+  {name:'ハート', draw: drawHeart},
+  {name:'さかな', draw: drawFish},
+  {name:'き', draw: drawTree},
 ];
 
 function buildPresetGrid(){
@@ -499,7 +525,7 @@ function openPreset(i){
   loadCurrentLineArt();
   document.getElementById('drawTools').style.display = 'none';
   document.getElementById('studioTitle').textContent = PRESETS[i].name;
-  document.getElementById('modeNote').textContent = '塗りたい場所をタップしてね';
+  document.getElementById('modeNote').textContent = 'タップで塗りつぶし、いろえんぴつでなぞって塗れるで';
   buildPalette();
   history=[]; pushHistory();
   showScreen('studio');
@@ -591,6 +617,92 @@ function drawButterfly(c,w,h){
   c.beginPath(); c.ellipse(cx+w*0.16,cy+h*0.16,w*0.14,h*0.13,0.4,0,Math.PI*2); c.stroke();
   c.restore();
 }
+function drawDog(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w/2, cy=h*0.55;
+  c.beginPath(); c.arc(cx,cy,w*0.26,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx-w*0.26,cy-h*0.06,w*0.1,h*0.18,-0.3,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx+w*0.26,cy-h*0.06,w*0.1,h*0.18,0.3,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx-w*0.09,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx+w*0.09,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx,cy+h*0.1,w*0.06,h*0.045,0,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.moveTo(cx,cy+h*0.14); c.quadraticCurveTo(cx-w*0.06,cy+h*0.2,cx-w*0.12,cy+h*0.18); c.stroke();
+  c.beginPath(); c.moveTo(cx,cy+h*0.14); c.quadraticCurveTo(cx+w*0.06,cy+h*0.2,cx+w*0.12,cy+h*0.18); c.stroke();
+  c.restore();
+}
+function drawRabbit(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w/2, cy=h*0.62;
+  c.beginPath(); c.ellipse(cx-w*0.1,cy-h*0.32,w*0.07,h*0.24,-0.08,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx+w*0.1,cy-h*0.32,w*0.07,h*0.24,0.08,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx,cy,w*0.24,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx-w*0.08,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx+w*0.08,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.moveTo(cx,cy+h*0.05); c.lineTo(cx-w*0.05,cy+h*0.1); c.lineTo(cx+w*0.05,cy+h*0.1); c.closePath(); c.stroke();
+  c.beginPath(); c.arc(cx,cy+h*0.28,w*0.15,0,Math.PI*2); c.stroke();
+  c.restore();
+}
+function drawSun(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineCap='round';
+  const cx=w/2, cy=h/2, r=w*0.2;
+  c.beginPath(); c.arc(cx,cy,r,0,Math.PI*2); c.stroke();
+  for(let i=0;i<12;i++){
+    const a = Math.PI/6*i;
+    const x1 = cx+Math.cos(a)*(r+w*0.06), y1 = cy+Math.sin(a)*(r+w*0.06);
+    const x2 = cx+Math.cos(a)*(r+w*0.18), y2 = cy+Math.sin(a)*(r+w*0.18);
+    c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke();
+  }
+  c.beginPath(); c.arc(cx-r*0.35,cy-r*0.1,3,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx+r*0.35,cy-r*0.1,3,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx,cy+r*0.25,r*0.35,0.15*Math.PI,0.85*Math.PI); c.stroke();
+  c.restore();
+}
+function drawHeart(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w/2, topY=h*0.34;
+  c.beginPath();
+  c.moveTo(cx, h*0.78);
+  c.bezierCurveTo(cx-w*0.42, h*0.5, cx-w*0.4, topY, cx-w*0.15, topY);
+  c.bezierCurveTo(cx-w*0.02, topY, cx, h*0.38, cx, h*0.42);
+  c.bezierCurveTo(cx, h*0.38, cx+w*0.02, topY, cx+w*0.15, topY);
+  c.bezierCurveTo(cx+w*0.4, topY, cx+w*0.42, h*0.5, cx, h*0.78);
+  c.closePath();
+  c.stroke();
+  c.restore();
+}
+function drawFish(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w*0.45, cy=h/2;
+  c.beginPath();
+  c.ellipse(cx,cy,w*0.28,h*0.18,0,0,Math.PI*2);
+  c.stroke();
+  c.beginPath();
+  c.moveTo(cx+w*0.27,cy);
+  c.lineTo(cx+w*0.42,cy-h*0.14);
+  c.lineTo(cx+w*0.42,cy+h*0.14);
+  c.closePath(); c.stroke();
+  c.beginPath(); c.arc(cx-w*0.14,cy-h*0.03,4,0,Math.PI*2); c.stroke();
+  c.beginPath();
+  c.moveTo(cx-w*0.02,cy-h*0.17); c.lineTo(cx+w*0.05,cy-h*0.28); c.lineTo(cx+w*0.12,cy-h*0.17);
+  c.stroke();
+  c.beginPath(); c.moveTo(cx-w*0.05,cy+h*0.14); c.quadraticCurveTo(cx,cy+h*0.24,cx+w*0.08,cy+h*0.16); c.stroke();
+  c.restore();
+}
+function drawTree(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w/2;
+  c.strokeRect(cx-w*0.05, h*0.66, w*0.1, h*0.24);
+  c.beginPath(); c.arc(cx,h*0.42,w*0.24,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx-w*0.16,h*0.5,w*0.16,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx+w*0.16,h*0.5,w*0.16,0,Math.PI*2); c.stroke();
+  c.restore();
+}
 
 /* ================= PHOTO -> LINE ART ================= */
 function handlePhoto(e){
@@ -611,7 +723,7 @@ function handlePhoto(e){
       currentMode='photo';
       document.getElementById('drawTools').style.display='none';
       document.getElementById('studioTitle').textContent='しゃしんのぬりえ';
-      document.getElementById('modeNote').textContent='塗りたい場所をタップしてね';
+      document.getElementById('modeNote').textContent='タップで塗りつぶし、いろえんぴつでなぞって塗れるで';
       buildPalette();
       history=[]; pushHistory();
       showScreen('studio');
@@ -669,7 +781,7 @@ function finishDrawing(){
   isDrawStage = false;
   document.getElementById('drawTools').style.display='none';
   document.getElementById('studioTitle').textContent='じぶんのぬりえ';
-  document.getElementById('modeNote').textContent='塗りたい場所をタップしてね';
+  document.getElementById('modeNote').textContent='タップで塗りつぶし、いろえんぴつでなぞって塗れるで';
   buildPalette();
   history=[]; pushHistory();
   flashHint();
@@ -696,8 +808,14 @@ function onDown(e){
   if(!isDrawStage){
     if(document.getElementById('studio').classList.contains('active')){
       const pos = getPos(e);
-      floodFill(Math.floor(pos.x), Math.floor(pos.y), currentColor);
-      pushHistory();
+      if(paintTool==='pencil'){
+        isPencilStroke = true;
+        lastPencilPos = pos;
+        drawPencilDot(pos);
+      } else {
+        floodFill(Math.floor(pos.x), Math.floor(pos.y), currentColor);
+        pushHistory();
+      }
     }
     return;
   }
@@ -710,7 +828,15 @@ function onDown(e){
   }
 }
 function onMove(e){
-  if(!isDrawStage || !isDrawingShape) return;
+  if(!isDrawStage){
+    if(paintTool==='pencil' && isPencilStroke){
+      const pos = getPos(e);
+      drawPencilSegment(lastPencilPos,pos);
+      lastPencilPos = pos;
+    }
+    return;
+  }
+  if(!isDrawingShape) return;
   const pos = getPos(e);
   const lw = parseInt(document.getElementById('brushSize').value)||10;
   if(drawTool==='freehand'){
@@ -736,10 +862,46 @@ function onMove(e){
   ctx.stroke();
 }
 function onUp(e){
-  if(!isDrawStage || !isDrawingShape) return;
+  if(!isDrawStage){
+    if(paintTool==='pencil' && isPencilStroke){
+      isPencilStroke = false;
+      lastPencilPos = null;
+      pushHistory();
+    }
+    return;
+  }
+  if(!isDrawingShape) return;
   isDrawingShape = false;
   freehandPoints = null;
   pushHistory();
+}
+
+/* ---- Colored-pencil brush: layered multiply strokes ---- */
+function drawPencilDot(pos){
+  const lw = parseInt(document.getElementById('brushSize').value)||10;
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = currentColor;
+  ctx.beginPath();
+  ctx.arc(pos.x,pos.y,lw/2,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+function drawPencilSegment(a,b){
+  const lw = parseInt(document.getElementById('brushSize').value)||10;
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.55;
+  ctx.strokeStyle = currentColor;
+  ctx.lineWidth = lw;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(a.x,a.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.stroke();
+  ctx.restore();
 }
 
 /* ---- Flood fill (scanline stack based) ---- */
