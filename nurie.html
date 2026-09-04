@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>ぬりえ | めがねのおっさん</title>
+<meta name="description" content="好きな線画・写真・自分の落書きに色を塗れる、のんびりぬりえアプリ">
+
+<!-- OGP -->
+<meta property="og:title" content="ぬりえ | めがねのおっさん">
+<meta property="og:description" content="好きな線画・写真・自分の落書きに色を塗れる、のんびりぬりえアプリ">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://meganemegane03.github.io/nurie-512.JPG">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- PWA -->
+<link rel="manifest" href="nurie-manifest.json">
+<link rel="apple-touch-icon" href="nurie-192.JPG">
+<meta name="theme-color" content="#f6efe0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ぬりえ">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#f6efe0;
+  --paper2:#fbf7ee;
+  --ink:#3a332a;
+  --line:#c9bfa8;
+  --accent:#e8623f;
+  --accent2:#3f8f8c;
+  --panel:#fffdf8;
+  --shadow:0 3px 0 rgba(58,51,42,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  margin:0;padding:0;height:100%;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'M PLUS Rounded 1c',sans-serif;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+body{
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(232,98,63,.06), transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(63,143,140,.07), transparent 45%);
+}
+h1,h2,h3{margin:0;font-family:'Yomogi',cursive;font-weight:400;}
+button{font-family:inherit;}
+
+.screen{display:none;min-height:100dvh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* ---------- HOME ---------- */
+#home{
+  align-items:center;justify-content:center;
+  padding:28px 20px 40px;
+  gap:22px;
+  text-align:center;
+}
+.home-title{
+  font-size:44px;
+  color:var(--accent);
+  letter-spacing:.04em;
+  text-shadow:2px 2px 0 rgba(232,98,63,.15);
+}
+.home-sub{
+  font-size:13px;
+  color:#8a7f6c;
+  margin-top:-10px;
+}
+.mode-list{
+  display:flex;flex-direction:column;gap:14px;
+  width:100%;max-width:340px;
+}
+.mode-card{
+  background:var(--panel);
+  border:2px solid var(--ink);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:16px 18px;
+  display:flex;align-items:center;gap:14px;
+  text-align:left;
+  cursor:pointer;
+  transition:transform .12s ease;
+}
+.mode-card:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(58,51,42,.18);}
+.mode-emoji{font-size:30px;flex:0 0 auto;}
+.mode-name{font-size:18px;font-weight:800;}
+.mode-desc{font-size:12px;color:#8a7f6c;margin-top:2px;}
+
+.bgm-toggle{
+  margin-top:6px;
+  display:flex;align-items:center;gap:8px;
+  font-size:12px;color:#8a7f6c;
+  background:none;border:1px solid var(--line);
+  border-radius:100px;padding:8px 16px;
+}
+
+/* ---------- STUDIO (shared paint screen) ---------- */
+#studio{padding:0;}
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px;
+  background:var(--paper2);
+  border-bottom:2px solid var(--ink);
+  gap:8px;
+}
+.icon-btn{
+  border:2px solid var(--ink);
+  background:var(--panel);
+  border-radius:12px;
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  box-shadow:var(--shadow);
+}
+.icon-btn:active{transform:translateY(2px);box-shadow:none;}
+.top-bar-title{font-size:15px;font-weight:800;flex:1;text-align:center;}
+
+.canvas-wrap{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:12px;
+  overflow:hidden;
+  position:relative;
+}
+#board{
+  background:#fff;
+  border:2px solid var(--ink);
+  border-radius:8px;
+  max-width:100%;
+  max-height:100%;
+  touch-action:none;
+  box-shadow:0 6px 0 rgba(58,51,42,.12);
+}
+.hint-badge{
+  position:absolute;top:20px;left:50%;transform:translateX(-50%);
+  background:rgba(58,51,42,.85);color:#fff;
+  padding:6px 14px;border-radius:100px;
+  font-size:12px;pointer-events:none;
+  opacity:0;transition:opacity .3s;
+}
+.hint-badge.show{opacity:1;}
+
+/* choose-preset / upload panels */
+.picker-panel{
+  padding:14px 14px 4px;
+}
+.preset-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  margin-top:8px;
+}
+.preset-thumb{
+  background:#fff;border:2px solid var(--ink);border-radius:12px;
+  aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);
+}
+.preset-thumb canvas{width:100%;height:100%;}
+.preset-thumb:active{transform:translateY(2px);box-shadow:none;}
+
+.upload-box{
+  margin:8px auto 0;
+  border:2px dashed var(--line);
+  border-radius:16px;
+  padding:30px 16px;
+  text-align:center;
+  color:#8a7f6c;
+  max-width:340px;
+}
+.upload-box input{display:none;}
+.upload-btn{
+  display:inline-block;margin-top:10px;
+  background:var(--accent);color:#fff;
+  border:2px solid var(--ink);
+  border-radius:100px;padding:10px 22px;
+  font-weight:700;font-size:14px;
+  box-shadow:var(--shadow);
+}
+
+.draw-tools{
+  display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap;
+}
+.tool-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:12px;padding:8px 12px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.tool-btn.active{background:var(--accent);color:#fff;}
+.tool-btn:active{transform:translateY(2px);box-shadow:none;}
+
+/* bottom paint bar */
+.paint-bar{
+  padding:10px 12px calc(14px + env(safe-area-inset-bottom));
+  background:var(--paper2);
+  border-top:2px solid var(--ink);
+}
+.palette{
+  display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;
+}
+.swatch{
+  flex:0 0 auto;width:34px;height:34px;border-radius:50%;
+  border:2px solid var(--ink);
+}
+.swatch.selected{outline:3px solid var(--accent2);outline-offset:2px;}
+.swatch.custom-swatch{
+  display:flex;align-items:center;justify-content:center;
+  background:#fff;font-size:14px;position:relative;overflow:hidden;
+}
+.swatch.custom-swatch input{
+  position:absolute;inset:0;opacity:0;cursor:pointer;
+}
+.controls-row{
+  display:flex;align-items:center;gap:10px;
+}
+.brush-row{display:flex;align-items:center;gap:6px;flex:1;font-size:12px;color:#8a7f6c;}
+.brush-row input[type=range]{flex:1;}
+.action-row{display:flex;gap:8px;}
+.pill-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:100px;padding:8px 14px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);white-space:nowrap;
+}
+.pill-btn:active{transform:translateY(2px);box-shadow:none;}
+.pill-btn.primary{background:var(--accent2);color:#fff;}
+
+.small-note{font-size:11px;color:#a9987d;text-align:center;margin-top:4px;}
+</style>
+</head>
+<body>
+
+<!-- ================= HOME ================= -->
+<div id="home" class="screen active">
+  <h1 class="home-title">ぬりえ</h1>
+  <p class="home-sub">めがねのおっさん工房</p>
+
+  <div class="mode-list">
+    <div class="mode-card" onclick="goPicker('preset')">
+      <div class="mode-emoji">🖍️</div>
+      <div>
+        <div class="mode-name">えらんでぬる</div>
+        <div class="mode-desc">用意した線画から選んで塗る、定番モード</div>
+      </div>
+    </div>
+    <div class="mode-card" onclick="goPicker('photo')">
+      <div class="mode-emoji">📷</div>
+      <div>
+        <div class="mode-name">しゃしんをせんがに</div>
+        <div class="mode-desc">写真をアップロードして線画に変換して塗る</div>
+      </div>
+    </div>
+    <div class="mode-card" onclick="goDraw()">
+      <div class="mode-emoji">✏️</div>
+      <div>
+        <div class="mode-name">じぶんでかく</div>
+        <div class="mode-desc">丸・四角・線を組み合わせて自分の線画を作る</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="bgm-toggle" id="bgmToggle" onclick="toggleBgm()">🔇 BGM: オフ</button>
+</div>
+
+<!-- ================= PICKER (preset / photo) ================= -->
+<div id="pickerScreen" class="screen">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="goHome()">←</button>
+    <div class="top-bar-title" id="pickerTitle">えらんでぬる</div>
+    <div style="width:40px;"></div>
+  </div>
+
+  <div class="picker-panel" id="presetPicker">
+    <div class="small-note">好きな絵をタップしてね</div>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+
+  <div class="picker-panel" id="photoPicker" style="display:none;">
+    <div class="upload-box">
+      <div>📷 塗りたい写真を選んでね</div>
+      <div style="font-size:11px;margin-top:4px;">輪郭がはっきりした写真ほど、キレイな線画になるで</div>
+      <label class="upload-btn">
+        写真をえらぶ
+        <input type="file" accept="image/*" id="photoInput" onchange="handlePhoto(event)">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- ================= STUDIO (paint screen) ================= -->
+<div id="studio" class="screen">
+  <div class="top-bar">
+    <button class="icon-btn" onclick="goHome()">←</button>
+    <div class="top-bar-title" id="studioTitle">ぬりえ</div>
+    <button class="icon-btn" onclick="clearBoard()">🗑️</button>
+  </div>
+
+  <div class="draw-tools" id="drawTools" style="display:none;">
+    <button class="tool-btn active" id="toolLine" onclick="setDrawTool('line')">／ 線</button>
+    <button class="tool-btn" id="toolCircle" onclick="setDrawTool('circle')">◯ 丸</button>
+    <button class="tool-btn" id="toolRect" onclick="setDrawTool('rect')">▭ 四角</button>
+    <button class="tool-btn" id="toolFreehand" onclick="setDrawTool('freehand')">🖊️ フリー</button>
+    <button class="tool-btn" id="toolDone" onclick="finishDrawing()" style="margin-left:auto;background:var(--accent);color:#fff;">ぬりえにする ✓</button>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="board" width="600" height="600"></canvas>
+    <div class="hint-badge" id="hintBadge">タップして色を塗ろう🎨</div>
+  </div>
+
+  <div class="paint-bar">
+    <div class="palette" id="palette"></div>
+    <div class="controls-row">
+      <div class="brush-row" id="brushRow">
+        <span>ふとさ</span>
+        <input type="range" id="brushSize" min="4" max="40" value="10">
+      </div>
+      <div class="action-row">
+        <button class="pill-btn" onclick="undo()">↩️ 戻す</button>
+        <button class="pill-btn primary" onclick="saveImage()">💾 保存</button>
+      </div>
+    </div>
+    <div class="small-note" id="modeNote"></div>
+  </div>
+</div>
+
+<audio id="bgmAudio" src="nurie-BGM.mp3" loop preload="none"></audio>
+
+<script>
+/* ================= STATE ================= */
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d', {willReadFrequently:true});
+const CW = canvas.width, CH = canvas.height;
+
+let currentMode = 'preset'; // preset | photo | draw
+let currentColor = '#e8623f';
+let history = [];
+let drawTool = 'line';
+let drawStart = null;
+let isDrawingShape = false;
+let freehandPoints = null;
+let isDrawStage = false; // true while in "じぶんでかく" pre-fill drawing stage
+
+const PALETTE = [
+  '#3a332a','#ffffff','#e8623f','#f2b94a','#f7e26b',
+  '#7cb96f','#3f8f8c','#4a86c9','#8a6fbf','#e4739b',
+  '#a9714b','#d9d2c0'
+];
+
+/* ================= NAV ================= */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function goHome(){ showScreen('home'); }
+
+function goPicker(mode){
+  currentMode = mode;
+  showScreen('pickerScreen');
+  document.getElementById('presetPicker').style.display = mode==='preset' ? 'block':'none';
+  document.getElementById('photoPicker').style.display = mode==='photo' ? 'block':'none';
+  document.getElementById('pickerTitle').textContent = mode==='preset' ? 'えらんでぬる' : 'しゃしんをせんがに';
+  if(mode==='preset') buildPresetGrid();
+}
+
+function goDraw(){
+  currentMode = 'draw';
+  isDrawStage = true;
+  resetCanvasWhite();
+  document.getElementById('drawTools').style.display = 'flex';
+  document.getElementById('palette').style.display = 'none';
+  document.getElementById('brushRow').style.display = 'none';
+  document.getElementById('studioTitle').textContent = 'せんがをつくる';
+  document.getElementById('modeNote').textContent = '丸・四角・線・フリーで好きな絵を描いてね。できたら「ぬりえにする」をタップ';
+  document.getElementById('hintBadge').classList.remove('show');
+  history = [];
+  showScreen('studio');
+  pushHistory();
+}
+
+/* ================= CANVAS BASICS ================= */
+function resetCanvasWhite(){
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,CW,CH);
+}
+function pushHistory(){
+  history.push(ctx.getImageData(0,0,CW,CH));
+  if(history.length>25) history.shift();
+}
+function undo(){
+  if(history.length<=1) return;
+  history.pop();
+  const prev = history[history.length-1];
+  ctx.putImageData(prev,0,0);
+}
+function clearBoard(){
+  if(isDrawStage){
+    resetCanvasWhite();
+    history=[]; pushHistory();
+  } else {
+    if(confirm('最初の線画にリセットする？')){
+      loadCurrentLineArt();
+    }
+  }
+}
+function saveImage(){
+  const link = document.createElement('a');
+  link.download = 'nurie-'+Date.now()+'.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ================= PALETTE ================= */
+function buildPalette(){
+  const wrap = document.getElementById('palette');
+  wrap.innerHTML = '';
+  wrap.style.display = 'flex';
+  document.getElementById('brushRow').style.display = 'flex';
+  PALETTE.forEach(c=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (c===currentColor?' selected':'');
+    sw.style.background = c;
+    sw.onclick = ()=>{ currentColor=c; buildPalette(); };
+    wrap.appendChild(sw);
+  });
+  const custom = document.createElement('label');
+  custom.className = 'swatch custom-swatch';
+  custom.innerHTML = '🎨<input type="color" id="customColor">';
+  wrap.appendChild(custom);
+  document.getElementById('customColor').oninput = (e)=>{
+    currentColor = e.target.value; buildPalette();
+  };
+}
+
+/* ================= PRESET LINE ART ================= */
+const PRESETS = [
+  {name:'ほし', draw: drawStar},
+  {name:'はな', draw: drawFlower},
+  {name:'ねこ', draw: drawCat},
+  {name:'まる模様', draw: drawMandala},
+  {name:'いえ', draw: drawHouse},
+  {name:'ちょうちょ', draw: drawButterfly},
+];
+
+function buildPresetGrid(){
+  const grid = document.getElementById('presetGrid');
+  grid.innerHTML = '';
+  PRESETS.forEach((p,i)=>{
+    const thumb = document.createElement('div');
+    thumb.className = 'preset-thumb';
+    const c = document.createElement('canvas');
+    c.width = 150; c.height = 150;
+    const tctx = c.getContext('2d');
+    tctx.fillStyle='#fff'; tctx.fillRect(0,0,150,150);
+    p.draw(tctx,150,150);
+    thumb.appendChild(c);
+    thumb.onclick = ()=> openPreset(i);
+    grid.appendChild(thumb);
+  });
+}
+let activePresetIndex = 0;
+function openPreset(i){
+  activePresetIndex = i;
+  isDrawStage = false;
+  currentMode = 'preset';
+  loadCurrentLineArt();
+  document.getElementById('drawTools').style.display = 'none';
+  document.getElementById('studioTitle').textContent = PRESETS[i].name;
+  document.getElementById('modeNote').textContent = '塗りたい場所をタップしてね';
+  buildPalette();
+  history=[]; pushHistory();
+  showScreen('studio');
+  flashHint();
+}
+function loadCurrentLineArt(){
+  resetCanvasWhite();
+  PRESETS[activePresetIndex].draw(ctx,CW,CH);
+}
+
+function drawStar(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  c.translate(w/2,h/2);
+  c.beginPath();
+  for(let i=0;i<10;i++){
+    const r = i%2===0 ? w*0.42 : w*0.18;
+    const a = Math.PI/5*i - Math.PI/2;
+    const x=Math.cos(a)*r, y=Math.sin(a)*r;
+    i===0?c.moveTo(x,y):c.lineTo(x,y);
+  }
+  c.closePath(); c.stroke();
+  c.restore();
+}
+function drawFlower(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6;
+  const cx=w/2, cy=h/2, petalR=w*0.16;
+  for(let i=0;i<6;i++){
+    const a = Math.PI/3*i;
+    const px = cx + Math.cos(a)*w*0.22;
+    const py = cy + Math.sin(a)*w*0.22;
+    c.beginPath(); c.arc(px,py,petalR,0,Math.PI*2); c.stroke();
+  }
+  c.beginPath(); c.arc(cx,cy,w*0.12,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.moveTo(cx,cy+w*0.22); c.lineTo(cx,h*0.9); c.stroke();
+  c.restore();
+}
+function drawCat(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const cx=w/2, cy=h*0.55;
+  c.beginPath(); c.arc(cx,cy,w*0.28,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.moveTo(cx-w*0.24,cy-h*0.2); c.lineTo(cx-w*0.34,cy-h*0.42); c.lineTo(cx-w*0.1,cy-h*0.28); c.closePath(); c.stroke();
+  c.beginPath(); c.moveTo(cx+w*0.24,cy-h*0.2); c.lineTo(cx+w*0.34,cy-h*0.42); c.lineTo(cx+w*0.1,cy-h*0.28); c.closePath(); c.stroke();
+  c.beginPath(); c.arc(cx-w*0.1,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.arc(cx+w*0.1,cy-h*0.02,4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.moveTo(cx-w*0.3,cy+h*0.02); c.lineTo(cx-w*0.5,cy-h*0.02); c.stroke();
+  c.beginPath(); c.moveTo(cx-w*0.3,cy+h*0.08); c.lineTo(cx-w*0.5,cy+h*0.08); c.stroke();
+  c.beginPath(); c.moveTo(cx+w*0.3,cy+h*0.02); c.lineTo(cx+w*0.5,cy-h*0.02); c.stroke();
+  c.beginPath(); c.moveTo(cx+w*0.3,cy+h*0.08); c.lineTo(cx+w*0.5,cy+h*0.08); c.stroke();
+  c.restore();
+}
+function drawMandala(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=5;
+  const cx=w/2, cy=h/2;
+  for(let r=w*0.1;r<w*0.45;r+=w*0.09){
+    c.beginPath(); c.arc(cx,cy,r,0,Math.PI*2); c.stroke();
+  }
+  for(let i=0;i<12;i++){
+    const a = Math.PI/6*i;
+    c.beginPath();
+    c.moveTo(cx+Math.cos(a)*w*0.1, cy+Math.sin(a)*w*0.1);
+    c.lineTo(cx+Math.cos(a)*w*0.45, cy+Math.sin(a)*w*0.45);
+    c.stroke();
+  }
+  c.restore();
+}
+function drawHouse(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6; c.lineJoin='round';
+  const bx=w*0.22, by=h*0.5, bw=w*0.56, bh=h*0.32;
+  c.strokeRect(bx,by,bw,bh);
+  c.beginPath(); c.moveTo(bx-w*0.06,by); c.lineTo(w/2,h*0.22); c.lineTo(bx+bw+w*0.06,by); c.stroke();
+  c.strokeRect(w*0.46,by+bh*0.35,w*0.1,bh*0.65);
+  c.strokeRect(bx+bw*0.12,by+bh*0.18,bw*0.22,bh*0.32);
+  c.strokeRect(bx+bw*0.66,by+bh*0.18,bw*0.22,bh*0.32);
+  c.restore();
+}
+function drawButterfly(c,w,h){
+  c.save();
+  c.strokeStyle='#3a332a'; c.lineWidth=6;
+  const cx=w/2, cy=h/2;
+  c.beginPath(); c.moveTo(cx,cy-h*0.28); c.lineTo(cx,cy+h*0.28); c.stroke();
+  c.beginPath(); c.ellipse(cx-w*0.18,cy-h*0.14,w*0.18,h*0.16,0.4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx-w*0.16,cy+h*0.16,w*0.14,h*0.13,-0.4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx+w*0.18,cy-h*0.14,w*0.18,h*0.16,-0.4,0,Math.PI*2); c.stroke();
+  c.beginPath(); c.ellipse(cx+w*0.16,cy+h*0.16,w*0.14,h*0.13,0.4,0,Math.PI*2); c.stroke();
+  c.restore();
+}
+
+/* ================= PHOTO -> LINE ART ================= */
+function handlePhoto(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    img.onload = ()=>{
+      resetCanvasWhite();
+      // draw scaled/cropped to fit square canvas
+      const scale = Math.max(CW/img.width, CH/img.height);
+      const dw = img.width*scale, dh = img.height*scale;
+      const dx = (CW-dw)/2, dy=(CH-dh)/2;
+      ctx.drawImage(img,dx,dy,dw,dh);
+      edgeDetect();
+      isDrawStage=false;
+      currentMode='photo';
+      document.getElementById('drawTools').style.display='none';
+      document.getElementById('studioTitle').textContent='しゃしんのぬりえ';
+      document.getElementById('modeNote').textContent='塗りたい場所をタップしてね';
+      buildPalette();
+      history=[]; pushHistory();
+      showScreen('studio');
+      flashHint();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function edgeDetect(){
+  const src = ctx.getImageData(0,0,CW,CH);
+  const w=CW,h=CH;
+  const gray = new Float32Array(w*h);
+  for(let i=0;i<w*h;i++){
+    const r=src.data[i*4], g=src.data[i*4+1], b=src.data[i*4+2];
+    gray[i] = 0.299*r+0.587*g+0.114*b;
+  }
+  const out = ctx.createImageData(w,h);
+  const gx = [-1,0,1,-2,0,2,-1,0,1];
+  const gy = [-1,-2,-1,0,0,0,1,2,1];
+  const THRESH = 60;
+  for(let y=1;y<h-1;y++){
+    for(let x=1;x<w-1;x++){
+      let sx=0, sy=0, k=0;
+      for(let j=-1;j<=1;j++){
+        for(let i=-1;i<=1;i++){
+          const v = gray[(y+j)*w+(x+i)];
+          sx += v*gx[k]; sy += v*gy[k]; k++;
+        }
+      }
+      const mag = Math.sqrt(sx*sx+sy*sy);
+      const idx=(y*w+x)*4;
+      const isEdge = mag > THRESH;
+      const val = isEdge ? 0 : 255;
+      out.data[idx]=val; out.data[idx+1]=val; out.data[idx+2]=val; out.data[idx+3]=255;
+    }
+  }
+  // borders white
+  for(let x=0;x<w;x++){ [0,h-1].forEach(y=>{const idx=(y*w+x)*4; out.data[idx]=255;out.data[idx+1]=255;out.data[idx+2]=255;out.data[idx+3]=255;}); }
+  for(let y=0;y<h;y++){ [0,w-1].forEach(x=>{const idx=(y*w+x)*4; out.data[idx]=255;out.data[idx+1]=255;out.data[idx+2]=255;out.data[idx+3]=255;}); }
+  ctx.putImageData(out,0,0);
+}
+
+/* ================= DRAW-YOUR-OWN MODE ================= */
+function setDrawTool(tool){
+  drawTool = tool;
+  ['toolLine','toolCircle','toolRect','toolFreehand'].forEach(id=>{
+    document.getElementById(id).classList.remove('active');
+  });
+  const map = {line:'toolLine',circle:'toolCircle',rect:'toolRect',freehand:'toolFreehand'};
+  document.getElementById(map[tool]).classList.add('active');
+}
+function finishDrawing(){
+  isDrawStage = false;
+  document.getElementById('drawTools').style.display='none';
+  document.getElementById('studioTitle').textContent='じぶんのぬりえ';
+  document.getElementById('modeNote').textContent='塗りたい場所をタップしてね';
+  buildPalette();
+  history=[]; pushHistory();
+  flashHint();
+}
+
+/* pointer handling: shapes in draw stage, flood fill otherwise */
+let previewSnapshot = null;
+
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.touches? e.touches[0].clientX : e.clientX);
+  const cy = (e.touches? e.touches[0].clientY : e.clientY);
+  return {
+    x: (cx-rect.left) * (CW/rect.width),
+    y: (cy-rect.top) * (CH/rect.height)
+  };
+}
+
+canvas.addEventListener('pointerdown', onDown);
+canvas.addEventListener('pointermove', onMove);
+window.addEventListener('pointerup', onUp);
+
+function onDown(e){
+  if(!isDrawStage){
+    if(document.getElementById('studio').classList.contains('active')){
+      const pos = getPos(e);
+      floodFill(Math.floor(pos.x), Math.floor(pos.y), currentColor);
+      pushHistory();
+    }
+    return;
+  }
+  const pos = getPos(e);
+  isDrawingShape = true;
+  drawStart = pos;
+  previewSnapshot = ctx.getImageData(0,0,CW,CH);
+  if(drawTool==='freehand'){
+    freehandPoints = [pos];
+  }
+}
+function onMove(e){
+  if(!isDrawStage || !isDrawingShape) return;
+  const pos = getPos(e);
+  const lw = parseInt(document.getElementById('brushSize').value)||10;
+  if(drawTool==='freehand'){
+    freehandPoints.push(pos);
+    ctx.putImageData(previewSnapshot,0,0);
+    ctx.strokeStyle='#3a332a'; ctx.lineWidth=Math.max(4,lw*0.5); ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.beginPath();
+    freehandPoints.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+    return;
+  }
+  ctx.putImageData(previewSnapshot,0,0);
+  ctx.strokeStyle='#3a332a'; ctx.lineWidth=6; ctx.lineJoin='round';
+  ctx.beginPath();
+  if(drawTool==='line'){
+    ctx.moveTo(drawStart.x,drawStart.y); ctx.lineTo(pos.x,pos.y);
+  } else if(drawTool==='circle'){
+    const r = Math.hypot(pos.x-drawStart.x,pos.y-drawStart.y);
+    ctx.arc(drawStart.x,drawStart.y,r,0,Math.PI*2);
+  } else if(drawTool==='rect'){
+    ctx.rect(drawStart.x,drawStart.y,pos.x-drawStart.x,pos.y-drawStart.y);
+  }
+  ctx.stroke();
+}
+function onUp(e){
+  if(!isDrawStage || !isDrawingShape) return;
+  isDrawingShape = false;
+  freehandPoints = null;
+  pushHistory();
+}
+
+/* ---- Flood fill (scanline stack based) ---- */
+function hexToRgb(hex){
+  const v = parseInt(hex.slice(1),16);
+  return [(v>>16)&255,(v>>8)&255,v&255,255];
+}
+function floodFill(startX,startY,fillHex){
+  if(startX<0||startY<0||startX>=CW||startY>=CH) return;
+  const img = ctx.getImageData(0,0,CW,CH);
+  const data = img.data;
+  const w=CW,h=CH;
+  const startIdx = (startY*w+startX)*4;
+  const target = [data[startIdx],data[startIdx+1],data[startIdx+2],data[startIdx+3]];
+  const fill = hexToRgb(fillHex);
+  const tol = 40;
+  const matches=(i)=>{
+    return Math.abs(data[i]-target[0])<=tol &&
+           Math.abs(data[i+1]-target[1])<=tol &&
+           Math.abs(data[i+2]-target[2])<=tol;
+  };
+  if(target[0]===fill[0]&&target[1]===fill[1]&&target[2]===fill[2]) return;
+  // avoid filling over dark outline pixels
+  if(target[0]<70 && target[1]<70 && target[2]<70) return;
+
+  const stack=[[startX,startY]];
+  const visited = new Uint8Array(w*h);
+  while(stack.length){
+    const [x,y] = stack.pop();
+    if(x<0||x>=w||y<0||y>=h) continue;
+    const vidx = y*w+x;
+    if(visited[vidx]) continue;
+    const idx = vidx*4;
+    if(!matches(idx)) continue;
+    visited[vidx]=1;
+    data[idx]=fill[0]; data[idx+1]=fill[1]; data[idx+2]=fill[2]; data[idx+3]=255;
+    stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* ================= MISC UI ================= */
+function flashHint(){
+  const b = document.getElementById('hintBadge');
+  b.classList.add('show');
+  setTimeout(()=>b.classList.remove('show'),1800);
+}
+
+/* BGM */
+let bgmOn = false;
+function toggleBgm(){
+  const audio = document.getElementById('bgmAudio');
+  bgmOn = !bgmOn;
+  const btn = document.getElementById('bgmToggle');
+  if(bgmOn){
+    audio.volume = 0.5;
+    audio.play().catch(()=>{});
+    btn.textContent = '🔊 BGM: オン';
+  } else {
+    audio.pause();
+    btn.textContent = '🔇 BGM: オフ';
+  }
+}
+
+/* init */
+buildPresetGrid();
+</script>
+</body>
+</html>
