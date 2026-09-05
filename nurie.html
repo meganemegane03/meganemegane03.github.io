@@ -487,6 +487,7 @@ function buildPalette(){
 
 /* ================= PRESET LINE ART ================= */
 const PRESETS = [
+  {name:'おっさん', draw: drawOssan},
   {name:'ほし', draw: drawStar},
   {name:'はな', draw: drawFlower},
   {name:'ねこ', draw: drawCat},
@@ -534,6 +535,42 @@ function openPreset(i){
 function loadCurrentLineArt(){
   resetCanvasWhite();
   PRESETS[activePresetIndex].draw(ctx,CW,CH);
+}
+
+let ossanCanvas = null;
+let ossanReady = false;
+function preloadOssanPreset(){
+  const img = new Image();
+  img.onload = ()=>{
+    const oc = document.createElement('canvas');
+    oc.width = CW; oc.height = CH;
+    const octx = oc.getContext('2d');
+    octx.fillStyle = '#ffffff'; octx.fillRect(0,0,CW,CH);
+    const scale = Math.max(CW/img.width, CH/img.height);
+    const dw = img.width*scale, dh = img.height*scale;
+    const dx=(CW-dw)/2, dy=(CH-dh)/2;
+    octx.drawImage(img,dx,dy,dw,dh);
+    edgeDetectOnCtx(octx, CW, CH);
+    ossanCanvas = oc;
+    ossanReady = true;
+    if(document.getElementById('pickerScreen').classList.contains('active')){
+      buildPresetGrid();
+    }
+    if(document.getElementById('studio').classList.contains('active') && currentMode==='preset' && PRESETS[activePresetIndex] && PRESETS[activePresetIndex].name==='おっさん'){
+      loadCurrentLineArt();
+    }
+  };
+  img.src = 'nurie-512.JPG';
+}
+function drawOssan(c,w,h){
+  if(ossanReady && ossanCanvas){
+    c.drawImage(ossanCanvas,0,0,CW,CH,0,0,w,h);
+  } else {
+    c.save();
+    c.strokeStyle='#c9bfa8'; c.lineWidth=4;
+    c.beginPath(); c.arc(w/2,h/2,Math.min(w,h)*0.3,0,Math.PI*2); c.stroke();
+    c.restore();
+  }
 }
 
 function drawStar(c,w,h){
@@ -735,14 +772,16 @@ function handlePhoto(e){
 }
 
 function edgeDetect(){
-  const src = ctx.getImageData(0,0,CW,CH);
-  const w=CW,h=CH;
+  edgeDetectOnCtx(ctx, CW, CH);
+}
+function edgeDetectOnCtx(tctx, w, h){
+  const src = tctx.getImageData(0,0,w,h);
   const gray = new Float32Array(w*h);
   for(let i=0;i<w*h;i++){
     const r=src.data[i*4], g=src.data[i*4+1], b=src.data[i*4+2];
     gray[i] = 0.299*r+0.587*g+0.114*b;
   }
-  const out = ctx.createImageData(w,h);
+  const out = tctx.createImageData(w,h);
   const gx = [-1,0,1,-2,0,2,-1,0,1];
   const gy = [-1,-2,-1,0,0,0,1,2,1];
   const THRESH = 60;
@@ -765,7 +804,7 @@ function edgeDetect(){
   // borders white
   for(let x=0;x<w;x++){ [0,h-1].forEach(y=>{const idx=(y*w+x)*4; out.data[idx]=255;out.data[idx+1]=255;out.data[idx+2]=255;out.data[idx+3]=255;}); }
   for(let y=0;y<h;y++){ [0,w-1].forEach(x=>{const idx=(y*w+x)*4; out.data[idx]=255;out.data[idx+1]=255;out.data[idx+2]=255;out.data[idx+3]=255;}); }
-  ctx.putImageData(out,0,0);
+  tctx.putImageData(out,0,0);
 }
 
 /* ================= DRAW-YOUR-OWN MODE ================= */
@@ -968,6 +1007,7 @@ function toggleBgm(){
 
 /* init */
 buildPresetGrid();
+preloadOssanPreset();
 </script>
 </body>
 </html>
