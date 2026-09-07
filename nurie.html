@@ -494,6 +494,9 @@ function buildPalette(){
 /* ================= PRESET LINE ART ================= */
 const PRESETS = [
   {name:'おっさん', draw: drawOssan},
+  {name:'アート1', draw: makeArtDrawFn('art1')},
+  {name:'アート2', draw: makeArtDrawFn('art2')},
+  {name:'アート3', draw: makeArtDrawFn('art3')},
   {name:'ほし', draw: drawStar},
   {name:'はな', draw: drawFlower},
   {name:'ねこ', draw: drawCat},
@@ -578,6 +581,46 @@ function drawOssan(c,w,h){
     c.beginPath(); c.arc(w/2,h/2,Math.min(w,h)*0.3,0,Math.PI*2); c.stroke();
     c.restore();
   }
+}
+
+/* ---- Ready-made art-style line art presets (already line art, no edge detection needed) ---- */
+const ART_NAMES = {art1:'アート1', art2:'アート2', art3:'アート3'};
+let artCanvases = {art1:null, art2:null, art3:null};
+let artReady = {art1:false, art2:false, art3:false};
+function preloadArtPreset(key){
+  const img = new Image();
+  img.onload = ()=>{
+    const oc = document.createElement('canvas');
+    oc.width = CW; oc.height = CH;
+    const octx = oc.getContext('2d');
+    octx.fillStyle = '#ffffff'; octx.fillRect(0,0,CW,CH);
+    const scale = Math.max(CW/img.width, CH/img.height);
+    const dw = img.width*scale, dh = img.height*scale;
+    const dx=(CW-dw)/2, dy=(CH-dh)/2;
+    octx.drawImage(img,dx,dy,dw,dh);
+    artCanvases[key] = oc;
+    artReady[key] = true;
+    if(document.getElementById('pickerScreen').classList.contains('active')){
+      buildPresetGrid();
+    }
+    if(document.getElementById('studio').classList.contains('active') && currentMode==='preset' && PRESETS[activePresetIndex] && PRESETS[activePresetIndex].name===ART_NAMES[key]){
+      loadCurrentLineArt();
+      baseLineArt = ctx.getImageData(0,0,CW,CH);
+    }
+  };
+  img.src = 'nurie-'+key+'.JPG';
+}
+function makeArtDrawFn(key){
+  return function(c,w,h){
+    if(artReady[key] && artCanvases[key]){
+      c.drawImage(artCanvases[key],0,0,CW,CH,0,0,w,h);
+    } else {
+      c.save();
+      c.strokeStyle='#c9bfa8'; c.lineWidth=4;
+      c.beginPath(); c.arc(w/2,h/2,Math.min(w,h)*0.3,0,Math.PI*2); c.stroke();
+      c.restore();
+    }
+  };
 }
 
 function drawStar(c,w,h){
@@ -1068,6 +1111,9 @@ function toggleBgm(){
 /* init */
 buildPresetGrid();
 preloadOssanPreset();
+preloadArtPreset('art1');
+preloadArtPreset('art2');
+preloadArtPreset('art3');
 </script>
 </body>
 </html>
