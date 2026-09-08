@@ -86,6 +86,19 @@ textarea#textInput{
 .pill-btn:active{transform:translateY(2px);box-shadow:none;}
 .pill-btn.primary{background:var(--accent2);color:#fff;}
 .pill-btn.warn{background:var(--accent);color:#fff;}
+.pill-btn.toggle.active{background:var(--ink);color:#fff;}
+
+.orient-row{display:flex;gap:8px;}
+.orient-btn{
+  flex:1;border:2px solid var(--ink);background:var(--panel);
+  border-radius:12px;padding:10px 6px;font-size:12px;font-weight:700;
+  box-shadow:var(--shadow);text-align:center;
+}
+.orient-btn.selected{background:var(--accent);color:#fff;}
+.orient-btn:active{transform:translateY(2px);box-shadow:none;}
+
+.check-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);margin-top:8px;}
+.check-row input{width:18px;height:18px;}
 
 .swatches{display:flex;gap:8px;flex-wrap:wrap;}
 .swatch{
@@ -144,8 +157,14 @@ textarea#textInput{
   <div class="section">
     <div class="btn-row">
       <button class="pill-btn" onclick="undoStroke()">↩️ 線を消す</button>
+      <button class="pill-btn" onclick="redoStroke()">↪️ やり直す</button>
       <button class="pill-btn warn" onclick="clearAll()">🗑️ 文字も含めて消す</button>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">キャンバスの向き</div>
+    <div class="orient-row" id="orientRow"></div>
   </div>
 
   <div class="section">
@@ -155,6 +174,25 @@ textarea#textInput{
       <input type="range" id="fontSizeRange" min="24" max="140" value="60">
       <span>大</span>
     </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">もじの太さ</div>
+    <div class="size-row">
+      <span>細</span>
+      <input type="range" id="fontWeightRange" min="0" max="10" value="0">
+      <span>太</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="btn-row">
+      <button class="pill-btn toggle" id="gradientBtn" onclick="toggleGradient()">🌈 グラデーション</button>
+      <button class="pill-btn toggle" id="shadowBtn" onclick="toggleShadow()">🌗 かげ</button>
+      <button class="pill-btn toggle" id="outlineBtn" onclick="toggleOutline()">🖊️ 縁取り</button>
+    </div>
+    <div class="section-label" style="margin-top:10px;">縁取りの色</div>
+    <div class="swatches" id="outlineSwatches"></div>
   </div>
 
   <div class="section">
@@ -185,7 +223,11 @@ textarea#textInput{
   </div>
 
   <div class="section">
-    <button class="pill-btn primary" style="width:100%;font-size:15px;padding:14px;" onclick="saveImage()">💾 保存する</button>
+    <div class="check-row">
+      <input type="checkbox" id="transparentCheck">
+      <label for="transparentCheck">🫥 背景を透明にして保存(文字だけ書き出す)</label>
+    </div>
+    <button class="pill-btn primary" style="width:100%;font-size:15px;padding:14px;margin-top:10px;" onclick="saveImage()">💾 保存する</button>
   </div>
 
   <div class="footer-pad"></div>
@@ -195,7 +237,14 @@ textarea#textInput{
 /* ================= SETUP ================= */
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
-const CW = canvas.width, CH = canvas.height;
+let CW = canvas.width, CH = canvas.height;
+
+const ORIENTATIONS = {
+  landscape: {w:1200, h:630, label:'横長'},
+  square: {w:1000, h:1000, label:'正方形'},
+  portrait: {w:630, h:1200, label:'縦長'},
+};
+let currentOrientation = 'landscape';
 
 const PALETTE = [
   '#ffffff','#3a332a','#f6efe0',
@@ -217,11 +266,17 @@ const FONTS = [
 
 let bgColor = '#ffffff';
 let textColor = '#3a332a';
+let outlineColor = '#ffffff';
 let selectedFont = FONTS[0].family;
 let fontSize = 60;
+let fontWeight = 0;
+let gradientOn = false;
+let shadowOn = false;
+let outlineOn = false;
 
 let bgImage = null; // {img, scale, offsetX, offsetY}
-let strokes = []; // committed: {points, text, color, font, fontSize}
+let strokes = []; // committed: {points, text, color, font, fontSize, weight, gradient, shadow, outline, outlineColor}
+let redoStack = [];
 let currentPoints = [];
 let drawingActive = false;
 let isPinching = false;
@@ -258,8 +313,57 @@ function refreshBgSwatches(){
 function refreshTextSwatches(){
   buildSwatches('textSwatches', textColor, (c)=>{ textColor=c; refreshTextSwatches(); });
 }
+function refreshOutlineSwatches(){
+  buildSwatches('outlineSwatches', outlineColor, (c)=>{ outlineColor=c; refreshOutlineSwatches(); });
+}
 refreshBgSwatches();
 refreshTextSwatches();
+refreshOutlineSwatches();
+
+/* ================= TOGGLES ================= */
+function toggleGradient(){
+  gradientOn = !gradientOn;
+  document.getElementById('gradientBtn').classList.toggle('active', gradientOn);
+}
+function toggleShadow(){
+  shadowOn = !shadowOn;
+  document.getElementById('shadowBtn').classList.toggle('active', shadowOn);
+}
+function toggleOutline(){
+  outlineOn = !outlineOn;
+  document.getElementById('outlineBtn').classList.toggle('active', outlineOn);
+}
+
+/* ================= ORIENTATION ================= */
+function buildOrientRow(){
+  const row = document.getElementById('orientRow');
+  row.innerHTML = '';
+  Object.keys(ORIENTATIONS).forEach(key=>{
+    const o = ORIENTATIONS[key];
+    const btn = document.createElement('button');
+    btn.className = 'orient-btn' + (key===currentOrientation?' selected':'');
+    btn.textContent = o.label;
+    btn.onclick = ()=> setOrientation(key);
+    row.appendChild(btn);
+  });
+}
+function setOrientation(key){
+  if(key===currentOrientation) return;
+  if(strokes.length>0 || bgImage){
+    if(!confirm('向きを変えると今の絵が消えるけど、ええ?')) return;
+  }
+  currentOrientation = key;
+  const o = ORIENTATIONS[key];
+  CW = o.w; CH = o.h;
+  canvas.width = CW; canvas.height = CH;
+  canvas.style.aspectRatio = `${CW}/${CH}`;
+  strokes = [];
+  redoStack = [];
+  bgImage = null;
+  buildOrientRow();
+  render();
+}
+buildOrientRow();
 
 /* ================= FONT UI ================= */
 function buildFontGrid(){
@@ -278,6 +382,9 @@ buildFontGrid();
 
 document.getElementById('fontSizeRange').addEventListener('input', e=>{
   fontSize = parseInt(e.target.value)||60;
+});
+document.getElementById('fontWeightRange').addEventListener('input', e=>{
+  fontWeight = parseInt(e.target.value)||0;
 });
 
 /* ================= BACKGROUND IMAGE ================= */
@@ -329,7 +436,7 @@ function simplifyPoints(pts){
 }
 
 function drawTextOnPath(tctx, stroke){
-  const {points, text, color, font, fontSize:fs} = stroke;
+  const {points, text, color, font, fontSize:fs, weight, gradient, shadow, outline, outlineColor:oColor} = stroke;
   if(points.length<2 || !text || !text.trim()) return;
   const dists = [0];
   for(let i=1;i<points.length;i++){
@@ -339,7 +446,6 @@ function drawTextOnPath(tctx, stroke){
   if(totalLen < 8) return;
 
   tctx.font = `${fs}px "${font}"`;
-  tctx.fillStyle = color;
   tctx.textBaseline = 'middle';
 
   const chars = Array.from(text);
@@ -354,6 +460,7 @@ function drawTextOnPath(tctx, stroke){
 
   const repeats = Math.max(1, Math.round(totalLen/oneWidth));
   const scale = totalLen / (repeats*oneWidth);
+  const totalCharCount = repeats*chars.length;
 
   let pointIndex = 0;
   function posAtDist(d){
@@ -369,6 +476,7 @@ function drawTextOnPath(tctx, stroke){
   }
 
   let dist = 0;
+  let charGlobalIndex = 0;
   outer:
   for(let r=0;r<repeats;r++){
     for(let i=0;i<chars.length;i++){
@@ -376,25 +484,58 @@ function drawTextOnPath(tctx, stroke){
       dist += w/2;
       if(dist > totalLen) break outer;
       const p = posAtDist(dist);
+
+      const fillColor = gradient
+        ? `hsl(${Math.round((charGlobalIndex/Math.max(1,totalCharCount))*360)},75%,50%)`
+        : color;
+
       tctx.save();
       tctx.translate(p.x,p.y);
       tctx.rotate(p.angle);
       tctx.textAlign = 'center';
+
+      if(shadow){
+        tctx.shadowColor = 'rgba(0,0,0,0.45)';
+        tctx.shadowBlur = fs*0.12;
+        tctx.shadowOffsetX = fs*0.04;
+        tctx.shadowOffsetY = fs*0.06;
+      }
+
+      if(outline){
+        tctx.lineJoin = 'round';
+        tctx.miterLimit = 2;
+        tctx.strokeStyle = oColor;
+        tctx.lineWidth = Math.max(2, fs*0.09);
+        tctx.strokeText(chars[i],0,0);
+      }
+
+      if(weight>0){
+        tctx.lineJoin = 'round';
+        tctx.strokeStyle = fillColor;
+        tctx.lineWidth = weight;
+        tctx.strokeText(chars[i],0,0);
+      }
+
+      tctx.fillStyle = fillColor;
       tctx.fillText(chars[i],0,0);
       tctx.restore();
+
       dist += w/2;
+      charGlobalIndex++;
     }
   }
 }
 
 /* ================= RENDER LOOP ================= */
-function render(){
+function render(skipBackground){
   ctx.clearRect(0,0,CW,CH);
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0,0,CW,CH);
-  drawBackgroundImage();
+  if(!skipBackground){
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0,0,CW,CH);
+    drawBackgroundImage();
+  }
   strokes.forEach(s=>drawTextOnPath(ctx,s));
-  if(drawingActive && currentPoints.length>1){
+  if(!skipBackground && drawingActive && currentPoints.length>1){
     ctx.save();
     ctx.strokeStyle = textColor;
     ctx.globalAlpha = 0.35;
@@ -471,7 +612,12 @@ function onTouchEnd(e){
     const pts = simplifyPoints(currentPoints);
     const text = document.getElementById('textInput').value;
     if(pts.length>3 && text.trim()){
-      strokes.push({points:pts, text, color:textColor, font:selectedFont, fontSize});
+      strokes.push({
+        points:pts, text, color:textColor, font:selectedFont, fontSize,
+        weight:fontWeight, gradient:gradientOn, shadow:shadowOn,
+        outline:outlineOn, outlineColor:outlineColor
+      });
+      redoStack = [];
     }
     currentPoints = [];
     render();
@@ -480,17 +626,29 @@ function onTouchEnd(e){
 
 /* ================= ACTIONS ================= */
 function undoStroke(){
-  strokes.pop();
+  if(strokes.length===0) return;
+  redoStack.push(strokes.pop());
+  render();
+}
+function redoStroke(){
+  if(redoStack.length===0) return;
+  strokes.push(redoStack.pop());
   render();
 }
 function clearAll(){
   strokes = [];
+  redoStack = [];
   render();
 }
 
 function saveImage(){
+  const transparent = document.getElementById('transparentCheck').checked;
+  if(transparent){
+    render(true); // redraw without background, strokes only
+  }
   canvas.toBlob(async (blob)=>{
     if(!blob) return;
+    if(transparent) render(); // restore normal view
     const fileName = 'nazoru-'+Date.now()+'.png';
     const file = new File([blob], fileName, {type:'image/png'});
     if(navigator.canShare && navigator.canShare({files:[file]})){
