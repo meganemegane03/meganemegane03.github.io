@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>なぞる | めがねのおっさん</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=Kosugi+Maru&family=Hachi+Maru+Pop&family=Klee+One:wght@400;600&family=Reggae+One&family=RocknRoll+One&family=Yusei+Magic&family=Yomogi&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#f6efe0;
+  --paper2:#fbf7ee;
+  --ink:#3a332a;
+  --line:#c9bfa8;
+  --accent:#e8623f;
+  --accent2:#3f8f8c;
+  --panel:#fffdf8;
+  --shadow:0 3px 0 rgba(58,51,42,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  margin:0;padding:0;height:100%;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'M PLUS Rounded 1c',sans-serif;
+  overscroll-behavior:none;
+}
+h1,h2{margin:0;font-family:'Yomogi',cursive;font-weight:400;}
+button{font-family:inherit;}
+
+.wrap{
+  display:flex;flex-direction:column;min-height:100dvh;
+}
+.top-bar{
+  display:flex;align-items:center;justify-content:center;
+  padding:calc(12px + env(safe-area-inset-top)) 12px 12px;
+  background:var(--paper2);
+  border-bottom:2px solid var(--ink);
+}
+.top-title{font-size:26px;color:var(--accent);}
+
+.canvas-wrap{
+  padding:14px;display:flex;justify-content:center;
+}
+#board{
+  width:100%;max-width:520px;
+  aspect-ratio:1200/630;
+  background:#fff;
+  border:2px solid var(--ink);
+  border-radius:10px;
+  box-shadow:0 6px 0 rgba(58,51,42,.12);
+  touch-action:none;
+  display:block;
+}
+.hint{
+  text-align:center;font-size:12px;color:#a9987d;
+  padding:2px 16px 0;
+}
+
+.section{
+  padding:14px 16px 0;
+}
+.section-label{
+  font-size:12px;color:#8a7f6c;margin-bottom:6px;font-weight:700;
+}
+textarea#textInput{
+  width:100%;
+  border:2px solid var(--ink);
+  border-radius:12px;
+  padding:10px 12px;
+  font-size:16px;
+  font-family:inherit;
+  resize:none;
+  background:var(--panel);
+  box-shadow:var(--shadow);
+}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pill-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:100px;padding:9px 16px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);white-space:nowrap;
+}
+.pill-btn:active{transform:translateY(2px);box-shadow:none;}
+.pill-btn.primary{background:var(--accent2);color:#fff;}
+.pill-btn.warn{background:var(--accent);color:#fff;}
+
+.swatches{display:flex;gap:8px;flex-wrap:wrap;}
+.swatch{
+  width:32px;height:32px;border-radius:50%;
+  border:2px solid var(--ink);flex:0 0 auto;
+}
+.swatch.selected{outline:3px solid var(--accent2);outline-offset:2px;}
+.swatch.custom-swatch{
+  display:flex;align-items:center;justify-content:center;
+  background:#fff;font-size:13px;position:relative;overflow:hidden;
+}
+.swatch.custom-swatch input{position:absolute;inset:0;opacity:0;}
+
+.font-grid{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:8px;
+}
+.font-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:12px;padding:10px 8px;font-size:16px;
+  box-shadow:var(--shadow);text-align:center;
+}
+.font-btn.selected{background:var(--accent);color:#fff;}
+.font-btn:active{transform:translateY(2px);box-shadow:none;}
+
+.size-row{display:flex;align-items:center;gap:10px;}
+.size-row input[type=range]{flex:1;}
+.size-row span{font-size:12px;color:#8a7f6c;white-space:nowrap;}
+
+.img-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.upload-label{
+  border:2px solid var(--ink);background:var(--accent);color:#fff;
+  border-radius:100px;padding:9px 16px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.upload-label input{display:none;}
+.img-note{font-size:11px;color:#a9987d;margin-top:4px;}
+
+.footer-pad{height:24px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top-bar"><h1 class="top-title">なぞる</h1></div>
+
+  <div class="canvas-wrap">
+    <canvas id="board" width="1200" height="630"></canvas>
+  </div>
+  <div class="hint">指でなぞって線を描くと、その軌跡に沿って文字が並ぶで(2本指で背景画像を拡大・移動できるで)</div>
+
+  <div class="section">
+    <div class="section-label">線に乗せる文字</div>
+    <textarea id="textInput" rows="2" placeholder="めがねのおっさん">めがねのおっさん</textarea>
+  </div>
+
+  <div class="section">
+    <div class="btn-row">
+      <button class="pill-btn" onclick="undoStroke()">↩️ 線を消す</button>
+      <button class="pill-btn warn" onclick="clearAll()">🗑️ 文字も含めて消す</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">もじの大きさ</div>
+    <div class="size-row">
+      <span>小</span>
+      <input type="range" id="fontSizeRange" min="24" max="140" value="60">
+      <span>大</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">背景画像</div>
+    <div class="img-row">
+      <label class="upload-label">
+        📷 画像を選ぶ
+        <input type="file" accept="image/*" id="bgImageInput" onchange="handleBgImage(event)">
+      </label>
+      <button class="pill-btn" onclick="clearBgImage()">画像を消す</button>
+    </div>
+    <div class="img-note">2本指のピンチで拡大縮小、2本指ドラッグで位置調整できるで</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">背景色</div>
+    <div class="swatches" id="bgSwatches"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">文字色</div>
+    <div class="swatches" id="textSwatches"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">フォント</div>
+    <div class="font-grid" id="fontGrid"></div>
+  </div>
+
+  <div class="section">
+    <button class="pill-btn primary" style="width:100%;font-size:15px;padding:14px;" onclick="saveImage()">💾 保存する</button>
+  </div>
+
+  <div class="footer-pad"></div>
+</div>
+
+<script>
+/* ================= SETUP ================= */
+const canvas = document.getElementById('board');
+const ctx = canvas.getContext('2d');
+const CW = canvas.width, CH = canvas.height;
+
+const PALETTE = [
+  '#ffffff','#3a332a','#f6efe0',
+  '#f7e26b','#e8623f','#7cb96f','#3f8f8c','#4a86c9','#8a6fbf','#e4739b'
+];
+
+const FONTS = [
+  {label:'筆書き', family:'Yuji Syuku'},
+  {label:'ゴシック', family:'Noto Sans JP'},
+  {label:'明朝', family:'Noto Serif JP'},
+  {label:'丸ゴシック', family:'Kosugi Maru'},
+  {label:'ポップ', family:'Hachi Maru Pop'},
+  {label:'かわいい', family:'Klee One'},
+  {label:'レトロ', family:'Reggae One'},
+  {label:'ロック', family:'RocknRoll One'},
+  {label:'やさしい', family:'Yusei Magic'},
+  {label:'達筆', family:'Yomogi'},
+];
+
+let bgColor = '#ffffff';
+let textColor = '#3a332a';
+let selectedFont = FONTS[0].family;
+let fontSize = 60;
+
+let bgImage = null; // {img, scale, offsetX, offsetY}
+let strokes = []; // committed: {points, text, color, font, fontSize}
+let currentPoints = [];
+let drawingActive = false;
+let isPinching = false;
+let pinchStartDist = null, pinchStartScale = 1, pinchMidStart = null, pinchStartOffset = {x:0,y:0};
+
+/* ================= FONT PRELOAD ================= */
+function preloadFonts(){
+  FONTS.forEach(f=>{
+    document.fonts.load(`48px "${f.family}"`, 'あ').catch(()=>{});
+  });
+}
+preloadFonts();
+
+/* ================= PALETTE UI ================= */
+function buildSwatches(containerId, current, onPick){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = '';
+  PALETTE.forEach(c=>{
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (c===current?' selected':'');
+    sw.style.background = c;
+    sw.onclick = ()=> onPick(c);
+    wrap.appendChild(sw);
+  });
+  const custom = document.createElement('label');
+  custom.className = 'swatch custom-swatch';
+  custom.innerHTML = '🎨<input type="color">';
+  custom.querySelector('input').oninput = (e)=> onPick(e.target.value);
+  wrap.appendChild(custom);
+}
+function refreshBgSwatches(){
+  buildSwatches('bgSwatches', bgColor, (c)=>{ bgColor=c; refreshBgSwatches(); render(); });
+}
+function refreshTextSwatches(){
+  buildSwatches('textSwatches', textColor, (c)=>{ textColor=c; refreshTextSwatches(); });
+}
+refreshBgSwatches();
+refreshTextSwatches();
+
+/* ================= FONT UI ================= */
+function buildFontGrid(){
+  const grid = document.getElementById('fontGrid');
+  grid.innerHTML = '';
+  FONTS.forEach(f=>{
+    const btn = document.createElement('button');
+    btn.className = 'font-btn' + (f.family===selectedFont?' selected':'');
+    btn.style.fontFamily = `"${f.family}"`;
+    btn.textContent = f.label;
+    btn.onclick = ()=>{ selectedFont = f.family; buildFontGrid(); };
+    grid.appendChild(btn);
+  });
+}
+buildFontGrid();
+
+document.getElementById('fontSizeRange').addEventListener('input', e=>{
+  fontSize = parseInt(e.target.value)||60;
+});
+
+/* ================= BACKGROUND IMAGE ================= */
+function handleBgImage(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const img = new Image();
+    img.onload = ()=>{
+      bgImage = {img, scale:1, offsetX:0, offsetY:0};
+      render();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function clearBgImage(){
+  bgImage = null;
+  render();
+}
+function drawBackgroundImage(){
+  if(!bgImage) return;
+  const img = bgImage.img;
+  const baseScale = Math.max(CW/img.width, CH/img.height);
+  const total = baseScale * bgImage.scale;
+  const dw = img.width*total, dh = img.height*total;
+  const dx = (CW-dw)/2 + bgImage.offsetX;
+  const dy = (CH-dh)/2 + bgImage.offsetY;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0,0,CW,CH);
+  ctx.clip();
+  ctx.drawImage(img,dx,dy,dw,dh);
+  ctx.restore();
+}
+
+/* ================= TEXT ON PATH ================= */
+function simplifyPoints(pts){
+  // drop points that are too close together to keep things light
+  const out = [pts[0]];
+  for(let i=1;i<pts.length;i++){
+    const last = out[out.length-1];
+    if(Math.hypot(pts[i].x-last.x, pts[i].y-last.y) > 3){
+      out.push(pts[i]);
+    }
+  }
+  return out;
+}
+
+function drawTextOnPath(tctx, stroke){
+  const {points, text, color, font, fontSize:fs} = stroke;
+  if(points.length<2 || !text || !text.trim()) return;
+  const dists = [0];
+  for(let i=1;i<points.length;i++){
+    dists.push(dists[i-1] + Math.hypot(points[i].x-points[i-1].x, points[i].y-points[i-1].y));
+  }
+  const totalLen = dists[dists.length-1];
+  if(totalLen < 8) return;
+
+  tctx.font = `${fs}px "${font}"`;
+  tctx.fillStyle = color;
+  tctx.textBaseline = 'middle';
+
+  const chars = Array.from(text);
+  if(chars.length===0) return;
+  let oneWidth = 0;
+  const charWidths = chars.map(ch=>{
+    const w = tctx.measureText(ch).width || fs*0.6;
+    oneWidth += w;
+    return w;
+  });
+  if(oneWidth<=0) return;
+
+  const repeats = Math.max(1, Math.round(totalLen/oneWidth));
+  const scale = totalLen / (repeats*oneWidth);
+
+  let pointIndex = 0;
+  function posAtDist(d){
+    while(pointIndex < dists.length-2 && dists[pointIndex+1] < d) pointIndex++;
+    const segStart = points[pointIndex];
+    const segEnd = points[pointIndex+1] || segStart;
+    const segLen = (dists[pointIndex+1]-dists[pointIndex]) || 1;
+    const t = (d-dists[pointIndex])/segLen;
+    const x = segStart.x + (segEnd.x-segStart.x)*t;
+    const y = segStart.y + (segEnd.y-segStart.y)*t;
+    const angle = Math.atan2(segEnd.y-segStart.y, segEnd.x-segStart.x);
+    return {x,y,angle};
+  }
+
+  let dist = 0;
+  outer:
+  for(let r=0;r<repeats;r++){
+    for(let i=0;i<chars.length;i++){
+      const w = charWidths[i]*scale;
+      dist += w/2;
+      if(dist > totalLen) break outer;
+      const p = posAtDist(dist);
+      tctx.save();
+      tctx.translate(p.x,p.y);
+      tctx.rotate(p.angle);
+      tctx.textAlign = 'center';
+      tctx.fillText(chars[i],0,0);
+      tctx.restore();
+      dist += w/2;
+    }
+  }
+}
+
+/* ================= RENDER LOOP ================= */
+function render(){
+  ctx.clearRect(0,0,CW,CH);
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0,0,CW,CH);
+  drawBackgroundImage();
+  strokes.forEach(s=>drawTextOnPath(ctx,s));
+  if(drawingActive && currentPoints.length>1){
+    ctx.save();
+    ctx.strokeStyle = textColor;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 3;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    currentPoints.forEach((p,i)=> i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+render();
+
+/* ================= TOUCH HANDLING ================= */
+function getTouchPos(t){
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: (t.clientX-rect.left) * (CW/rect.width),
+    y: (t.clientY-rect.top) * (CH/rect.height)
+  };
+}
+function touchDist(t1,t2){
+  return Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+}
+function touchMid(t1,t2){
+  return {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
+}
+
+canvas.addEventListener('touchstart', onTouchStart, {passive:false});
+canvas.addEventListener('touchmove', onTouchMove, {passive:false});
+canvas.addEventListener('touchend', onTouchEnd, {passive:false});
+canvas.addEventListener('touchcancel', onTouchEnd, {passive:false});
+
+function onTouchStart(e){
+  e.preventDefault();
+  if(e.touches.length===1 && !isPinching){
+    drawingActive = true;
+    currentPoints = [getTouchPos(e.touches[0])];
+  } else if(e.touches.length>=2){
+    drawingActive = false;
+    currentPoints = [];
+    isPinching = true;
+    const t1=e.touches[0], t2=e.touches[1];
+    pinchStartDist = touchDist(t1,t2) || 1;
+    pinchStartScale = bgImage ? bgImage.scale : 1;
+    pinchMidStart = touchMid(t1,t2);
+    pinchStartOffset = bgImage ? {x:bgImage.offsetX,y:bgImage.offsetY} : {x:0,y:0};
+  }
+}
+function onTouchMove(e){
+  e.preventDefault();
+  if(isPinching && e.touches.length>=2){
+    if(!bgImage) return;
+    const t1=e.touches[0], t2=e.touches[1];
+    const dist = touchDist(t1,t2) || 1;
+    const factor = dist/pinchStartDist;
+    bgImage.scale = Math.max(0.3, Math.min(6, pinchStartScale*factor));
+    const mid = touchMid(t1,t2);
+    bgImage.offsetX = pinchStartOffset.x + (mid.x-pinchMidStart.x)*(CW/canvas.getBoundingClientRect().width);
+    bgImage.offsetY = pinchStartOffset.y + (mid.y-pinchMidStart.y)*(CH/canvas.getBoundingClientRect().height);
+    render();
+  } else if(drawingActive && e.touches.length===1){
+    currentPoints.push(getTouchPos(e.touches[0]));
+    render();
+  }
+}
+function onTouchEnd(e){
+  e.preventDefault();
+  if(isPinching && e.touches.length<2){
+    isPinching = false;
+  }
+  if(drawingActive && e.touches.length===0){
+    drawingActive = false;
+    const pts = simplifyPoints(currentPoints);
+    const text = document.getElementById('textInput').value;
+    if(pts.length>3 && text.trim()){
+      strokes.push({points:pts, text, color:textColor, font:selectedFont, fontSize});
+    }
+    currentPoints = [];
+    render();
+  }
+}
+
+/* ================= ACTIONS ================= */
+function undoStroke(){
+  strokes.pop();
+  render();
+}
+function clearAll(){
+  strokes = [];
+  render();
+}
+
+function saveImage(){
+  canvas.toBlob(async (blob)=>{
+    if(!blob) return;
+    const fileName = 'nazoru-'+Date.now()+'.png';
+    const file = new File([blob], fileName, {type:'image/png'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{
+        await navigator.share({files:[file], title:'なぞる'});
+        return;
+      }catch(err){
+        if(err && err.name === 'AbortError') return;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url,'_blank');
+    if(!win){
+      alert('保存できひんかった…設定でポップアップを許可してもう一回試してみて');
+    }
+    setTimeout(()=>URL.revokeObjectURL(url), 60000);
+  }, 'image/png');
+}
+</script>
+</body>
+</html>
