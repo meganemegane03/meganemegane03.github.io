@@ -171,7 +171,19 @@ textarea#textInput{
   </div>
 
   <div class="section">
-    <div class="section-label">キャンバスの向き</div>
+    <div class="section-label">背景画像</div>
+    <div class="img-row">
+      <label class="upload-label">
+        📷 画像を選ぶ
+        <input type="file" accept="image/*" id="bgImageInput" onchange="handleBgImage(event)">
+      </label>
+      <button class="pill-btn" onclick="clearBgImage()">画像を消す</button>
+    </div>
+    <div class="img-note">2本指のピンチで拡大縮小、2本指ドラッグで位置調整できるで</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">キャンバスの形</div>
     <div class="orient-row" id="orientRow"></div>
   </div>
 
@@ -201,18 +213,6 @@ textarea#textInput{
     </div>
     <div class="section-label" style="margin-top:10px;">縁取りの色</div>
     <div class="swatches" id="outlineSwatches"></div>
-  </div>
-
-  <div class="section">
-    <div class="section-label">背景画像</div>
-    <div class="img-row">
-      <label class="upload-label">
-        📷 画像を選ぶ
-        <input type="file" accept="image/*" id="bgImageInput" onchange="handleBgImage(event)">
-      </label>
-      <button class="pill-btn" onclick="clearBgImage()">画像を消す</button>
-    </div>
-    <div class="img-note">2本指のピンチで拡大縮小、2本指ドラッグで位置調整できるで</div>
   </div>
 
   <div class="section">
