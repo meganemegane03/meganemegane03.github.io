@@ -70,6 +70,7 @@ button{font-family:inherit;}
 .pill-btn:active{transform:translateY(2px);box-shadow:none;}
 .pill-btn.selected{background:var(--accent);color:#fff;}
 .pill-btn.primary{background:var(--accent2);color:#fff;}
+.pill-btn.warn{background:var(--accent);color:#fff;}
 .pill-btn.toggle.active{background:var(--ink);color:#fff;}
 
 .upload-label{
@@ -78,6 +79,16 @@ button{font-family:inherit;}
   box-shadow:var(--shadow);
 }
 .upload-label input{display:none;}
+
+.preset-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+.preset-thumb-img{
+  width:100%;aspect-ratio:1/1;object-fit:cover;
+  border:2px solid var(--ink);border-radius:10px;
+  box-shadow:var(--shadow);
+}
+.preset-thumb-img:active{transform:translateY(2px);box-shadow:none;}
 
 .stepper{display:flex;align-items:center;gap:14px;}
 .stepper button{
@@ -111,10 +122,16 @@ button{font-family:inherit;}
 .board-inner canvas.piece-el{
   position:absolute;
 }
+.board-placeholder{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#a9987d;font-size:13px;
+}
 .board-toolbar{
-  margin:16px auto 0;
+  margin:12px auto 0;
   width:min(92vw,520px);
-  display:flex;align-items:center;justify-content:space-between;
+  display:none;
+  align-items:center;justify-content:space-between;
 }
 .progress-badge{
   background:var(--ink);color:#fff;
@@ -135,7 +152,7 @@ button{font-family:inherit;}
   background:var(--panel);
   box-shadow:var(--shadow);
   padding:6px;
-  display:flex;
+  display:none;
   gap:2px;
   overflow-x:auto;
   overflow-y:hidden;
@@ -150,7 +167,8 @@ button{font-family:inherit;}
 }
 .tray-scroll-row{
   margin:8px 16px 0;
-  display:flex;align-items:center;gap:8px;
+  display:none;
+  align-items:center;gap:8px;
 }
 .tray-scroll-row span{font-size:16px;}
 .tray-scroll-row input[type=range]{flex:1;}
@@ -203,52 +221,52 @@ canvas.dragging{
 
 <div class="section">
   <div class="section-label">しゃしん</div>
-  <div class="btn-row">
-    <label class="upload-label">
-      📷 画像を選ぶ
-      <input type="file" accept="image/*" id="imgInput" onchange="handleImageUpload(event)">
-    </label>
+  <div id="photoSectionBody"></div>
+</div>
+
+<div id="puzzleControls" style="display:none;">
+  <div class="section">
+    <div class="section-label">なんいど</div>
+    <div class="btn-row" id="difficultyRow"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">マス数(3×3〜6×6)</div>
+    <div class="stepper">
+      <button onclick="changeGrid(-1)">−</button>
+      <div class="stepper-val" id="gridVal">4×4</div>
+      <button onclick="changeGrid(1)">＋</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">ピースの形</div>
+    <div class="btn-row" id="styleRow"></div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">かいてん</div>
+    <div class="btn-row" id="rotationRow"></div>
+  </div>
+
+  <div class="section">
+    <button class="pill-btn primary build-btn" onclick="generatePuzzle()">🧩 パズルを作る</button>
   </div>
 </div>
 
-<div class="section">
-  <div class="section-label">なんいど</div>
-  <div class="btn-row" id="difficultyRow"></div>
-</div>
-
-<div class="section">
-  <div class="section-label">マス数(3×3〜6×6)</div>
-  <div class="stepper">
-    <button onclick="changeGrid(-1)">−</button>
-    <div class="stepper-val" id="gridVal">6×6</div>
-    <button onclick="changeGrid(1)">＋</button>
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-label">ピースの形</div>
-  <div class="btn-row" id="styleRow"></div>
-</div>
-
-<div class="section">
-  <div class="section-label">かいてん</div>
-  <div class="btn-row" id="rotationRow"></div>
-</div>
-
-<div class="section">
-  <button class="pill-btn primary build-btn" onclick="generatePuzzle()">🧩 パズルを作る</button>
+<div class="board-toolbar" id="boardToolbar">
+  <div class="progress-badge" id="progressBadge">0 / 0</div>
+  <button class="hint-toggle-btn" id="hintBtn" onclick="toggleHint()">👁️ ヒント</button>
 </div>
 
 <div class="board-wrap" id="boardWrap">
-  <div class="progress-badge" id="progressBadge">0 / 0</div>
-  <button class="hint-toggle-btn" id="hintBtn" onclick="toggleHint()">👁️ ヒント</button>
   <div class="board-inner" id="boardInner"></div>
 </div>
 
 <div class="tray-wrap" id="trayWrap">
   <div class="tray-empty">「パズルを作る」を押してね</div>
 </div>
-<div class="tray-scroll-row">
+<div class="tray-scroll-row" id="trayScrollRow">
   <span>◀︎</span>
   <input type="range" id="trayScrollSlider" min="0" max="0" value="0">
   <span>▶︎</span>
@@ -270,8 +288,8 @@ canvas.dragging{
 /* ================= CONFIG ================= */
 const BOARD_PX = 800;
 const TAB_DEPTH_RATIO = 0.16;
-const DEFAULT_IMG_SRC = 'nurie-512.JPG';
 const APP_URL = 'https://meganemegane03.github.io/puzzle.html';
+const PRESET_PHOTOS = ['puzzle-photo1.PNG','puzzle-photo2.PNG','puzzle-photo3.PNG','puzzle-photo4.PNG','puzzle-photo5.PNG'];
 
 const TAB_SHAPE = [
   [0.35,0],[0.35,0.5],[0.25,0.75],[0.32,1.0],[0.5,1.15],[0.68,1.0],[0.75,0.75],[0.65,0.5],[0.65,0]
@@ -283,27 +301,33 @@ const DIFFICULTIES = [
   {key:'hard', label:'上級', n:6, rotation:true},
 ];
 
-let N = 6;
+let N = 4;
 let pieceStyle = 'jigsaw'; // 'jigsaw' | 'square'
 let rotationMode = false;
 let hintMode = false;
 let currentDifficultyKey = 'normal';
 
-let sourceCanvas = null; // BOARD_PX x BOARD_PX cropped source image
+let appStage = 'picker'; // 'picker' | 'adjust' | 'ready'
+let puzzleActive = false; // true once pieces are generated and in play
+
 let currentImg = null;
+let sourceCanvas = null; // BOARD_PX x BOARD_PX baked crop, fixed once confirmed
 let pieces = []; // {r,c,canvas,originX,originY,w,h,rotation,placed}
 let placedCount = 0;
 
+let adjustZoom = 1, adjustPanX = 0, adjustPanY = 0;
+let isPanning = false;
+let panTouchStartX = 0, panTouchStartY = 0, panStartX = 0, panStartY = 0;
+
 let dragPiece = null;
 let dragOffsetX = 0, dragOffsetY = 0;
-let touchStartTime = 0, touchStartX = 0, touchStartY = 0;
 let lastTapPiece = null, lastTapTime = 0;
 
 let boardZoom = 1, boardPanX = 0, boardPanY = 0;
 let isPinching = false;
 let pinchStartDist = null, pinchStartZoom = 1, pinchMidStart = null, pinchStartPan = {x:0,y:0};
 
-/* ================= UI BUILDERS ================= */
+/* ================= UI BUILDERS (controls) ================= */
 function buildDifficultyRow(){
   const row = document.getElementById('difficultyRow');
   row.innerHTML = '';
@@ -363,38 +387,169 @@ updateGridLabel();
 buildStyleRow();
 buildRotationRow();
 
-/* ================= IMAGE HANDLING ================= */
+/* ================= PHOTO SECTION (picker / adjust / ready) ================= */
+function renderPhotoSection(){
+  const body = document.getElementById('photoSectionBody');
+  body.innerHTML = '';
+
+  if(appStage==='picker'){
+    const grid = document.createElement('div');
+    grid.className = 'preset-grid';
+    PRESET_PHOTOS.forEach(src=>{
+      const thumb = document.createElement('img');
+      thumb.className = 'preset-thumb-img';
+      thumb.src = src;
+      thumb.onclick = ()=> selectPresetPhoto(src);
+      grid.appendChild(thumb);
+    });
+    body.appendChild(grid);
+
+    const uploadRow = document.createElement('div');
+    uploadRow.className = 'btn-row';
+    uploadRow.style.marginTop = '10px';
+    uploadRow.innerHTML = `<label class="upload-label">📷 アップロードする<input type="file" accept="image/*" id="imgInput" onchange="handleImageUpload(event)"></label>`;
+    body.appendChild(uploadRow);
+
+  } else if(appStage==='adjust'){
+    const note = document.createElement('div');
+    note.className = 'section-label';
+    note.style.margin = '0 0 8px';
+    note.textContent = '2本指でピンチ・1本指でドラッグして位置を決めてな';
+    body.appendChild(note);
+
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+    row.innerHTML = `
+      <button class="pill-btn primary" onclick="confirmCrop()">✅ これで決定</button>
+      <button class="pill-btn" onclick="cancelAdjust()">やめる</button>
+    `;
+    body.appendChild(row);
+
+  } else { // ready
+    const row = document.createElement('div');
+    row.className = 'btn-row';
+    row.innerHTML = `<button class="pill-btn warn" onclick="clearPhoto()">🗑️ 画像を消す</button>`;
+    body.appendChild(row);
+  }
+}
+
+function selectPresetPhoto(src){
+  const img = new Image();
+  img.onload = ()=>{
+    currentImg = img;
+    adjustZoom = 1; adjustPanX = 0; adjustPanY = 0;
+    appStage = 'adjust';
+    renderPhotoSection();
+    renderBoardStage();
+  };
+  img.src = src;
+}
 function handleImageUpload(e){
   const file = e.target.files[0];
   if(!file) return;
   const reader = new FileReader();
   reader.onload = ev=>{
     const img = new Image();
-    img.onload = ()=>{ currentImg = img; };
+    img.onload = ()=>{
+      currentImg = img;
+      adjustZoom = 1; adjustPanX = 0; adjustPanY = 0;
+      appStage = 'adjust';
+      renderPhotoSection();
+      renderBoardStage();
+    };
     img.src = ev.target.result;
   };
   reader.readAsDataURL(file);
 }
-function loadDefaultImage(){
-  const img = new Image();
-  img.onload = ()=>{
-    currentImg = img;
-    generatePuzzle();
-  };
-  img.src = DEFAULT_IMG_SRC;
+function cancelAdjust(){
+  currentImg = null;
+  appStage = 'picker';
+  renderPhotoSection();
+  renderBoardStage();
 }
-function buildSourceCanvas(){
+function confirmCrop(){
+  const boardRect = document.getElementById('boardWrap').getBoundingClientRect();
+  const convFactor = BOARD_PX / boardRect.width;
+
   const sc = document.createElement('canvas');
   sc.width = BOARD_PX; sc.height = BOARD_PX;
   const sctx = sc.getContext('2d');
   sctx.fillStyle = '#ffffff';
   sctx.fillRect(0,0,BOARD_PX,BOARD_PX);
+
   const img = currentImg;
-  const scale = Math.max(BOARD_PX/img.width, BOARD_PX/img.height);
-  const dw = img.width*scale, dh = img.height*scale;
-  const dx = (BOARD_PX-dw)/2, dy=(BOARD_PX-dh)/2;
+  const baseScale = Math.max(BOARD_PX/img.width, BOARD_PX/img.height);
+  const totalScale = baseScale*adjustZoom;
+  const dw = img.width*totalScale, dh = img.height*totalScale;
+  const dx = (BOARD_PX-dw)/2 + adjustPanX*convFactor;
+  const dy = (BOARD_PX-dh)/2 + adjustPanY*convFactor;
   sctx.drawImage(img,dx,dy,dw,dh);
   sourceCanvas = sc;
+
+  appStage = 'ready';
+  puzzleActive = false;
+  renderPhotoSection();
+  renderBoardStage();
+  document.getElementById('puzzleControls').style.display = 'block';
+  updatePlayUIVisibility();
+}
+function clearPhoto(){
+  appStage = 'picker';
+  puzzleActive = false;
+  currentImg = null;
+  sourceCanvas = null;
+  pieces = [];
+  placedCount = 0;
+  renderPhotoSection();
+  renderBoardStage();
+  document.getElementById('puzzleControls').style.display = 'none';
+  document.getElementById('trayWrap').innerHTML = '<div class="tray-empty">「パズルを作る」を押してね</div>';
+  updatePlayUIVisibility();
+  closeComplete();
+}
+
+function updateAdjustTransform(){
+  const img = document.getElementById('adjustImg');
+  if(img) img.style.transform = `translate(${adjustPanX}px,${adjustPanY}px) scale(${adjustZoom})`;
+}
+
+function updatePlayUIVisibility(){
+  document.getElementById('boardToolbar').style.display = puzzleActive ? 'flex' : 'none';
+  document.getElementById('trayWrap').style.display = puzzleActive ? 'flex' : 'none';
+  document.getElementById('trayScrollRow').style.display = puzzleActive ? 'flex' : 'none';
+}
+
+/* ================= BOARD STAGE RENDER (non-play states) ================= */
+function renderBoardStage(){
+  const boardInner = document.getElementById('boardInner');
+  boardInner.innerHTML = '';
+  boardInner.style.transform = 'translate(0px,0px) scale(1)';
+
+  if(appStage==='picker'){
+    const ph = document.createElement('div');
+    ph.className = 'board-placeholder';
+    ph.textContent = 'しゃしんを えらんでな';
+    boardInner.appendChild(ph);
+
+  } else if(appStage==='adjust'){
+    const img = document.createElement('img');
+    img.id = 'adjustImg';
+    img.src = currentImg.src;
+    img.style.position = 'absolute'; img.style.inset = '0';
+    img.style.width = '100%'; img.style.height = '100%';
+    img.style.objectFit = 'cover';
+    img.style.transformOrigin = 'center center';
+    img.style.transform = `translate(${adjustPanX}px,${adjustPanY}px) scale(${adjustZoom})`;
+    boardInner.appendChild(img);
+
+  } else if(appStage==='ready' && !puzzleActive){
+    const prevCanvas = document.createElement('canvas');
+    prevCanvas.width = BOARD_PX; prevCanvas.height = BOARD_PX;
+    prevCanvas.style.position = 'absolute'; prevCanvas.style.inset = '0';
+    prevCanvas.style.width = '100%'; prevCanvas.style.height = '100%';
+    prevCanvas.getContext('2d').drawImage(sourceCanvas,0,0);
+    boardInner.appendChild(prevCanvas);
+  }
 }
 
 /* ================= PUZZLE GENERATION ================= */
@@ -426,11 +581,10 @@ function buildPiecePath(colEdge,rowEdge,r,c,cellSize){
 }
 
 function generatePuzzle(){
-  if(!currentImg){
-    alert('先に画像を選んでな');
+  if(!sourceCanvas){
+    alert('先に画像を選んで位置を決めてな');
     return;
   }
-  buildSourceCanvas();
 
   const cellSize = BOARD_PX/N;
   const colEdge = Array.from({length:N},()=>Array.from({length:N-1},()=>Math.random()<0.5?1:-1));
@@ -474,7 +628,9 @@ function generatePuzzle(){
 
   placedCount = 0;
   hintMode = false;
+  puzzleActive = true;
   document.getElementById('hintBtn').classList.remove('active');
+  updatePlayUIVisibility();
   renderBoard();
   renderTray(true);
   updateProgress();
@@ -487,7 +643,7 @@ function resetZoom(){
   document.getElementById('boardInner').style.transform = 'translate(0px,0px) scale(1)';
 }
 
-/* ================= RENDER ================= */
+/* ================= RENDER (play state) ================= */
 function renderBoard(){
   const boardInner = document.getElementById('boardInner');
   boardInner.innerHTML = '';
@@ -586,6 +742,7 @@ function placePieceOnBoard(p){
   el.style.height = (p.h/BOARD_PX*100)+'%';
   el.style.transform = 'rotate(0deg)';
   el.style.zIndex = 2;
+  el.ontouchstart = null; // lock: correctly placed pieces are no longer draggable
   boardInner.appendChild(el);
 }
 
@@ -593,7 +750,7 @@ function updateProgress(){
   document.getElementById('progressBadge').textContent = `${placedCount} / ${N*N}`;
 }
 
-/* ================= HINT / SHARE ================= */
+/* ================= HINT / SHARE / BGM ================= */
 function toggleHint(){
   hintMode = !hintMode;
   document.getElementById('hintBtn').classList.toggle('active', hintMode);
@@ -629,7 +786,7 @@ function closeComplete(){
   document.getElementById('completeOverlay').classList.remove('show');
 }
 
-/* ================= DRAG & DROP ================= */
+/* ================= DRAG & DROP (pieces) ================= */
 function onPieceTouchStart(e,p){
   e.preventDefault();
   e.stopPropagation();
@@ -637,9 +794,7 @@ function onPieceTouchStart(e,p){
 
   const now = Date.now();
   const t = e.touches[0];
-  touchStartTime = now; touchStartX = t.clientX; touchStartY = t.clientY;
 
-  // double-tap to rotate
   if(rotationMode && lastTapPiece===p && (now-lastTapTime)<350){
     p.rotation = (p.rotation+90)%360;
     p.canvas.style.transform = `rotate(${p.rotation}deg)`;
@@ -717,7 +872,7 @@ function onPieceTouchEnd(e){
   }
 }
 
-/* ================= BOARD PINCH ZOOM ================= */
+/* ================= BOARD TOUCH: adjust-stage pan/pinch, play-stage pinch-zoom ================= */
 const boardWrap = document.getElementById('boardWrap');
 boardWrap.addEventListener('touchstart', onBoardTouchStart, {passive:false});
 boardWrap.addEventListener('touchmove', onBoardTouchMove, {passive:false});
@@ -725,6 +880,24 @@ boardWrap.addEventListener('touchend', onBoardTouchEnd, {passive:false});
 boardWrap.addEventListener('touchcancel', onBoardTouchEnd, {passive:false});
 
 function onBoardTouchStart(e){
+  if(appStage==='adjust'){
+    if(e.touches.length===1){
+      e.preventDefault();
+      isPanning = true;
+      panTouchStartX = e.touches[0].clientX; panTouchStartY = e.touches[0].clientY;
+      panStartX = adjustPanX; panStartY = adjustPanY;
+    } else if(e.touches.length>=2){
+      e.preventDefault();
+      isPanning = false;
+      isPinching = true;
+      const t1=e.touches[0], t2=e.touches[1];
+      pinchStartDist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
+      pinchStartZoom = adjustZoom;
+      pinchMidStart = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
+      pinchStartPan = {x:adjustPanX, y:adjustPanY};
+    }
+    return;
+  }
   if(dragPiece) return;
   if(e.touches.length>=2){
     e.preventDefault();
@@ -737,6 +910,24 @@ function onBoardTouchStart(e){
   }
 }
 function onBoardTouchMove(e){
+  if(appStage==='adjust'){
+    if(isPinching && e.touches.length>=2){
+      e.preventDefault();
+      const t1=e.touches[0], t2=e.touches[1];
+      const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
+      adjustZoom = Math.max(1, Math.min(5, pinchStartZoom*(dist/pinchStartDist)));
+      const mid = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
+      adjustPanX = pinchStartPan.x + (mid.x-pinchMidStart.x);
+      adjustPanY = pinchStartPan.y + (mid.y-pinchMidStart.y);
+      updateAdjustTransform();
+    } else if(isPanning && e.touches.length===1){
+      e.preventDefault();
+      adjustPanX = panStartX + (e.touches[0].clientX-panTouchStartX);
+      adjustPanY = panStartY + (e.touches[0].clientY-panTouchStartY);
+      updateAdjustTransform();
+    }
+    return;
+  }
   if(isPinching && e.touches.length>=2){
     e.preventDefault();
     const t1=e.touches[0], t2=e.touches[1];
@@ -749,11 +940,18 @@ function onBoardTouchMove(e){
   }
 }
 function onBoardTouchEnd(e){
+  if(appStage==='adjust'){
+    if(e.touches.length<2) isPinching = false;
+    if(e.touches.length<1) isPanning = false;
+    return;
+  }
   if(e.touches.length<2) isPinching = false;
 }
 
 /* ================= INIT ================= */
-loadDefaultImage();
+renderPhotoSection();
+renderBoardStage();
+updatePlayUIVisibility();
 </script>
 </body>
 </html>
