@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>パズル | めがねのおっさん</title>
+<meta name="description" content="好きな写真をピースに分けて組み立てる、ジグソーパズルアプリ">
+
+<link rel="manifest" href="puzzle-manifest.json">
+<link rel="apple-touch-icon" href="normal-icon-192.JPG">
+<meta name="theme-color" content="#f6efe0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="パズル">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yomogi&family=M+PLUS+Rounded+1c:wght@400;700;800&family=Kosugi+Maru&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --paper:#f6efe0;
+  --paper2:#fbf7ee;
+  --ink:#3a332a;
+  --line:#c9bfa8;
+  --accent:#e8623f;
+  --accent2:#3f8f8c;
+  --panel:#fffdf8;
+  --shadow:0 3px 0 rgba(58,51,42,.18);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  margin:0;padding:0;height:100%;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'M PLUS Rounded 1c',sans-serif;
+  overscroll-behavior:none;
+}
+h1{margin:0;font-family:'Yomogi',cursive;font-weight:400;}
+button{font-family:inherit;}
+
+.top-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  background:var(--paper2);
+  border-bottom:2px solid var(--ink);
+}
+.top-left{display:flex;flex-direction:column;line-height:1.1;}
+.top-title{font-size:28px;color:var(--accent);}
+.top-sub{
+  font-family:'Kosugi Maru',sans-serif;
+  font-size:10px;letter-spacing:.12em;color:#a9987d;font-weight:700;
+}
+.icon-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:12px;width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:var(--shadow);
+}
+.icon-btn:active{transform:translateY(2px);box-shadow:none;}
+
+.section{padding:14px 16px 0;}
+.section-label{font-size:12px;color:#8a7f6c;margin-bottom:6px;font-weight:700;}
+
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.pill-btn{
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:100px;padding:9px 16px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);white-space:nowrap;
+}
+.pill-btn:active{transform:translateY(2px);box-shadow:none;}
+.pill-btn.selected{background:var(--accent);color:#fff;}
+.pill-btn.primary{background:var(--accent2);color:#fff;}
+.pill-btn.toggle.active{background:var(--ink);color:#fff;}
+
+.upload-label{
+  border:2px solid var(--ink);background:var(--accent);color:#fff;
+  border-radius:100px;padding:9px 16px;font-size:13px;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.upload-label input{display:none;}
+
+.stepper{display:flex;align-items:center;gap:14px;}
+.stepper button{
+  width:38px;height:38px;border-radius:50%;
+  border:2px solid var(--ink);background:var(--panel);
+  font-size:18px;font-weight:800;box-shadow:var(--shadow);
+}
+.stepper button:active{transform:translateY(2px);box-shadow:none;}
+.stepper-val{font-size:18px;font-weight:800;min-width:54px;text-align:center;}
+
+.build-btn{
+  width:100%;font-size:15px;padding:14px;margin-top:6px;
+}
+
+.board-wrap{
+  margin:16px auto 0;
+  width:min(92vw,520px);
+  aspect-ratio:1/1;
+  position:relative;
+  overflow:hidden;
+  border:2px solid var(--ink);
+  border-radius:12px;
+  background:#e8e0cd;
+  touch-action:none;
+  box-shadow:0 6px 0 rgba(58,51,42,.12);
+}
+.board-inner{
+  position:absolute;inset:0;
+  transform-origin:center center;
+}
+.board-inner canvas.piece-el{
+  position:absolute;
+}
+.progress-badge{
+  position:absolute;top:8px;left:8px;
+  background:rgba(58,51,42,.8);color:#fff;
+  font-size:11px;padding:4px 10px;border-radius:100px;
+  z-index:5;
+}
+.hint-toggle-btn{
+  position:absolute;top:8px;right:8px;z-index:5;
+  border:2px solid var(--ink);background:var(--panel);
+  border-radius:100px;padding:6px 12px;font-size:11px;font-weight:700;
+  box-shadow:var(--shadow);
+}
+.hint-toggle-btn.active{background:var(--accent2);color:#fff;}
+
+.tray-wrap{
+  margin:12px 16px 0;
+  border:2px solid var(--ink);
+  border-radius:12px;
+  background:var(--panel);
+  box-shadow:var(--shadow);
+  padding:6px;
+  display:flex;
+  gap:2px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  min-height:88px;
+}
+.tray-slot{
+  width:76px;height:76px;flex:0 0 auto;
+  display:flex;align-items:center;justify-content:center;
+}
+.tray-slot canvas{
+  max-width:100%;max-height:100%;width:auto;height:auto;
+}
+.tray-empty{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;color:#a9987d;font-size:12px;
+}
+
+canvas.piece-el{cursor:grab;}
+canvas.dragging{
+  position:fixed !important;
+  z-index:999;
+  pointer-events:none;
+  transform:none !important;
+}
+
+.complete-overlay{
+  position:fixed;inset:0;
+  background:rgba(58,51,42,.55);
+  display:none;
+  align-items:center;justify-content:center;
+  z-index:50;
+  padding:24px;
+}
+.complete-overlay.show{display:flex;}
+.complete-card{
+  background:var(--panel);border:2px solid var(--ink);
+  border-radius:20px;padding:28px 24px;text-align:center;
+  box-shadow:0 6px 0 rgba(58,51,42,.25);
+  max-width:320px;
+}
+.complete-card h2{font-size:32px;color:var(--accent);margin-bottom:8px;}
+.complete-card p{font-size:13px;color:#8a7f6c;margin:0 0 16px;}
+
+.footer-pad{height:28px;}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-left">
+    <h1 class="top-title">パズル</h1>
+    <div class="top-sub">OSSAN PRESENTS</div>
+  </div>
+  <button class="icon-btn" onclick="shareApp()">🔗</button>
+</div>
+
+<div class="section">
+  <div class="section-label">しゃしん</div>
+  <div class="btn-row">
+    <label class="upload-label">
+      📷 画像を選ぶ
+      <input type="file" accept="image/*" id="imgInput" onchange="handleImageUpload(event)">
+    </label>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">なんいど</div>
+  <div class="btn-row" id="difficultyRow"></div>
+</div>
+
+<div class="section">
+  <div class="section-label">マス数(3×3〜10×10)</div>
+  <div class="stepper">
+    <button onclick="changeGrid(-1)">−</button>
+    <div class="stepper-val" id="gridVal">6×6</div>
+    <button onclick="changeGrid(1)">＋</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-label">ピースの形</div>
+  <div class="btn-row" id="styleRow"></div>
+</div>
+
+<div class="section">
+  <div class="section-label">かいてん</div>
+  <div class="btn-row" id="rotationRow"></div>
+</div>
+
+<div class="section">
+  <button class="pill-btn primary build-btn" onclick="generatePuzzle()">🧩 パズルを作る</button>
+</div>
+
+<div class="board-wrap" id="boardWrap">
+  <div class="progress-badge" id="progressBadge">0 / 0</div>
+  <button class="hint-toggle-btn" id="hintBtn" onclick="toggleHint()">👁️ ヒント</button>
+  <div class="board-inner" id="boardInner"></div>
+</div>
+
+<div class="tray-wrap" id="trayWrap">
+  <div class="tray-empty">「パズルを作る」を押してね</div>
+</div>
+
+<div class="footer-pad"></div>
+
+<div class="complete-overlay" id="completeOverlay">
+  <div class="complete-card">
+    <h2>かんせい!🎉</h2>
+    <p>ようできたな〜おつかれさん</p>
+    <button class="pill-btn primary" onclick="closeComplete()">とじる</button>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIG ================= */
+const BOARD_PX = 800;
+const TAB_DEPTH_RATIO = 0.16;
+const DEFAULT_IMG_SRC = 'nurie-512.JPG';
+const APP_URL = 'https://meganemegane03.github.io/puzzle.html';
+
+const TAB_SHAPE = [
+  [0.35,0],[0.35,0.5],[0.25,0.75],[0.32,1.0],[0.5,1.15],[0.68,1.0],[0.75,0.75],[0.65,0.5],[0.65,0]
+];
+
+const DIFFICULTIES = [
+  {key:'easy', label:'初級', n:4, rotation:false},
+  {key:'normal', label:'中級', n:6, rotation:false},
+  {key:'hard', label:'上級', n:8, rotation:true},
+];
+
+let N = 6;
+let pieceStyle = 'jigsaw'; // 'jigsaw' | 'square'
+let rotationMode = false;
+let hintMode = false;
+let currentDifficultyKey = 'normal';
+
+let sourceCanvas = null; // BOARD_PX x BOARD_PX cropped source image
+let currentImg = null;
+let pieces = []; // {r,c,canvas,originX,originY,w,h,rotation,placed}
+let placedCount = 0;
+
+let dragPiece = null;
+let dragOffsetX = 0, dragOffsetY = 0;
+let touchStartTime = 0, touchStartX = 0, touchStartY = 0;
+let lastTapPiece = null, lastTapTime = 0;
+
+let boardZoom = 1, boardPanX = 0, boardPanY = 0;
+let isPinching = false;
+let pinchStartDist = null, pinchStartZoom = 1, pinchMidStart = null, pinchStartPan = {x:0,y:0};
+
+/* ================= UI BUILDERS ================= */
+function buildDifficultyRow(){
+  const row = document.getElementById('difficultyRow');
+  row.innerHTML = '';
+  DIFFICULTIES.forEach(d=>{
+    const btn = document.createElement('button');
+    btn.className = 'pill-btn' + (d.key===currentDifficultyKey?' selected':'');
+    btn.textContent = d.label;
+    btn.onclick = ()=>{
+      currentDifficultyKey = d.key;
+      N = d.n;
+      rotationMode = d.rotation;
+      buildDifficultyRow();
+      updateGridLabel();
+      buildRotationRow();
+    };
+    row.appendChild(btn);
+  });
+  const custom = document.createElement('button');
+  custom.className = 'pill-btn' + (currentDifficultyKey==='custom'?' selected':'');
+  custom.textContent = 'カスタム';
+  custom.onclick = ()=>{ currentDifficultyKey='custom'; buildDifficultyRow(); };
+  row.appendChild(custom);
+}
+function updateGridLabel(){
+  document.getElementById('gridVal').textContent = `${N}×${N}`;
+}
+function changeGrid(delta){
+  N = Math.max(3, Math.min(10, N+delta));
+  currentDifficultyKey = 'custom';
+  buildDifficultyRow();
+  updateGridLabel();
+}
+function buildStyleRow(){
+  const row = document.getElementById('styleRow');
+  row.innerHTML = '';
+  [['jigsaw','ジグソー風'],['square','シンプル四角']].forEach(([key,label])=>{
+    const btn = document.createElement('button');
+    btn.className = 'pill-btn' + (pieceStyle===key?' selected':'');
+    btn.textContent = label;
+    btn.onclick = ()=>{ pieceStyle=key; buildStyleRow(); };
+    row.appendChild(btn);
+  });
+}
+function buildRotationRow(){
+  const row = document.getElementById('rotationRow');
+  row.innerHTML = '';
+  [[false,'なし'],[true,'あり']].forEach(([key,label])=>{
+    const btn = document.createElement('button');
+    btn.className = 'pill-btn' + (rotationMode===key?' selected':'');
+    btn.textContent = label;
+    btn.onclick = ()=>{ rotationMode=key; currentDifficultyKey='custom'; buildDifficultyRow(); buildRotationRow(); };
+    row.appendChild(btn);
+  });
+}
+buildDifficultyRow();
+updateGridLabel();
+buildStyleRow();
+buildRotationRow();
+
+/* ================= IMAGE HANDLING ================= */
+function handleImageUpload(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    const img = new Image();
+    img.onload = ()=>{ currentImg = img; };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function loadDefaultImage(){
+  const img = new Image();
+  img.onload = ()=>{
+    currentImg = img;
+    generatePuzzle();
+  };
+  img.src = DEFAULT_IMG_SRC;
+}
+function buildSourceCanvas(){
+  const sc = document.createElement('canvas');
+  sc.width = BOARD_PX; sc.height = BOARD_PX;
+  const sctx = sc.getContext('2d');
+  sctx.fillStyle = '#ffffff';
+  sctx.fillRect(0,0,BOARD_PX,BOARD_PX);
+  const img = currentImg;
+  const scale = Math.max(BOARD_PX/img.width, BOARD_PX/img.height);
+  const dw = img.width*scale, dh = img.height*scale;
+  const dx = (BOARD_PX-dw)/2, dy=(BOARD_PX-dh)/2;
+  sctx.drawImage(img,dx,dy,dw,dh);
+  sourceCanvas = sc;
+}
+
+/* ================= PUZZLE GENERATION ================= */
+function edgeSign(colEdge,rowEdge,r,c,side){
+  if(pieceStyle==='square') return 0;
+  if(side==='top') return r===0?0:-rowEdge[r-1][c];
+  if(side==='bottom') return r===N-1?0:rowEdge[r][c];
+  if(side==='left') return c===0?0:-colEdge[r][c-1];
+  if(side==='right') return c===N-1?0:colEdge[r][c];
+}
+function appendEdge(path,sx,sy,ex,ey,sign,cellSize){
+  if(sign===0){ path.push([ex,ey]); return; }
+  const dx=ex-sx, dy=ey-sy;
+  const px=-(dy/cellSize), py=(dx/cellSize);
+  const tabDepth = cellSize*TAB_DEPTH_RATIO;
+  TAB_SHAPE.forEach(([s,d])=>{
+    path.push([sx+dx*s+px*d*tabDepth*sign, sy+dy*s+py*d*tabDepth*sign]);
+  });
+  path.push([ex,ey]);
+}
+function buildPiecePath(colEdge,rowEdge,r,c,cellSize){
+  const x0=c*cellSize, y0=r*cellSize, x1=x0+cellSize, y1=y0+cellSize;
+  const path = [[x0,y0]];
+  appendEdge(path,x0,y0,x1,y0, edgeSign(colEdge,rowEdge,r,c,'top'), cellSize);
+  appendEdge(path,x1,y0,x1,y1, edgeSign(colEdge,rowEdge,r,c,'right'), cellSize);
+  appendEdge(path,x1,y1,x0,y1, edgeSign(colEdge,rowEdge,r,c,'bottom'), cellSize);
+  appendEdge(path,x0,y1,x0,y0, edgeSign(colEdge,rowEdge,r,c,'left'), cellSize);
+  return path;
+}
+
+function generatePuzzle(){
+  if(!currentImg){
+    alert('先に画像を選んでな');
+    return;
+  }
+  buildSourceCanvas();
+
+  const cellSize = BOARD_PX/N;
+  const colEdge = Array.from({length:N},()=>Array.from({length:N-1},()=>Math.random()<0.5?1:-1));
+  const rowEdge = Array.from({length:N-1},()=>Array.from({length:N},()=>Math.random()<0.5?1:-1));
+
+  pieces = [];
+  for(let r=0;r<N;r++){
+    for(let c=0;c<N;c++){
+      const path = buildPiecePath(colEdge,rowEdge,r,c,cellSize);
+      const xs = path.map(p=>p[0]), ys = path.map(p=>p[1]);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const w = Math.ceil(maxX-minX)+2, h = Math.ceil(maxY-minY)+2;
+
+      const pc = document.createElement('canvas');
+      pc.width = w; pc.height = h;
+      const pctx = pc.getContext('2d');
+      pctx.save();
+      pctx.translate(-minX+1,-minY+1);
+      pctx.beginPath();
+      path.forEach(([x,y],i)=> i===0?pctx.moveTo(x,y):pctx.lineTo(x,y));
+      pctx.closePath();
+      pctx.save();
+      pctx.clip();
+      pctx.drawImage(sourceCanvas,0,0);
+      pctx.restore();
+      pctx.lineWidth = 1.5;
+      pctx.strokeStyle = 'rgba(0,0,0,0.28)';
+      pctx.stroke();
+      pctx.restore();
+
+      pc.className = 'piece-el';
+      pieces.push({
+        r,c,canvas:pc,
+        originX:minX-1, originY:minY-1, w, h,
+        rotation: rotationMode ? [0,90,180,270][Math.floor(Math.random()*4)] : 0,
+        placed:false
+      });
+    }
+  }
+
+  placedCount = 0;
+  hintMode = false;
+  document.getElementById('hintBtn').classList.remove('active');
+  renderBoard();
+  renderTray(true);
+  updateProgress();
+  closeComplete();
+  resetZoom();
+}
+
+function resetZoom(){
+  boardZoom=1; boardPanX=0; boardPanY=0;
+  document.getElementById('boardInner').style.transform = 'translate(0px,0px) scale(1)';
+}
+
+/* ================= RENDER ================= */
+function renderBoard(){
+  const boardInner = document.getElementById('boardInner');
+  boardInner.innerHTML = '';
+
+  const hintCanvas = document.createElement('canvas');
+  hintCanvas.width = BOARD_PX; hintCanvas.height = BOARD_PX;
+  hintCanvas.style.position='absolute'; hintCanvas.style.inset='0';
+  hintCanvas.style.width='100%'; hintCanvas.style.height='100%';
+  hintCanvas.style.opacity = hintMode ? '0.25' : '0';
+  hintCanvas.id = 'hintCanvas';
+  const hctx = hintCanvas.getContext('2d');
+  hctx.drawImage(sourceCanvas,0,0);
+  boardInner.appendChild(hintCanvas);
+
+  const gridCanvas = document.createElement('canvas');
+  gridCanvas.width = BOARD_PX; gridCanvas.height = BOARD_PX;
+  gridCanvas.style.position='absolute'; gridCanvas.style.inset='0';
+  gridCanvas.style.width='100%'; gridCanvas.style.height='100%';
+  const gctx = gridCanvas.getContext('2d');
+  gctx.strokeStyle = 'rgba(58,51,42,0.25)';
+  gctx.lineWidth = 1;
+  const cell = BOARD_PX/N;
+  for(let i=1;i<N;i++){
+    gctx.beginPath(); gctx.moveTo(i*cell,0); gctx.lineTo(i*cell,BOARD_PX); gctx.stroke();
+    gctx.beginPath(); gctx.moveTo(0,i*cell); gctx.lineTo(BOARD_PX,i*cell); gctx.stroke();
+  }
+  boardInner.appendChild(gridCanvas);
+}
+
+function renderTray(shuffle){
+  const tray = document.getElementById('trayWrap');
+  tray.innerHTML = '';
+  const unplaced = pieces.filter(p=>!p.placed);
+  if(unplaced.length===0){
+    const empty = document.createElement('div');
+    empty.className = 'tray-empty';
+    empty.textContent = 'ぜんぶ置けたで!';
+    tray.appendChild(empty);
+    return;
+  }
+  const order = shuffle ? shuffleArray(unplaced.slice()) : unplaced;
+  order.forEach(p=>{
+    const slot = document.createElement('div');
+    slot.className = 'tray-slot';
+    setupPieceEl(p);
+    slot.appendChild(p.canvas);
+    tray.appendChild(slot);
+  });
+}
+function shuffleArray(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function setupPieceEl(p){
+  const el = p.canvas;
+  el.classList.add('piece-el');
+  el.style.transform = `rotate(${p.rotation}deg)`;
+  el.style.position = '';
+  el.style.left=''; el.style.top=''; el.style.width=''; el.style.height='';
+  el.ontouchstart = (e)=>onPieceTouchStart(e,p);
+}
+
+function placePieceOnBoard(p){
+  const boardInner = document.getElementById('boardInner');
+  const el = p.canvas;
+  el.classList.remove('dragging');
+  el.style.position = 'absolute';
+  el.style.left = (p.originX/BOARD_PX*100)+'%';
+  el.style.top = (p.originY/BOARD_PX*100)+'%';
+  el.style.width = (p.w/BOARD_PX*100)+'%';
+  el.style.height = (p.h/BOARD_PX*100)+'%';
+  el.style.transform = 'rotate(0deg)';
+  el.style.zIndex = 2;
+  boardInner.appendChild(el);
+}
+
+function updateProgress(){
+  document.getElementById('progressBadge').textContent = `${placedCount} / ${N*N}`;
+}
+
+/* ================= HINT / SHARE ================= */
+function toggleHint(){
+  hintMode = !hintMode;
+  document.getElementById('hintBtn').classList.toggle('active', hintMode);
+  const hc = document.getElementById('hintCanvas');
+  if(hc) hc.style.opacity = hintMode ? '0.25' : '0';
+}
+function shareApp(){
+  if(navigator.share){
+    navigator.share({title:'パズル | めがねのおっさん', url:APP_URL}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(APP_URL).then(()=>{
+      alert('リンクをコピーしたで📋');
+    }).catch(()=>{});
+  } else {
+    prompt('このURLをコピーしてな', APP_URL);
+  }
+}
+function closeComplete(){
+  document.getElementById('completeOverlay').classList.remove('show');
+}
+
+/* ================= DRAG & DROP ================= */
+function onPieceTouchStart(e,p){
+  e.preventDefault();
+  e.stopPropagation();
+  if(e.touches.length!==1) return;
+
+  const now = Date.now();
+  const t = e.touches[0];
+  touchStartTime = now; touchStartX = t.clientX; touchStartY = t.clientY;
+
+  // double-tap to rotate
+  if(rotationMode && lastTapPiece===p && (now-lastTapTime)<350){
+    p.rotation = (p.rotation+90)%360;
+    p.canvas.style.transform = `rotate(${p.rotation}deg)`;
+    lastTapPiece = null;
+    return;
+  }
+  lastTapPiece = p; lastTapTime = now;
+
+  const rect = p.canvas.getBoundingClientRect();
+  dragOffsetX = t.clientX - rect.left;
+  dragOffsetY = t.clientY - rect.top;
+  dragPiece = p;
+
+  p.canvas.classList.add('dragging');
+  p.canvas.style.width = rect.width+'px';
+  p.canvas.style.height = rect.height+'px';
+  p.canvas.style.left = rect.left+'px';
+  p.canvas.style.top = rect.top+'px';
+  document.body.appendChild(p.canvas);
+
+  document.addEventListener('touchmove', onPieceTouchMove, {passive:false});
+  document.addEventListener('touchend', onPieceTouchEnd, {passive:false});
+}
+function onPieceTouchMove(e){
+  if(!dragPiece) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  dragPiece.canvas.style.left = (t.clientX-dragOffsetX)+'px';
+  dragPiece.canvas.style.top = (t.clientY-dragOffsetY)+'px';
+}
+function onPieceTouchEnd(e){
+  if(!dragPiece) return;
+  e.preventDefault();
+  const p = dragPiece;
+  dragPiece = null;
+  document.removeEventListener('touchmove', onPieceTouchMove);
+  document.removeEventListener('touchend', onPieceTouchEnd);
+
+  const pieceRect = p.canvas.getBoundingClientRect();
+  const dropX = pieceRect.left + pieceRect.width/2;
+  const dropY = pieceRect.top + pieceRect.height/2;
+
+  const boardInner = document.getElementById('boardInner');
+  const boardRect = boardInner.getBoundingClientRect();
+
+  let matched = false;
+  if(dropX>=boardRect.left && dropX<=boardRect.right && dropY>=boardRect.top && dropY<=boardRect.bottom){
+    const fracX = (dropX-boardRect.left)/boardRect.width;
+    const fracY = (dropY-boardRect.top)/boardRect.height;
+    const targetC = Math.floor(fracX*N);
+    const targetR = Math.floor(fracY*N);
+    const rotOK = !rotationMode || p.rotation%360===0;
+    if(targetR===p.r && targetC===p.c && rotOK){
+      matched = true;
+    }
+  }
+
+  if(matched){
+    p.placed = true;
+    placedCount++;
+    placePieceOnBoard(p);
+    updateProgress();
+    renderTray(false);
+    if(placedCount===N*N){
+      setTimeout(()=>{
+        document.getElementById('completeOverlay').classList.add('show');
+      }, 200);
+    }
+  } else {
+    p.canvas.classList.remove('dragging');
+    p.canvas.style.position = '';
+    p.canvas.style.left=''; p.canvas.style.top='';
+    p.canvas.style.width=''; p.canvas.style.height='';
+    renderTray(false);
+  }
+}
+
+/* ================= BOARD PINCH ZOOM ================= */
+const boardWrap = document.getElementById('boardWrap');
+boardWrap.addEventListener('touchstart', onBoardTouchStart, {passive:false});
+boardWrap.addEventListener('touchmove', onBoardTouchMove, {passive:false});
+boardWrap.addEventListener('touchend', onBoardTouchEnd, {passive:false});
+boardWrap.addEventListener('touchcancel', onBoardTouchEnd, {passive:false});
+
+function onBoardTouchStart(e){
+  if(dragPiece) return;
+  if(e.touches.length>=2){
+    e.preventDefault();
+    isPinching = true;
+    const t1=e.touches[0], t2=e.touches[1];
+    pinchStartDist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
+    pinchStartZoom = boardZoom;
+    pinchMidStart = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
+    pinchStartPan = {x:boardPanX, y:boardPanY};
+  }
+}
+function onBoardTouchMove(e){
+  if(isPinching && e.touches.length>=2){
+    e.preventDefault();
+    const t1=e.touches[0], t2=e.touches[1];
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
+    boardZoom = Math.max(1, Math.min(3.5, pinchStartZoom*(dist/pinchStartDist)));
+    const mid = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
+    boardPanX = pinchStartPan.x + (mid.x-pinchMidStart.x);
+    boardPanY = pinchStartPan.y + (mid.y-pinchMidStart.y);
+    document.getElementById('boardInner').style.transform = `translate(${boardPanX}px,${boardPanY}px) scale(${boardZoom})`;
+  }
+}
+function onBoardTouchEnd(e){
+  if(e.touches.length<2) isPinching = false;
+}
+
+/* ================= INIT ================= */
+loadDefaultImage();
+</script>
+</body>
+</html>
