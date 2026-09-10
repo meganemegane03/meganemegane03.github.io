@@ -139,12 +139,18 @@ button{font-family:inherit;}
   min-height:88px;
 }
 .tray-slot{
-  width:76px;height:76px;flex:0 0 auto;
+  flex:0 0 auto;
   display:flex;align-items:center;justify-content:center;
 }
 .tray-slot canvas{
   max-width:100%;max-height:100%;width:auto;height:auto;
 }
+.tray-scroll-row{
+  margin:8px 16px 0;
+  display:flex;align-items:center;gap:8px;
+}
+.tray-scroll-row span{font-size:16px;}
+.tray-scroll-row input[type=range]{flex:1;}
 .tray-empty{
   display:flex;align-items:center;justify-content:center;
   width:100%;color:#a9987d;font-size:12px;
@@ -186,7 +192,10 @@ canvas.dragging{
     <h1 class="top-title">パズル</h1>
     <div class="top-sub">OSSAN PRESENTS</div>
   </div>
-  <button class="icon-btn" onclick="shareApp()">🔗</button>
+  <div class="btn-row" style="gap:8px;">
+    <button class="icon-btn" id="bgmToggleBtn" onclick="toggleBgm()">🔇</button>
+    <button class="icon-btn" onclick="shareApp()">🔗</button>
+  </div>
 </div>
 
 <div class="section">
@@ -205,7 +214,7 @@ canvas.dragging{
 </div>
 
 <div class="section">
-  <div class="section-label">マス数(3×3〜10×10)</div>
+  <div class="section-label">マス数(3×3〜6×6)</div>
   <div class="stepper">
     <button onclick="changeGrid(-1)">−</button>
     <div class="stepper-val" id="gridVal">6×6</div>
@@ -236,6 +245,11 @@ canvas.dragging{
 <div class="tray-wrap" id="trayWrap">
   <div class="tray-empty">「パズルを作る」を押してね</div>
 </div>
+<div class="tray-scroll-row">
+  <span>◀︎</span>
+  <input type="range" id="trayScrollSlider" min="0" max="0" value="0">
+  <span>▶︎</span>
+</div>
 
 <div class="footer-pad"></div>
 
@@ -246,6 +260,8 @@ canvas.dragging{
     <button class="pill-btn primary" onclick="closeComplete()">とじる</button>
   </div>
 </div>
+
+<audio id="bgmAudio" src="nurie-BGM.mp3" loop preload="none"></audio>
 
 <script>
 /* ================= CONFIG ================= */
@@ -259,9 +275,9 @@ const TAB_SHAPE = [
 ];
 
 const DIFFICULTIES = [
-  {key:'easy', label:'初級', n:4, rotation:false},
-  {key:'normal', label:'中級', n:6, rotation:false},
-  {key:'hard', label:'上級', n:8, rotation:true},
+  {key:'easy', label:'初級', n:3, rotation:false},
+  {key:'normal', label:'中級', n:4, rotation:false},
+  {key:'hard', label:'上級', n:6, rotation:true},
 ];
 
 let N = 6;
@@ -312,7 +328,7 @@ function updateGridLabel(){
   document.getElementById('gridVal').textContent = `${N}×${N}`;
 }
 function changeGrid(delta){
-  N = Math.max(3, Math.min(10, N+delta));
+  N = Math.max(3, Math.min(6, N+delta));
   currentDifficultyKey = 'custom';
   buildDifficultyRow();
   updateGridLabel();
@@ -507,17 +523,38 @@ function renderTray(shuffle){
     empty.className = 'tray-empty';
     empty.textContent = 'ぜんぶ置けたで!';
     tray.appendChild(empty);
+    setupTrayScroll();
     return;
   }
+  const boardRect = document.getElementById('boardWrap').getBoundingClientRect();
+  const cellPx = Math.round(boardRect.width / N);
   const order = shuffle ? shuffleArray(unplaced.slice()) : unplaced;
   order.forEach(p=>{
     const slot = document.createElement('div');
     slot.className = 'tray-slot';
+    slot.style.width = cellPx+'px';
+    slot.style.height = cellPx+'px';
     setupPieceEl(p);
     slot.appendChild(p.canvas);
     tray.appendChild(slot);
   });
+  setupTrayScroll();
 }
+function setupTrayScroll(){
+  const tray = document.getElementById('trayWrap');
+  const slider = document.getElementById('trayScrollSlider');
+  requestAnimationFrame(()=>{
+    const maxScroll = Math.max(0, tray.scrollWidth - tray.clientWidth);
+    slider.max = maxScroll;
+    slider.value = tray.scrollLeft;
+  });
+}
+document.getElementById('trayScrollSlider').addEventListener('input', e=>{
+  document.getElementById('trayWrap').scrollLeft = parseInt(e.target.value)||0;
+});
+document.getElementById('trayWrap').addEventListener('scroll', ()=>{
+  document.getElementById('trayScrollSlider').value = document.getElementById('trayWrap').scrollLeft;
+});
 function shuffleArray(arr){
   for(let i=arr.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
@@ -569,6 +606,20 @@ function shareApp(){
     }).catch(()=>{});
   } else {
     prompt('このURLをコピーしてな', APP_URL);
+  }
+}
+let bgmOn = false;
+function toggleBgm(){
+  const audio = document.getElementById('bgmAudio');
+  bgmOn = !bgmOn;
+  const btn = document.getElementById('bgmToggleBtn');
+  if(bgmOn){
+    audio.volume = 0.5;
+    audio.play().catch(()=>{});
+    btn.textContent = '🔊';
+  } else {
+    audio.pause();
+    btn.textContent = '🔇';
   }
 }
 function closeComplete(){
