@@ -678,6 +678,7 @@ function renderBoard(){
 
 function renderTray(){
   const tray = document.getElementById('trayWrap');
+  const prevScroll = tray.scrollLeft;
   tray.innerHTML = '';
   const unplaced = trayOrder.filter(p=>!p.placed);
   if(unplaced.length===0){
@@ -699,6 +700,7 @@ function renderTray(){
     slot.appendChild(p.canvas);
     tray.appendChild(slot);
   });
+  tray.scrollLeft = prevScroll;
   setupTrayScroll();
 }
 function setupTrayScroll(){
@@ -900,16 +902,7 @@ function onBoardTouchStart(e){
     }
     return;
   }
-  if(dragPiece) return;
-  if(e.touches.length>=2){
-    e.preventDefault();
-    isPinching = true;
-    const t1=e.touches[0], t2=e.touches[1];
-    pinchStartDist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
-    pinchStartZoom = boardZoom;
-    pinchMidStart = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
-    pinchStartPan = {x:boardPanX, y:boardPanY};
-  }
+  // no board zoom/pan during play; pieces handle their own drag
 }
 function onBoardTouchMove(e){
   if(appStage==='adjust'){
@@ -930,16 +923,7 @@ function onBoardTouchMove(e){
     }
     return;
   }
-  if(isPinching && e.touches.length>=2){
-    e.preventDefault();
-    const t1=e.touches[0], t2=e.touches[1];
-    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY) || 1;
-    boardZoom = Math.max(1, Math.min(3.5, pinchStartZoom*(dist/pinchStartDist)));
-    const mid = {x:(t1.clientX+t2.clientX)/2, y:(t1.clientY+t2.clientY)/2};
-    boardPanX = pinchStartPan.x + (mid.x-pinchMidStart.x);
-    boardPanY = pinchStartPan.y + (mid.y-pinchMidStart.y);
-    document.getElementById('boardInner').style.transform = `translate(${boardPanX}px,${boardPanY}px) scale(${boardZoom})`;
-  }
+  // no board zoom/pan during play
 }
 function onBoardTouchEnd(e){
   if(appStage==='adjust'){
@@ -947,7 +931,6 @@ function onBoardTouchEnd(e){
     if(e.touches.length<1) isPanning = false;
     return;
   }
-  if(e.touches.length<2) isPinching = false;
 }
 
 /* ================= INIT ================= */
