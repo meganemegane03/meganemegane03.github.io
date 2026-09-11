@@ -313,6 +313,7 @@ let puzzleActive = false; // true once pieces are generated and in play
 let currentImg = null;
 let sourceCanvas = null; // BOARD_PX x BOARD_PX baked crop, fixed once confirmed
 let pieces = []; // {r,c,canvas,originX,originY,w,h,rotation,placed}
+let trayOrder = []; // shuffled piece order, persists across re-renders
 let placedCount = 0;
 
 let adjustZoom = 1, adjustPanX = 0, adjustPanY = 0;
@@ -499,6 +500,7 @@ function clearPhoto(){
   currentImg = null;
   sourceCanvas = null;
   pieces = [];
+  trayOrder = [];
   placedCount = 0;
   renderPhotoSection();
   renderBoardStage();
@@ -629,10 +631,11 @@ function generatePuzzle(){
   placedCount = 0;
   hintMode = false;
   puzzleActive = true;
+  trayOrder = shuffleArray(pieces.slice());
   document.getElementById('hintBtn').classList.remove('active');
   updatePlayUIVisibility();
   renderBoard();
-  renderTray(true);
+  renderTray();
   updateProgress();
   closeComplete();
   resetZoom();
@@ -673,10 +676,10 @@ function renderBoard(){
   boardInner.appendChild(gridCanvas);
 }
 
-function renderTray(shuffle){
+function renderTray(){
   const tray = document.getElementById('trayWrap');
   tray.innerHTML = '';
-  const unplaced = pieces.filter(p=>!p.placed);
+  const unplaced = trayOrder.filter(p=>!p.placed);
   if(unplaced.length===0){
     const empty = document.createElement('div');
     empty.className = 'tray-empty';
@@ -687,8 +690,7 @@ function renderTray(shuffle){
   }
   const boardRect = document.getElementById('boardWrap').getBoundingClientRect();
   const cellPx = Math.round(boardRect.width / N);
-  const order = shuffle ? shuffleArray(unplaced.slice()) : unplaced;
-  order.forEach(p=>{
+  unplaced.forEach(p=>{
     const slot = document.createElement('div');
     slot.className = 'tray-slot';
     slot.style.width = cellPx+'px';
@@ -857,7 +859,7 @@ function onPieceTouchEnd(e){
     placedCount++;
     placePieceOnBoard(p);
     updateProgress();
-    renderTray(false);
+    renderTray();
     if(placedCount===N*N){
       setTimeout(()=>{
         document.getElementById('completeOverlay').classList.add('show');
@@ -868,7 +870,7 @@ function onPieceTouchEnd(e){
     p.canvas.style.position = '';
     p.canvas.style.left=''; p.canvas.style.top='';
     p.canvas.style.width=''; p.canvas.style.height='';
-    renderTray(false);
+    renderTray();
   }
 }
 
