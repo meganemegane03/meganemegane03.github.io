@@ -497,6 +497,12 @@ const PRESETS = [
   {name:'アート1', draw: makeArtDrawFn('art1')},
   {name:'アート2', draw: makeArtDrawFn('art2')},
   {name:'アート3', draw: makeArtDrawFn('art3')},
+  {name:'アート4', draw: makeArtDrawFn('art4')},
+  {name:'アート5', draw: makeArtDrawFn('art5')},
+  {name:'アート6', draw: makeArtDrawFn('art6')},
+  {name:'アート7', draw: makeArtDrawFn('art7')},
+  {name:'アート8', draw: makeArtDrawFn('art8')},
+  {name:'アート9', draw: makeArtDrawFn('art9')},
   {name:'ほし', draw: drawStar},
   {name:'はな', draw: drawFlower},
   {name:'ねこ', draw: drawCat},
@@ -584,9 +590,18 @@ function drawOssan(c,w,h){
 }
 
 /* ---- Ready-made art-style line art presets (already line art, no edge detection needed) ---- */
-const ART_NAMES = {art1:'アート1', art2:'アート2', art3:'アート3'};
-let artCanvases = {art1:null, art2:null, art3:null};
-let artReady = {art1:false, art2:false, art3:false};
+const ART_FILES = {
+  art1:'nurie-art1.JPG', art2:'nurie-art2.JPG', art3:'nurie-art3.JPG',
+  art4:'nurie-art4.PNG', art5:'nurie-art5.PNG', art6:'nurie-art6.PNG',
+  art7:'nurie-art7.PNG', art8:'nurie-art8.PNG', art9:'nurie-art9.WEBP'
+};
+const ART_NAMES = {
+  art1:'アート1', art2:'アート2', art3:'アート3',
+  art4:'アート4', art5:'アート5', art6:'アート6',
+  art7:'アート7', art8:'アート8', art9:'アート9'
+};
+let artCanvases = {};
+let artReady = {};
 function preloadArtPreset(key){
   const img = new Image();
   img.onload = ()=>{
@@ -608,7 +623,7 @@ function preloadArtPreset(key){
       baseLineArt = ctx.getImageData(0,0,CW,CH);
     }
   };
-  img.src = 'nurie-'+key+'.JPG';
+  img.src = ART_FILES[key];
 }
 function makeArtDrawFn(key){
   return function(c,w,h){
@@ -1114,6 +1129,12 @@ preloadOssanPreset();
 preloadArtPreset('art1');
 preloadArtPreset('art2');
 preloadArtPreset('art3');
+preloadArtPreset('art4');
+preloadArtPreset('art5');
+preloadArtPreset('art6');
+preloadArtPreset('art7');
+preloadArtPreset('art8');
+preloadArtPreset('art9');
 </script>
 </body>
 </html>
