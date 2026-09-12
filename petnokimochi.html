@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff4dc">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ペットの気持ち">
+<link rel="manifest" href="petnokimochi-manifest.json">
+<link rel="apple-touch-icon" href="normal-icon-192.JPG">
+<title>ペットの気持ち</title>
+<style>
+:root{--bg:#fff7e8;--card:#fff;--ink:#3b3028;--accent:#e8895b;--accent2:#6c9b78;--line:#eadbc5}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 10% 5%,#fff 0 8%,transparent 9%),var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;min-height:100vh}
+body:before{content:"🐾  🐾  🐾";position:fixed;top:8px;left:10px;right:10px;text-align:center;opacity:.18;letter-spacing:18px;font-size:22px;pointer-events:none}
+main{width:min(680px,100%);margin:auto;padding:28px 16px 38px}
+header{text-align:center;margin:16px 0 20px}
+h1{font-size:34px;margin:0 0 5px;letter-spacing:.04em}
+.subtitle{font-size:14px;opacity:.72}
+.card{background:rgba(255,255,255,.92);border:2px solid var(--line);border-radius:28px;padding:20px;box-shadow:0 8px 24px rgba(80,55,30,.08);margin-bottom:16px}
+.hero{text-align:center}
+.preview-wrap{display:none;position:relative;margin:0 auto 18px;max-width:560px}
+.preview{display:block;width:100%;max-height:52vh;object-fit:contain;border-radius:22px;background:#f4ead8}
+.badge{position:absolute;right:10px;top:10px;background:#fff;padding:6px 10px;border-radius:999px;font-size:12px;box-shadow:0 2px 8px #0001}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button,.file-label{border:0;border-radius:18px;padding:15px 12px;font-size:16px;font-weight:800;cursor:pointer;text-align:center;transition:transform .08s}
+button:active,.file-label:active{transform:scale(.97)}
+.primary{background:var(--accent);color:#fff}
+.secondary{background:#f1e4cf;color:var(--ink)}
+input[type=file]{display:none}
+.note{font-size:12px;line-height:1.7;text-align:center;opacity:.7;margin-top:13px}
+.result{display:none}
+.speech{position:relative;background:#fffdf8;border:3px solid var(--ink);border-radius:24px;padding:20px 18px;margin:8px 0 20px;font-size:19px;font-weight:700;line-height:1.65;text-align:left;white-space:pre-line}
+.speech:after{content:"";position:absolute;left:38px;bottom:-15px;width:24px;height:24px;background:#fffdf8;border-right:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg)}
+.result-title{font-size:24px;text-align:center;font-weight:900;margin:5px 0 12px}
+.stats{display:grid;gap:10px}
+.stat{display:flex;align-items:center;justify-content:space-between;background:#fff7e8;border-radius:15px;padding:11px 13px;font-size:14px}
+.stat b{font-size:15px}
+.meter{font-size:18px;letter-spacing:1px}
+.small{font-size:11px;opacity:.62}
+.bottom-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.disclaimer{text-align:center;font-size:12px;opacity:.65;line-height:1.7;margin:15px 0 0}
+.loading{display:none;text-align:center;padding:20px;font-weight:800}
+footer{text-align:center;font-size:11px;opacity:.55;margin-top:20px}
+@media(max-width:430px){h1{font-size:30px}.card{padding:16px;border-radius:24px}.speech{font-size:18px}button,.file-label{font-size:15px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>🐾 ペットの気持ち</h1>
+<div class="subtitle">この子、いったい何を思ってるんやろ？</div>
+</header>
+
+<section class="card hero" id="inputCard">
+<div class="preview-wrap" id="previewWrap">
+<img id="preview" class="preview" alt="選んだペットの写真">
+<div class="badge">📷 写真は端末内だけで使用</div>
+</div>
+<div id="startText">
+<p style="font-size:18px;font-weight:800;margin:5px 0 18px">ペットの写真を見せてや〜🤣</p>
+</div>
+<div class="actions">
+<label class="file-label primary" for="cameraInput">📸 写真を撮る</label>
+<label class="file-label secondary" for="photoInput">🖼️ 写真を選ぶ</label>
+<input id="cameraInput" type="file" accept="image/*" capture="environment">
+<input id="photoInput" type="file" accept="image/*">
+</div>
+<div class="note">写真はどこにも送信しません。<br>このアプリはAIで本当の気持ちを読んでいるわけではありません😂</div>
+</section>
+
+<div class="loading" id="loading">この子の気持ちを勝手に妄想中……🤔</div>
+
+<section class="card result" id="resultCard">
+<div class="result-title">この子の気持ちは……</div>
+<div class="speech" id="speech"></div>
+<div class="stats" id="stats"></div>
+<div class="disclaimer">※このアプリの勝手な妄想です。<br>当たってるように見えても、たぶん偶然です🤣</div>
+<div class="bottom-actions">
+<button class="primary" id="againBtn">🔄 もう一回聞く！</button>
+<button class="secondary" id="photoBtn">📸 別の写真で聞く</button>
+</div>
+</section>
+
+<footer>ペットの気持ち　— 今日も勝手に通訳中 —</footer>
+</main>
+
+<script>
+const lines = {"ご飯・おやつ":["なぁ。そろそろご飯ちゃう？\n時計見てみ。完全にご飯の時間やで。","おやつの袋、さっき鳴ったよな？\n聞こえてへんフリしても無駄やで。","ご飯まだ？\nいや、怒ってへん。\nただ、めっちゃ待ってるだけや。","その袋なに？\nおやつ？\n……ほな、こっち来るわ。","一回だけ言うで。\nおやつ欲しい。\n……もう一回言おか？","今日のご飯、ちょっと豪華にしてくれてもええで。\n記念日やから。\n何の記念日かは知らんけど。","さっき食べたって？\nそれはそれ。\n今は今や。","冷蔵庫開けたな。\nワシには分かる。\n何か出てくる音や。","おやつ一個だけ？\nその『一個』って、袋一個のことやろ？","ご飯を残す日もある。\nでもおやつは残さん。\nそこはプロや。","食べ終わったで。\n次のご飯まで何分？\n長すぎへん？","その手に持ってるもん、食べ物ちゃうん？\n……ちゃうんか。\nほな興味ないわ。","おやつくれるまで見つめるで。\n瞬きも減らすで。\n覚悟しいや。","ご飯の時間が近づくと元気になる。\n偶然やで。\nほんまに偶然。","ちょっと聞いて。\nワシの胃袋、まだ空いてるらしい。\n困ったもんやな。","ご飯まだやのに『待て』って言うたな？\n待つのはええ。\nでも早めに頼むわ。","おやつの気配を感じた。\n科学では説明できへん。\nでもワシには分かる。","その袋、こっち向けて。\n匂いだけでもええ。\n……いや、やっぱ現物で。","今日は少なめにする？\nワシの希望は多め。\n交渉しよか。","食後のデザートは？\nペットにも文化というもんがあるんや。","お皿ピカピカやろ？\n洗ったんちゃうで。\nワシが全部食べたんや。","ご飯の音がした気がする。\n確認しに行くわ。\n仕事やから。","おやつを隠したな？\n場所は分からん。\nでも探す気は満々や。","『太るで』って言われてもな。\nそれは明日のワシに任せる。","一口だけちょうだい。\n……その一口を何回かに分けてもええで。","ご飯の量を測ってる？\n細かいこと気にせんでもええって。","ワシが見てる方向、分かる？\nそう、キッチンや。\n察して。","食べ物の話してたやろ。\n寝てても聞こえるんや。\nこれは才能や。","おやつをくれへん日がある？\nそれは困る。\n改善を要求する。","ご飯を食べた後にまた欲しくなる。\nこれを『食欲』と呼ぶらしい。\n便利な言葉やな。"],"散歩":["なぁ。\n外、ええ天気やで。\n散歩行こか。","リード見えた。\nもう準備できたで。\n飼い主だけや。","散歩行く？\n『あと5分』は信用してへんで。","玄関の前まで来た。\nここから先は任せたで。","今日はどこ行くん？\nワシは右でも左でもええ。\n全部行こ。","散歩の時間や。\n用事？\n散歩より大事なん？","靴履いたな。\nつまり散歩やな。\nはい、決定。","外の匂い、確認したい。\n全部な。\n一個残らず。","散歩中に止まる？\nワシが止まる時は理由がある。\nだいたい匂いや。","ちょっと待って。\nあそこの匂い、気になる。\nめっちゃ気になる。","散歩ってええな。\n歩くし、嗅ぐし、帰ったら寝られる。\n完璧や。","今日は長めで頼む。\n昨日短かったからな。\n帳尻合わせや。","『もう帰ろ』って？\nまだや。\nここからが本番や。","散歩の途中で急に走る？\nあれは予定通りや。\nたぶん。","外に出た瞬間、元気になる？\n家では充電中やっただけや。","散歩行かへんの？\nワシ、もう心の準備できてるで。","リード持ってるやん。\nそれを持ってどこ行くつもりや？","散歩中のワシを写真撮る？\nまず歩こうや。","あの角、気になる。\n昨日も気になった。\n今日も気になる。","散歩から帰る？\n分かった。\nでも最後にもう一周だけ。"],"飼い主への文句":["なぁ。\nそのスマホ、ワシより長く見てへん？","写真撮りすぎや。\n同じ顔しかしてへんで。","呼んだ？\n聞こえてたけど、今は行かへん。","『こっち見て』って言うけどな。\nワシ、ずっと見てたで。","掃除機うるさいねん。\n毎回あれ何なん？","そこワシの場所やで。\n先に座ったからって勝ちちゃうぞ。","寝てる時に触るな。\n起きるやろ。\n当たり前や。","名前呼びすぎや。\n名前は一日一回でええ。","その服、ワシの毛ついてるで。\n……ワシのせいやけど。","また写真撮るん？\nさっき撮ったやん。\nほぼ同じやん。","ワシが静かにしてる時はな。\nだいたい何か考えてるんや。","『ダメ』って言うけど、\n何がダメかワシには分からん。","抱っこする前に一言ほしい。\n心の準備ってもんがある。","その席、ワシが狙ってた。\n知らんかった？\n今知ったな。","急に大声出すな。\nびっくりするやろ。","ワシの寝顔を撮るな。\n……でも可愛く撮れたなら許す。","何回も撫でるな。\n……いや、そこはもうちょい続けて。","『おいで』って言われたから来た。\nご褒美は？","ワシが見てへんところで何食べてる？\n隠しても匂いで分かる。","今日は帰ってくるの遅かったな。\nちょっと寂しかったぞ。","留守番ありがとうって？\n当然や。\nでもお土産は？","電話中に鳴くなって？\nワシも参加したかっただけや。","パソコン触ってるな。\nその画面よりワシ見た方がええで。","その箱、ワシ入れる？\n……入れへんのか。\nちょっと期待したわ。","ベッド狭いな。\nワシが広く使ってるんちゃう。\nそっちが端に寄ってるだけや。","ドア閉めたな。\n開けて。\nいや、やっぱ閉めて。\n……やっぱ開けて。","ワシの名前を間違えたな。\n聞いたで。","『今日は静かやな』って言った？\nフラグ立てるな。","何でもワシのせいにするな。\n落としたのはたまたまや。","ワシを置いて出かける時、顔が寂しそうやったな。\n……まあ、ちょっとだけ寂しかったで。"],"甘え":["なぁ。\nちょっとだけそばにおって。","今日は甘えてもええ日やろ？\n何曜日でもええけど。","撫でてほしい。\nそこやない。\nもうちょい右や。","ここ座るわ。\n隣、空いてるやろ？","眠くなってきた。\nそばにおると安心するわ。","ちょっとだけ抱っこして。\n……ちょっとだけやで。","名前呼ばれるの、嫌いやないで。\nもう一回呼んで。","ワシ、ここ好きやねん。\n君の近くやから。","今日は一緒に寝よか。\n場所はワシが決める。","何もせんでええ。\nただ、そこにおって。","撫でる手、止まったな。\n再開してええで。","ワシが近づいたんや。\n気づいてくれてもええんやで。","ちょっと寂しかった。\n……今は大丈夫や。","そばに来た？\nよし。\nこれで安心や。","呼んだら来てくれる？\n……来てくれたら嬉しい。","今日はなんか、甘えたい気分や。\n理由はない。","ここで寝てもええ？\nもう寝てるけどな。","手、貸して。\n匂い確認するだけや。\nたぶん。","ワシ、君のこと結構好きやで。\n内緒やけど。","もうちょっとだけ一緒におろか。\n時間は気にせんでええ。"],"謎発言":["今日、壁がちょっと違う。\n……昨日から同じやけど。","なぁ。\n夢の中ではワシ、二足歩行やったで。","あの音、聞こえた？\nワシには聞こえた。\n何の音かは知らん。","急に走りたくなった。\n理由？\nない。","今から何もない方向を見る。\n気にせんといて。","ワシには分かる。\n今日は何かが起こる。\nたぶん昼寝や。","さっき夢で会ったな。\n君、夢の中でもスマホ見てたで。","あの角には何かある。\n何かはない。\nでも何かある。","突然静かになる時がある。\nそれは秘密の時間や。","ワシ、今すごいこと考えてる。\n……忘れた。","もしワシが喋れたら？\n今とそんな変わらんと思うで。","今日は床の気分や。\n昨日はソファの気分やった。","急にこっち見た？\nワシも今、君を見てた。","あの箱、昨日より大きく見える。\nたぶん気のせいや。","ワシの尻尾には意思がある。\nワシより先に動くこともある。","何もないところを見てる？\n……そこに何かあるかもしれんやろ。","今のワシ、賢そうやろ？\n何も考えてへんけど。","人間って不思議やな。\n自分でドア開けるんやもんな。","今日は宇宙について考えてた。\n3秒くらい。","この家のルール？\nワシがまだ把握してへん。"],"ツッコミ":["いや、何でやねん。","今それするん？\nタイミングおかしいやろ。","写真撮るんかい！\nしかもまた同じ角度！","おやつないんかい！\n期待したワシの気持ち返して！","散歩ちゃうんかい！\n靴履いただけかい！","それワシの場所やろ！\nなんで君が座ってんねん！","呼んどいて来たら何もないんかい！","『すぐ戻る』って長いねん！","その袋、ワシのちゃうんかい！\n紛らわしいねん！","撫でるんかい！\n……そこは正解や。","何で今掃除機出すねん！\n平和を返して！","寝ようとした瞬間に呼ぶんかい！","ご飯減ってるやん！\nそれ『健康管理』で済ませるんかい！","こっち見て笑うな！\n何がおもろいねん！","また名前呼んだな！\nさっき返事したやろ！","急に抱っこするんかい！\n予告してくれ！","その音なんやねん！\nワシびっくりしたわ！","『かわいい』って何回言うねん！\n……まあ、もっと言ってもええけど。","ワシが寝てる時だけ写真撮るな！\n起きてる時も撮れ！","それ、ワシのおもちゃやろ！\n君が遊んでどうすんねん！","外行くと思ったら行かへんのかい！","おやつ一個って言うたな？\n袋ごととは言うてへんけど！","何でそこに置いたんや！\n取りにくいやろ！","呼んだのに無視するんかい！\nこっちが無視した時は怒るくせに！","それ新しい箱やん！\nまずワシに見せんかい！","ワシが見てるからって何でも見せるな！","もう寝るんかい！\nワシまだ寝てへんで！","『ちょっとだけ』が長いねん！\n人間のちょっと怖いわ！","何もしてへんのに笑うな！\nこっちまで恥ずかしいわ！","結局おやつくれるんかい！\n最初からそう言え！"],"偉そう":["今日の予定？\nワシの機嫌次第や。","そこ、ワシが使う。\n空けといて。","ご飯は決まった時間に。\nワシのスケジュール優先でな。","撫でる許可を出そう。\nありがたく思って。","散歩コースはワシが決める。\n異論は認めへん。","写真？\n角度はワシが指定する。","ワシを待たせるとはな。\nなかなか度胸あるやん。","おやつを持ってきて。\n話はそれからや。","今日はここで寝る。\n場所取りは済んでる。","君の仕事は何かって？\nワシのお世話やろ。","ワシが起きた。\n一日の始まりや。","ワシが寝た。\n静かにしてな。","その席、譲って。\nワシの方が似合うから。","ワシのご飯は丁寧に。\n盛り付けにも品格が必要や。","呼ばれたから来た。\n感謝してええで。","今日は特別に触らせたる。\n時間制限付きや。","ワシの顔を見て。\nこれが本日の正解や。","君が家におる？\nそれは良かった。\nワシの警備が楽になる。","ワシの機嫌を取る方法？\n簡単や。\nおやつ。","では、今日もよろしく。\nワシは寝る。"],"眠い":["眠い。\n以上。\nもう寝るで。","今しゃべる？\n明日にしてくれへん？","あと5分だけ寝る。\n……5分って長いで。","起こさんといて。\n起きてるけど寝てるから。","眠い時のワシ、かなり賢い。\n何もしないという判断ができる。","今日はいっぱい寝た。\nでもまだ寝られる。\n才能やな。","その音、ちょっと静かにして。\n睡眠の邪魔や。","寝る場所探してる。\nここも違う。\nあっちも違う。","今から寝る。\n何か用事ある？\nないな。よし。","眠い。\nご飯の時だけ起こして。","ワシが目を閉じたら寝てると思ってええ。\nだいたい合ってる。","昼寝は仕事や。\n邪魔したらあかん。","寝返りしただけや。\n起きてへん。","その布団、空いてる？\n……ほな使うわ。","眠気には勝てへん。\n勝つ気もない。","さっき寝た？\n寝た。\nでも今も眠い。","今日は早めに寝る。\nたぶんすぐ寝る。","名前呼ばれた？\n聞こえたけど返事は明日。","今のワシに必要なのは、おやつ……ちゃう、睡眠や。","おやすみ。\nまだ昼？\n知らん。寝る。"]};
+const flat = Object.entries(lines).flatMap(([category, arr]) => arr.map(text => ({category,text})));
+let lastIndex = -1;
+let currentUrl = null;
+
+const cameraInput = document.getElementById('cameraInput');
+const photoInput = document.getElementById('photoInput');
+const preview = document.getElementById('preview');
+const previewWrap = document.getElementById('previewWrap');
+const inputCard = document.getElementById('inputCard');
+const resultCard = document.getElementById('resultCard');
+const loading = document.getElementById('loading');
+const speech = document.getElementById('speech');
+const stats = document.getElementById('stats');
+
+function pickLine(){
+  let i;
+  do { i = Math.floor(Math.random()*flat.length); } while(flat.length>1 && i===lastIndex);
+  lastIndex=i;
+  return flat[i];
+}
+function stars(n){
+  return "★".repeat(n)+"☆".repeat(5-n);
+}
+function percent(){
+  return Math.floor(Math.random()*101);
+}
+function makeStats(){
+  const mood = Math.floor(Math.random()*5)+1;
+  const honesty = Math.floor(Math.random()*5)+1;
+  return [
+    ["本音度", `<span class="meter">${stars(honesty)}</span>`],
+    ["飼い主への不満", `<b>${percent()}%</b>`],
+    ["おやつへの執着", `<b>${percent()}%</b>`],
+    ["今の機嫌", `<b>${percent()}%</b>`],
+    ["AIの自信", `<b>${Math.floor(Math.random()*31)}%</b>`]
+  ].map(([label,value])=>`<div class="stat"><span>${label}</span><span>${value}</span></div>`).join("");
+}
+
+function showResult(){
+  const picked = pickLine();
+  speech.textContent = picked.text;
+  stats.innerHTML = makeStats();
+  resultCard.style.display = "block";
+  resultCard.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function handleFile(file){
+  if(!file) return;
+  if(!file.type.startsWith("image/")) return;
+  if(currentUrl) URL.revokeObjectURL(currentUrl);
+  currentUrl = URL.createObjectURL(file);
+  preview.src = currentUrl;
+  previewWrap.style.display = "block";
+  document.getElementById("startText").style.display = "none";
+  resultCard.style.display = "none";
+  loading.style.display = "block";
+  setTimeout(()=>{
+    loading.style.display = "none";
+    showResult();
+  },450);
+}
+
+cameraInput.addEventListener("change", e=>handleFile(e.target.files[0]));
+photoInput.addEventListener("change", e=>handleFile(e.target.files[0]));
+document.getElementById("againBtn").addEventListener("click", ()=>{
+  loading.style.display="block";
+  resultCard.style.display="none";
+  setTimeout(()=>{
+    loading.style.display="none";
+    showResult();
+  },300);
+});
+document.getElementById("photoBtn").addEventListener("click", ()=>{
+  resultCard.style.display="none";
+  inputCard.scrollIntoView({behavior:"smooth",block:"start"});
+  photoInput.click();
+});
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./petnokimochi-sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
