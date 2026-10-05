@@ -42,12 +42,17 @@ button{font-family:inherit;}
   display:flex;flex-direction:column;min-height:100dvh;
 }
 .top-bar{
-  display:flex;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:calc(12px + env(safe-area-inset-top)) 12px 12px;
   background:var(--paper2);
   border-bottom:2px solid var(--ink);
 }
-.top-title{font-size:26px;color:var(--accent);}
+.top-title{font-size:26px;color:var(--accent);letter-spacing:.04em;}
+.top-sub{
+  font-family:'M PLUS Rounded 1c',sans-serif;
+  font-size:10px;letter-spacing:.12em;color:#a9987d;font-weight:700;
+  margin-top:2px;
+}
 
 .canvas-wrap{
   padding:14px;display:flex;justify-content:center;
@@ -150,7 +155,10 @@ textarea#textInput{
 <body>
 
 <div class="wrap">
-  <div class="top-bar"><h1 class="top-title">なぞる</h1></div>
+  <div class="top-bar">
+    <h1 class="top-title">NAZORU</h1>
+    <div class="top-sub">MEGANE OSSAN PRODUCE</div>
+  </div>
 
   <div class="canvas-wrap">
     <canvas id="board" width="1200" height="630"></canvas>
@@ -159,7 +167,7 @@ textarea#textInput{
 
   <div class="section">
     <div class="section-label">線に乗せる文字</div>
-    <textarea id="textInput" rows="2" placeholder="めがねのおっさん">めがねのおっさん</textarea>
+    <textarea id="textInput" rows="2" placeholder="めがねのおっさん"></textarea>
   </div>
 
   <div class="section">
@@ -288,6 +296,10 @@ let redoStack = [];
 let currentPoints = [];
 let drawingActive = false;
 let isPinching = false;
+let straightMode = false;
+let straightOrigin = null;
+let holdTimer = null;
+const HOLD_MS = 450;
 let pinchStartDist = null, pinchStartScale = 1, pinchMidStart = null, pinchStartOffset = {x:0,y:0};
 
 /* ================= FONT PRELOAD ================= */
@@ -577,13 +589,27 @@ canvas.addEventListener('touchmove', onTouchMove, {passive:false});
 canvas.addEventListener('touchend', onTouchEnd, {passive:false});
 canvas.addEventListener('touchcancel', onTouchEnd, {passive:false});
 
+function enterStraightMode(){
+  if(!drawingActive || currentPoints.length===0) return;
+  straightMode = true;
+  const lastPt = currentPoints[currentPoints.length-1];
+  currentPoints = [straightOrigin, lastPt];
+  render();
+}
 function onTouchStart(e){
   e.preventDefault();
   if(e.touches.length===1 && !isPinching){
     drawingActive = true;
-    currentPoints = [getTouchPos(e.touches[0])];
+    straightMode = false;
+    clearTimeout(holdTimer);
+    const pos = getTouchPos(e.touches[0]);
+    currentPoints = [pos];
+    straightOrigin = pos;
+    holdTimer = setTimeout(enterStraightMode, HOLD_MS);
   } else if(e.touches.length>=2){
+    clearTimeout(holdTimer);
     drawingActive = false;
+    straightMode = false;
     currentPoints = [];
     isPinching = true;
     const t1=e.touches[0], t2=e.touches[1];
@@ -606,7 +632,14 @@ function onTouchMove(e){
     bgImage.offsetY = pinchStartOffset.y + (mid.y-pinchMidStart.y)*(CH/canvas.getBoundingClientRect().height);
     render();
   } else if(drawingActive && e.touches.length===1){
-    currentPoints.push(getTouchPos(e.touches[0]));
+    const pos = getTouchPos(e.touches[0]);
+    if(straightMode){
+      currentPoints = [straightOrigin, pos];
+    } else {
+      currentPoints.push(pos);
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(enterStraightMode, HOLD_MS);
+    }
     render();
   }
 }
@@ -616,10 +649,16 @@ function onTouchEnd(e){
     isPinching = false;
   }
   if(drawingActive && e.touches.length===0){
+    clearTimeout(holdTimer);
     drawingActive = false;
+    straightMode = false;
     const pts = simplifyPoints(currentPoints);
+    let pathLen = 0;
+    for(let i=1;i<pts.length;i++){
+      pathLen += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    }
     const text = document.getElementById('textInput').value;
-    if(pts.length>3 && text.trim()){
+    if(pts.length>=2 && pathLen>10 && text.trim()){
       strokes.push({
         points:pts, text, color:textColor, font:selectedFont, fontSize,
         weight:fontWeight, gradient:gradientOn, shadow:shadowOn,
