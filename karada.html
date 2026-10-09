@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KARADA | MEGANE OSSAN PRODUCE</title>
+<meta name="theme-color" content="#1F2A44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="KARADA">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="karada-icon-192.JPG">
+<link rel="icon" href="karada-icon-192.JPG">
+<link rel="manifest" id="mf">
+<style>
+:root{
+  --paper:#EEF5F2; --ink:#1F2A44; --card:#fff; --line:#CFDDD7; --mute:#6B7A86;
+  --ok:#2E9E6B; --warn:#E39A00; --bad:#D64545; --accent:#2F6F8F;
+  --okbg:#E3F4EB; --warnbg:#FFF3D6; --badbg:#FBE4E4;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  font-size:16px;line-height:1.55}
+header{background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px}
+header .in{max-width:560px;margin:0 auto}
+header h1{margin:0;font-size:28px;letter-spacing:.14em;font-weight:800;line-height:1.1}
+header p{margin:2px 0 0;font-size:11px;letter-spacing:.12em;opacity:.7}
+main{max-width:560px;margin:0 auto;padding:14px 14px calc(env(safe-area-inset-bottom,0px) + 96px)}
+.page{display:none}.page.on{display:block}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;margin:0 0 12px}
+.card h3{margin:0 0 8px;font-size:15px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700}
+.fld small{font-weight:400;color:var(--mute);margin-left:4px}
+input[type=number],input[type=date]{width:100%;font:inherit;font-size:17px;padding:10px;border:1.5px solid var(--line);
+  border-radius:10px;background:#FAFCFB;color:var(--ink);min-height:44px}
+input:focus{outline:3px solid #9CC7DA;border-color:var(--accent)}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;font:inherit;font-weight:700;padding:10px;border-radius:10px;border:1.5px solid var(--line);background:#FAFCFB;color:var(--ink);min-height:44px}
+.seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.hint{font-size:12px;color:var(--mute);margin:6px 0 0}
+.btn{display:block;width:100%;font:inherit;font-size:18px;font-weight:800;padding:14px;border:0;border-radius:14px;background:var(--accent);color:#fff;min-height:52px}
+.btn:active{transform:scale(.98)}
+.btn.sub{background:#fff;color:var(--ink);border:1.5px solid var(--line);font-size:14px;padding:8px 12px;min-height:40px;width:auto;display:inline-block}
+nav{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1.5px solid var(--line);
+  display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;font:inherit;font-size:13px;font-weight:700;border:0;background:none;color:var(--mute);padding:10px 0 9px;min-height:56px}
+nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--accent)}
+nav button span{display:block;font-size:20px;line-height:1.1}
+/* ossan bubble */
+.ossan{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px}
+.ossan .face{width:84px;height:84px;flex:none;object-fit:cover;border-radius:18px;border:2px solid var(--ink);background:#fff}
+.bubble{position:relative;background:#fff;border:2px solid var(--ink);border-radius:16px;padding:10px 12px;font-size:15px;font-weight:700;flex:1}
+.bubble:before{content:"";position:absolute;left:-10px;top:26px;border:8px solid transparent;border-right-color:var(--ink);border-left:0}
+.bubble:after{content:"";position:absolute;left:-6px;top:28px;border:6px solid transparent;border-right-color:#fff;border-left:0}
+.chips{display:flex;gap:8px;margin:0 0 12px}
+.chip{flex:1;text-align:center;border-radius:12px;padding:8px 4px;font-size:12px;font-weight:700}
+.chip b{display:block;font-size:22px;line-height:1.1}
+.chip.c0{background:var(--okbg);color:#1B6B47}.chip.c1{background:var(--warnbg);color:#8A5C00}.chip.c2{background:var(--badbg);color:#9B2A2A}
+.row{background:#fff;border:1.5px solid var(--line);border-left-width:8px;border-radius:12px;padding:9px 12px;margin:0 0 9px}
+.row.l0{border-left-color:var(--ok)}.row.l1{border-left-color:var(--warn)}.row.l2{border-left-color:var(--bad)}
+.rt{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.nm{font-weight:800;font-size:14px}
+.val{font-size:20px;font-weight:800;margin-left:auto}
+.val small{font-size:12px;font-weight:400;color:var(--mute);margin-left:2px}
+.bd{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px}
+.l0 .bd{background:var(--okbg);color:#1B6B47}.l1 .bd{background:var(--warnbg);color:#8A5C00}.l2 .bd{background:var(--badbg);color:#9B2A2A}
+.need{font-size:14px;font-weight:700;margin-top:2px}
+.l1 .need{color:#8A5C00}.l2 .need{color:#B02F2F}.l0 .need{color:#1B6B47}
+.df,.ex{font-size:12px;color:var(--mute);margin-top:1px}
+.df .g{color:#1B6B47;font-weight:700}.df .b{color:#B02F2F;font-weight:700}
+.note{font-size:12px;color:var(--mute);background:#fff;border:1.5px dashed var(--line);border-radius:12px;padding:10px 12px;margin-top:6px}
+.muted{color:var(--mute);font-size:14px}
+.sel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:8px}
+.sel button{flex:none;font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border-radius:99px;border:1.5px solid var(--line);background:#fff;color:var(--ink);min-height:36px}
+.sel button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rec{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.rec:first-child{border-top:0}
+.rec .d{font-weight:800}.rec .s{font-size:12px;color:var(--mute)}
+.rec .sp{flex:1}
+svg.ch{width:100%;height:auto;display:block}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 76px);transform:translateX(-50%);background:var(--ink);color:#fff;
+  padding:10px 16px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="in"><h1>KARADA</h1><p>MEGANE OSSAN PRODUCE</p></div></header>
+<main>
+  <!-- 入力 -->
+  <section class="page on" id="p-input">
+    <div class="card">
+      <h3>きほん</h3>
+      <div class="grid">
+        <label class="fld"><span>日付</span><input type="date" id="date"></label>
+        <label class="fld"><span>身長<small>cm</small></span><input id="h" type="number" inputmode="decimal" step="any" placeholder="—"></label>
+      </div>
+      <div class="fld" style="margin-top:10px"><span>性別<small>腹囲の基準に使うで</small></span>
+        <div class="seg" id="sex"><button data-v="m" class="on">男</button><button data-v="f">女</button></div>
+      </div>
+    </div>
+    <div id="groups"></div>
+    <p class="hint" style="margin:0 0 12px">入れたいとこだけでええで。空欄はとばして見るわ😊</p>
+    <button class="btn" id="save">はかる！</button>
+  </section>
+
+  <!-- 結果 -->
+  <section class="page" id="p-result"></section>
+
+  <!-- きろく -->
+  <section class="page" id="p-log">
+    <div class="card"><h3>グラフ</h3><div class="sel" id="chsel"></div><div id="chart"></div></div>
+    <div class="card"><h3>これまでの記録</h3><div id="reclist"></div></div>
+  </section>
+</main>
+
+<nav>
+  <button data-go="input" class="on"><span>✏️</span>入力</button>
+  <button data-go="result"><span>🩺</span>結果</button>
+  <button data-go="log"><span>📈</span>きろく</button>
+</nav>
+<div id="toast"></div>
+
+<script>
+/* PWA manifest (inline) */
+try{
+  const base=location.href.split('#')[0].split('?')[0];
+  const m={name:'KARADA',short_name:'KARADA',start_url:base,scope:base.replace(/[^\/]*$/,''),
+    display:'standalone',background_color:'#EEF5F2',theme_color:'#1F2A44',
+    icons:[{src:new URL('karada-icon-192.JPG',base).href,sizes:'192x192',type:'image/jpeg'},
+           {src:new URL('karada-icon-512.JPG',base).href,sizes:'512x512',type:'image/jpeg'}]};
+  document.getElementById('mf').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
+}catch(e){}
+
+const $=s=>document.querySelector(s);
+const LS='karada_v1';
+let db={recs:[],set:{h:'',sex:'m'}};
+try{const r=JSON.parse(localStorage.getItem(LS)||'null');if(r&&Array.isArray(r.recs))db=r;}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){toast('保存できへんかった…');}}
+const state={view:null,chart:'weight',sex:db.set.sex||'m'};
+
+/* ===== 項目定義 =====
+   warn:  ここから「ちょい注意」 / danger: ここから「要相談」
+   low:true は低いほど悪い項目(HDL) */
+const ITEMS=[
+ {id:'weight',label:'体重',unit:'kg',step:.1,min:20,max:300},
+ {id:'waist',label:'腹囲',unit:'cm',step:.1,min:40,max:200,warn:s=>s==='f'?90:85,danger:null},
+ {id:'sys',label:'血圧(上)',unit:'mmHg',step:1,min:60,max:260,warn:130,danger:140},
+ {id:'dia',label:'血圧(下)',unit:'mmHg',step:1,min:30,max:160,warn:85,danger:90},
+ {id:'glu',label:'血糖値(空腹時)',unit:'mg/dL',step:1,min:30,max:600,warn:100,danger:126},
+ {id:'a1c',label:'HbA1c',unit:'%',step:.1,min:3,max:20,warn:5.6,danger:6.5},
+ {id:'tg',label:'中性脂肪',unit:'mg/dL',step:1,min:10,max:3000,warn:150,danger:300},
+ {id:'ldl',label:'LDLコレステロール',unit:'mg/dL',step:1,min:20,max:500,warn:120,danger:140},
+ {id:'hdl',label:'HDLコレステロール',unit:'mg/dL',step:1,min:10,max:200,warn:40,danger:35,low:true},
+ {id:'ggt',label:'γ-GTP',unit:'U/L',step:1,min:1,max:2000,warn:51,danger:101},
+ {id:'ast',label:'AST(GOT)',unit:'U/L',step:1,min:1,max:2000,warn:31,danger:51},
+ {id:'alt',label:'ALT(GPT)',unit:'U/L',step:1,min:1,max:2000,warn:31,danger:51},
+ {id:'ua',label:'尿酸値',unit:'mg/dL',step:.1,min:1,max:20,warn:7.1,danger:9.0}
+];
+const BMI={id:'bmi',label:'BMI',unit:'',step:.1};
+const meta=id=>id==='bmi'?BMI:ITEMS.find(i=>i.id===id);
+const GROUPS=[
+ {t:'からだ',ids:['weight','waist']},
+ {t:'血圧',ids:['sys','dia']},
+ {t:'血糖',ids:['glu','a1c']},
+ {t:'コレステロール・脂質',ids:['tg','ldl','hdl']},
+ {t:'肝臓・尿酸',ids:['ggt','ast','alt','ua']}
+];
+const ORDER=['bmi','waist','sys','dia','glu','a1c','tg','ldl','hdl','ggt','ast','alt','ua'];
+const TIPS={
+ bmi:'夜のお菓子と甘い飲みもんを1個へらしてみよか。',
+ waist:'まずは一駅歩く、エレベーターより階段やで。',
+ sys:'塩分ひかえめ、汁物は残す勇気や。',
+ dia:'塩分ひかえめ、汁物は残す勇気や。',
+ glu:'甘い飲みもんと〆のラーメンが敵やで。',
+ a1c:'ごはんのあとに10分歩くだけでも違うで。',
+ tg:'お酒と揚げもん、ちょっと控えめにしよか。',
+ ldl:'脂身の多い肉を、たまには魚に変えてみ。',
+ hdl:'ウォーキングみたいな運動で上がりやすいで。',
+ ggt:'休肝日つくろ。週2日は飲まん日や🍺',
+ ast:'お酒と夜食を控えて、肝臓を休ませたろ。',
+ alt:'お酒と夜食を控えて、肝臓を休ませたろ。',
+ ua:'水をよう飲んで、ビールとレバーはほどほどにな。'
+};
+const OKS=['ええ数値やんか！この調子で続けや〜😆','優等生やな！おっさん見習わなあかんわ👏','全部ええ感じやで！この生活、キープや✨'];
+const WARNS=['ちょっとだけオーバーやな、今日から気ぃつけよか💪','惜しい！あと少しで全部OKやで😉','まだ間に合うで！ちょっとずつ整えていこな'];
+const BADS=['これは病院で相談した方がええで、無理せんときや🏥','数字がだいぶ気になるわ。早めに先生に見てもらおな','ここは自己判断せんと、お医者さんに聞いてみよか'];
+
+const fmt=(n,d)=>Number(n.toFixed(d));
+const dec=it=>it.step<1?1:0;
+const num=s=>{const n=parseFloat(s);return isNaN(n)?null:n};
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+const hOf=r=>r.h||db.set.h||null;
+const sexOf=r=>r.sex||db.set.sex||'m';
+function getVal(r,id){
+  if(id==='bmi'){const h=hOf(r),w=r.v.weight;return(w&&h)?fmt(w/Math.pow(h/100,2),1):null;}
+  const v=r.v[id];return v==null?null:v;
+}
+function warnOf(it,sex){return typeof it.warn==='function'?it.warn(sex):it.warn;}
+
+/* ===== 判定 ===== */
+function evalRecord(rec){
+  const out=[],sex=sexOf(rec),h=hOf(rec);
+  ORDER.forEach(id=>{
+    const val=getVal(rec,id);if(val==null)return;
+    const it=meta(id);let o={id,label:it.label,unit:it.unit,val,lvl:0,need:'',extra:'',word:''};
+    if(id==='bmi'){
+      const hm2=Math.pow(h/100,2),w=rec.v.weight;
+      if(val>=25){o.lvl=val>=30?2:1;o.need=`あと ${fmt(w-24.9*hm2,1)}kg 減らしたらOK`;}
+      else if(val<18.5){o.lvl=1;o.word='ちょい低め';o.need=`あと ${fmt(18.5*hm2-w,1)}kg 増やしたらOK`;}
+      else o.need='基準内や👍';
+      const ideal=22*hm2,d=w-ideal;
+      o.extra=`体重 ${w}kg ／ 適正体重(BMI22)の目安は ${fmt(ideal,1)}kg${Math.abs(d)<0.05?'':'（'+(d>0?'あと '+fmt(d,1)+'kg 減':'あと '+fmt(-d,1)+'kg 増')+'）'}`;
+      o.unit='';
+    }else{
+      const warn=warnOf(it,sex),d=dec(it);
+      if(it.low){
+        o.lvl=val<it.danger?2:(val<warn?1:0);
+        if(o.lvl>0){o.need=`あと ${fmt(warn-val,d)}${it.unit} 上げたらOK`;o.word='ちょい低め';}
+      }else{
+        o.lvl=(it.danger!=null&&val>=it.danger)?2:(val>=warn?1:0);
+        if(o.lvl>0)o.need=`あと ${fmt(val-warn+it.step,d)}${it.unit} 下げたらOK`;
+      }
+      if(o.lvl===0)o.need='基準内や👍';
+    }
+    if(!o.word)o.word=o.lvl===0?'基準内':o.lvl===1?'ちょい超え':'要相談';
+    if(o.lvl===2)o.word='要相談';
+    out.push(o);
+  });
+  return out;
+}
+function prevOf(rec,id){
+  const i=db.recs.findIndex(r=>r.d===rec.d);
+  for(let k=i-1;k>=0;k--){const v=getVal(db.recs[k],id);if(v!=null)return v;}
+  return null;
+}
+function goodDir(id,rec){
+  const it=meta(id);
+  if(id==='bmi'||id==='weight'){const b=getVal(rec,'bmi');if(b==null)return 0;return b>=25?-1:(b<18.5?1:0);}
+  return it.low?1:-1;
+}
+
+/* ===== おっさん ===== */
+function face(m){
+  return `<img class="face" src="karada-icon-192.JPG" alt="おっさん">`;
+}
+function pick(arr,seed){let s=0;for(const c of seed)s+=c.charCodeAt(0);return arr[s%arr.length];}
+function ossanSays(list,d){
+  if(!list.length)return{m:1,t:'数字、入れてや〜。入れたとこだけ見たるで😊'};
+  const worst=Math.max(...list.map(o=>o.lvl));
+  if(worst===0)return{m:0,t:pick(OKS,d)};
+  const top=list.filter(o=>o.lvl===worst)[0];
+  if(worst===1)return{m:1,t:`${pick(WARNS,d)}\nいちばん気になるんは「${top.label}」やな。${TIPS[top.id]||''}`};
+  return{m:2,t:`${pick(BADS,d)}\n「${top.label}」がだいぶ気になるわ。${TIPS[top.id]||''}`};
+}
+
+/* ===== 画面 ===== */
+function go(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.toggle('on',e.id==='p-'+p));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.go===p));
+  if(p==='result')renderResult();
+  if(p==='log')renderLog();
+  window.scrollTo(0,0);
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200);}
+
+function buildForm(){
+  $('#groups').innerHTML=GROUPS.map(g=>`<section class="card"><h3>${g.t}</h3><div class="grid">`+
+    g.ids.map(id=>{const it=meta(id);return`<label class="fld"><span>${it.label}<small>${it.unit}</small></span><input id="f_${id}" type="number" inputmode="decimal" step="any" placeholder="—"></label>`;}).join('')+
+    `</div></section>`).join('');
+}
+function setSex(s){state.sex=s;document.querySelectorAll('#sex button').forEach(b=>b.classList.toggle('on',b.dataset.v===s));}
+
+function onSave(){
+  const d=$('#date').value||today();
+  const h=num($('#h').value);
+  if(h!=null&&(h<100||h>230)){toast('身長がちょっと変やで（100〜230cm）');return;}
+  const v={};
+  for(const it of ITEMS){
+    const x=num($('#f_'+it.id).value);
+    if(x==null)continue;
+    if(x<it.min||x>it.max){toast(`${it.label}の数字をもう一回見てな`);return;}
+    v[it.id]=x;
+  }
+  if(!Object.keys(v).length){toast('どれか1個は入れてや〜');return;}
+  let rec=db.recs.find(r=>r.d===d);
+  if(rec){Object.assign(rec.v,v);if(h!=null)rec.h=h;rec.sex=state.sex;}
+  else{rec={d,h:h!=null?h:(num(db.set.h)||null),sex:state.sex,v};db.recs.push(rec);}
+  db.recs.sort((a,b)=>a.d<b.d?-1:1);
+  db.set={h:h!=null?h:db.set.h,sex:state.sex};
+  save();
+  ITEMS.forEach(it=>$('#f_'+it.id).value='');
+  state.view=d;
+  if(rec.v.weight&&!hOf(rec))toast('身長を入れるとBMIも出るで');
+  go('result');
+}
+
+function renderResult(){
+  const el=$('#p-result');
+  if(!db.recs.length){
+    el.innerHTML=`<div class="ossan">${face(1)}<div class="bubble">まだ記録がないで〜。「入力」から数字を入れてな😊</div></div>`;
+    return;
+  }
+  let rec=db.recs.find(r=>r.d===state.view)||db.recs[db.recs.length-1];
+  state.view=rec.d;
+  const list=evalRecord(rec),say=ossanSays(list,rec.d);
+  const cnt=[0,1,2].map(l=>list.filter(o=>o.lvl===l).length);
+  const rows=list.map(o=>{
+    let df='';
+    const p=prevOf(rec,o.id);
+    if(p!=null){
+      const it=meta(o.id),d=dec(it),diff=fmt(o.val-p,d);
+      const arrow=diff>0?'↑':diff<0?'↓':'→';
+      const gd=goodDir(o.id,rec);
+      const cls=(diff===0||gd===0)?'':((diff>0?1:-1)===gd?'g':'b');
+      df=`<div class="df">前回 ${p}${o.unit} → <span class="${cls}">${diff>0?'+':''}${diff}${o.unit} ${arrow}</span></div>`;
+    }
+    if(o.id==='bmi'&&rec.v.weight){
+      const pw=(()=>{const i=db.recs.findIndex(r=>r.d===rec.d);for(let k=i-1;k>=0;k--)if(db.recs[k].v.weight!=null)return db.recs[k].v.weight;return null;})();
+      if(pw!=null){const dw=fmt(rec.v.weight-pw,1);df+=`<div class="df">体重 前回比 ${dw>0?'+':''}${dw}kg</div>`;}
+    }
+    return`<div class="row l${o.lvl}"><div class="rt"><span class="nm">${o.label}</span><span class="bd">${o.word}</span><span class="val">${o.val}<small>${o.unit}</small></span></div>
+      <div class="need">${o.lvl===0?'':'基準値まで '}${o.need}</div>${o.extra?`<div class="ex">${o.extra}</div>`:''}${df}</div>`;
+  }).join('');
+  el.innerHTML=`<p class="muted" style="margin:0 0 8px">${rec.d} の結果</p>
+   <div class="ossan">${face(say.m)}<div class="bubble">${say.t.replace(/\n/g,'<br>')}</div></div>
+   <div class="chips"><div class="chip c0"><b>${cnt[0]}</b>基準内</div><div class="chip c1"><b>${cnt[1]}</b>ちょい注意</div><div class="chip c2"><b>${cnt[2]}</b>要相談</div></div>
+   ${rows||'<p class="muted">判定できる項目がまだないで。身長と体重を入れるとBMIが出るで。</p>'}
+   <div class="note">※あくまで目安やで。診断やない。基準値は特定健診などで使われる一般的な値を使ってるから、健診結果に書いてある基準値と違う時は、そっちを優先してな。気になる時はお医者さんに相談しよな🏥</div>`;
+}
+
+function chartIds(){
+  const ids=['weight','bmi',...ITEMS.filter(i=>i.id!=='weight').map(i=>i.id)];
+  return ids.filter(id=>db.recs.some(r=>getVal(r,id)!=null));
+}
+function thresholdOf(id){
+  if(id==='bmi')return 25;
+  if(id==='weight')return null;
+  const it=meta(id);const last=db.recs[db.recs.length-1];
+  return warnOf(it,last?sexOf(last):'m');
+}
+function chartSvg(id){
+  const pts=db.recs.map(r=>({d:r.d,v:getVal(r,id)})).filter(p=>p.v!=null).slice(-12);
+  if(pts.length<2)return'<p class="muted">2回以上記録すると、グラフが出るで📈</p>';
+  const W=320,H=180,pl=14,pr=14,pt=22,pb=28,th=thresholdOf(id),it=meta(id),d=dec(it);
+  const vals=pts.map(p=>p.v);if(th!=null)vals.push(th);
+  let mn=Math.min(...vals),mx=Math.max(...vals);if(mn===mx){mn-=1;mx+=1;}
+  const pad=(mx-mn)*.15;mn-=pad;mx+=pad;
+  const X=i=>pl+(W-pl-pr)*i/(pts.length-1),Y=v=>pt+(H-pt-pb)*(1-(v-mn)/(mx-mn));
+  const line=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const showAll=pts.length<=8;
+  const dots=pts.map((p,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.v).toFixed(1)}" r="4" fill="#2F6F8F" stroke="#fff" stroke-width="1.5"/>`+
+    ((showAll||i===0||i===pts.length-1)?`<text x="${X(i).toFixed(1)}" y="${(Y(p.v)-9).toFixed(1)}" font-size="10" font-weight="700" text-anchor="middle" fill="#1F2A44">${fmt(p.v,d)}</text>`:'')).join('');
+  const md=s=>s.slice(5).replace('-','/');
+  const thl=th!=null?`<line x1="${pl}" x2="${W-pr}" y1="${Y(th).toFixed(1)}" y2="${Y(th).toFixed(1)}" stroke="#E39A00" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-pr}" y="${(Y(th)-4).toFixed(1)}" font-size="9" text-anchor="end" fill="#8A5C00">${it.low?'基準 '+th+' 以上':'基準 '+(id==='bmi'?'25':fmt(th,d))+' 未満'}</text>`:'';
+  return`<svg class="ch" viewBox="0 0 ${W} ${H}" role="img" aria-label="${it.label}の推移">${thl}<path d="${line}" fill="none" stroke="#2F6F8F" stroke-width="2.5" stroke-linejoin="round"/>${dots}
+   <text x="${pl}" y="${H-8}" font-size="10" fill="#6B7A86">${md(pts[0].d)}</text><text x="${W-pr}" y="${H-8}" font-size="10" text-anchor="end" fill="#6B7A86">${md(pts[pts.length-1].d)}</text></svg>`;
+}
+function renderLog(){
+  const ids=chartIds();
+  if(!ids.length){$('#chsel').innerHTML='';$('#chart').innerHTML='<p class="muted">まだ記録がないで。入力してみてな😊</p>';$('#reclist').innerHTML='<p class="muted">—</p>';return;}
+  if(!ids.includes(state.chart))state.chart=ids[0];
+  $('#chsel').innerHTML=ids.map(id=>`<button data-c="${id}" class="${id===state.chart?'on':''}">${meta(id).label}</button>`).join('');
+  $('#chart').innerHTML=chartSvg(state.chart);
+  $('#reclist').innerHTML=db.recs.slice().reverse().map(r=>{
+    const n=Object.keys(r.v).length;
+    return`<div class="rec"><div><div class="d">${r.d}</div><div class="s">${n}項目</div></div><div class="sp"></div>
+      <button class="btn sub" data-view="${r.d}">見る</button><button class="btn sub" data-del="${r.d}">消す</button></div>`;
+  }).join('');
+}
+
+/* ===== イベント ===== */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+document.querySelectorAll('#sex button').forEach(b=>b.addEventListener('click',()=>setSex(b.dataset.v)));
+$('#save').addEventListener('click',onSave);
+$('#chsel').addEventListener('click',e=>{const b=e.target.closest('button[data-c]');if(!b)return;state.chart=b.dataset.c;renderLog();});
+$('#reclist').addEventListener('click',e=>{
+  const v=e.target.closest('[data-view]'),x=e.target.closest('[data-del]');
+  if(v){state.view=v.dataset.view;go('result');}
+  if(x){
+    if(confirm(x.dataset.del+' の記録を消してええ？')){
+      db.recs=db.recs.filter(r=>r.d!==x.dataset.del);save();
+      if(state.view===x.dataset.del)state.view=null;renderLog();toast('消したで');
+    }
+  }
+});
+
+/* ===== 初期化 ===== */
+buildForm();
+$('#date').value=today();
+if(db.set.h)$('#h').value=db.set.h;
+setSex(db.set.sex||'m');
+</script>
+</body>
+</html>
