@@ -1,6 +1,6 @@
 {
-  "name": "なぞる | めがねのおっさん",
-  "short_name": "なぞる",
+  "name": "NAZORU | めがねのおっさん",
+  "short_name": "NAZORU",
   "description": "指でなぞった線に沿って文字が並ぶ、なぞり文字メーカー",
   "start_url": "./nazoru.html",
   "display": "standalone",
