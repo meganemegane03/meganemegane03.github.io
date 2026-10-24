@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>UTAU | MEGANE OSSAN PRODUCE</title>
+<meta name="theme-color" content="#14121F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="UTAU">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="normal-icon-192.JPG">
+<link rel="icon" href="normal-icon-192.JPG">
+<link rel="manifest" id="mf">
+<style>
+:root{--bg:#14121F;--card:#1E1B2E;--line:#35305A;--ink:#F3F0FF;--mute:#9A94C0;--pink:#FF4D8D;--cyan:#3DDCFF;--yellow:#FFD84D}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-size:16px;line-height:1.55}
+header{padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 10px;background:linear-gradient(180deg,#2A1747,#14121F)}
+header .in{max-width:600px;margin:0 auto}
+header h1{margin:0;font-size:34px;letter-spacing:.2em;font-weight:900;line-height:1.1;
+  background:linear-gradient(90deg,var(--pink),var(--yellow),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header p{margin:2px 0 0;font-size:11px;letter-spacing:.14em;color:var(--mute)}
+main{max-width:600px;margin:0 auto;padding:6px 14px calc(env(safe-area-inset-bottom,0px) + 40px)}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 12px}
+.card h3{margin:0 0 8px;font-size:15px}
+.btn{display:inline-block;font:inherit;font-weight:800;font-size:16px;padding:12px 18px;border:0;border-radius:14px;
+  background:linear-gradient(90deg,var(--pink),#B84DFF);color:#fff;min-height:48px;cursor:pointer;text-align:center}
+.btn.sub{background:#2B2750;border:1.5px solid var(--line);color:var(--ink)}
+.btn.on{background:linear-gradient(90deg,var(--cyan),#4D7BFF);color:#0B1030}
+.btn:disabled{opacity:.45}
+.btn.full{display:block;width:100%}
+.mute{color:var(--mute);font-size:13px}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+#fname{margin-top:8px;word-break:break-all}
+#status{margin-top:2px;min-height:1.4em}
+canvas{display:block;width:100%;height:250px;border-radius:12px;background:#0E0C18;touch-action:none}
+#readout{margin:8px 0 6px;font-size:14px;font-weight:700;min-height:1.5em}
+.tp{display:flex;align-items:center;gap:10px}
+.round{width:52px;height:52px;border-radius:50%;border:0;font-size:20px;background:var(--pink);color:#fff;flex:none}
+#time{font-size:12px;color:var(--mute);flex:none;min-width:84px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{flex:1;width:100%;accent-color:var(--pink);height:32px}
+.sl{display:flex;flex-direction:column;gap:0;margin:0 0 6px}
+.sl .t{display:flex;justify-content:space-between;font-size:13px;font-weight:700}
+.sl .t span:last-child{color:var(--yellow)}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;margin:6px 0;min-height:36px}
+.chk input{width:22px;height:22px;accent-color:var(--cyan)}
+.note{font-size:12px;color:var(--mute);border:1.5px dashed var(--line);border-radius:12px;padding:10px 12px}
+.note p{margin:0 0 4px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translateX(-50%);background:#fff;color:#14121F;
+  padding:10px 16px;border-radius:99px;font-size:14px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header><div class="in"><h1>UTAU</h1><p>MEGANE OSSAN PRODUCE</p></div></header>
+<main>
+  <section class="card">
+    <label class="btn" for="file">🎵 曲をえらぶ</label>
+    <input class="vh" type="file" id="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.flac,.ogg">
+    <div id="fname" class="mute">まだ曲が選ばれてへんで</div>
+    <div id="status" class="mute"></div>
+  </section>
+
+  <section class="card">
+    <canvas id="cv"></canvas>
+    <div id="readout">🎤 マイクをオンにすると、自分の声の音程が出るで</div>
+    <div class="tp">
+      <button class="round" id="play" aria-label="再生">▶</button>
+      <input type="range" id="seek" min="0" max="1000" value="0" aria-label="再生位置">
+      <span id="time">0:00 / 0:00</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>🎚 ボーカルけし</h3>
+    <div class="sl"><div class="t"><span>消す強さ</span><span id="v_str"></span></div><input type="range" id="str" min="0" max="100"></div>
+    <div class="sl"><div class="t"><span>低音をのこす範囲（これより下は消さへん）</span><span id="v_bass"></span></div><input type="range" id="bass" min="40" max="300"></div>
+    <div class="sl"><div class="t"><span>曲の音量</span><span id="v_vol"></span></div><input type="range" id="vol" min="0" max="150"></div>
+  </section>
+
+  <section class="card">
+    <h3>🎤 マイク（音程バー）</h3>
+    <button class="btn sub full" id="mic">🎤 マイクをオンにする</button>
+    <div class="sl" style="margin-top:10px"><div class="t"><span>ずれ補正（声が遅れて見える時に）</span><span id="v_lat"></span></div><input type="range" id="lat" min="0" max="400" step="10"></div>
+    <label class="chk"><input type="checkbox" id="fold"> オクターブ合わせ（男性が女性の曲を歌っても合わせて表示）</label>
+    <label class="chk"><input type="checkbox" id="showref"> お手本バー（曲から読み取ったメロディ）を出す</label>
+    <p class="mute" style="margin:6px 0 0">🎧 イヤホンで使ってな。スピーカーやと曲の音をマイクが拾ってしまうで。</p>
+  </section>
+
+  <section class="card">
+    <h3>💾 ボーカルけしの曲を保存</h3>
+    <button class="btn sub full" id="render" disabled>カラオケ音源を作る（WAV）</button>
+    <button class="btn full" id="dl" style="display:none;margin-top:8px">📥 できた！保存する</button>
+    <p class="mute" id="renmsg" style="margin:6px 0 0">曲を選ぶと使えるで。長い曲は少し時間かかるで。</p>
+  </section>
+
+  <div class="note">
+    <p>※簡易版やで。曲の「真ん中」に入ってる音を引き算するから、声が薄く残ったり、真ん中にある楽器も小さくなったりするで。</p>
+    <p>※お手本バーは、曲の音から自動で読み取った「目安」やで。楽器が多い曲やと、ズレたり抜けたりするで。</p>
+    <p>※曲はスマホの中だけで処理して、どこにも送らへん。Apple Musicなどの配信サービスの曲は読み込めへんで。個人で楽しむ用にしてな。</p>
+  </div>
+</main>
+<div id="toast"></div>
+
+<script>
+/* PWA manifest (inline) */
+try{
+  const base=location.href.split('#')[0].split('?')[0];
+  const m={name:'UTAU',short_name:'UTAU',start_url:base,scope:base.replace(/[^\/]*$/,''),
+    display:'standalone',background_color:'#14121F',theme_color:'#14121F',
+    icons:[{src:new URL('normal-icon-192.JPG',base).href,sizes:'192x192',type:'image/jpeg'},
+           {src:new URL('normal-icon-512.JPG',base).href,sizes:'512x512',type:'image/jpeg'}]};
+  document.getElementById('mf').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
+}catch(e){}
+
+const $=s=>document.querySelector(s);
+const LS='utau_v1';
+let cfg={str:100,bass:120,vol:100,lat:120,fold:true,showref:true};
+try{const r=JSON.parse(localStorage.getItem(LS)||'null');if(r)Object.assign(cfg,r);}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem(LS,JSON.stringify(cfg));}catch(e){}};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600);}
+
+/* ===== 音程ユーティリティ ===== */
+const NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const midiName=m=>{const r=Math.round(m);return NAMES[((r%12)+12)%12]+(Math.floor(r/12)-1);};
+const f2m=f=>69+12*Math.log2(f/440);
+const median=a=>{const b=a.slice().sort((x,y)=>x-y);const n=b.length;return n?(n%2?b[(n-1)/2]:(b[n/2-1]+b[n/2])/2):NaN;};
+const fmtT=s=>{s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
+
+/* ===== ピッチ検出（NSDF / McLeod風） ===== */
+function nsdfPitch(x,off,N,minLag,maxLag,sr,W){
+  const S=W.S;S[0]=0;
+  for(let i=0;i<N;i++){const v=x[off+i];S[i+1]=S[i]+v*v;}
+  const rms=Math.sqrt(S[N]/N);
+  if(rms<1e-4)return{f:0,c:0,rms};
+  const ns=W.ns,hi=Math.min(maxLag,N-3);
+  for(let t=minLag;t<=hi+1;t++){
+    let acf=0;const lim=N-t;
+    for(let i=0;i<lim;i++)acf+=x[off+i]*x[off+i+t];
+    const m=S[lim]+(S[N]-S[t]);
+    ns[t]=m>0?2*acf/m:0;
+  }
+  let t=minLag;
+  while(t<=hi&&ns[t]>0)t++;
+  const pk=[];let bestV=0;
+  while(t<=hi){
+    while(t<=hi&&ns[t]<=0)t++;
+    if(t>hi)break;
+    let pt=t,pv=ns[t];
+    while(t<=hi&&ns[t]>0){if(ns[t]>pv){pv=ns[t];pt=t;}t++;}
+    pk.push(pt,pv);if(pv>bestV)bestV=pv;
+  }
+  if(!pk.length)return{f:0,c:0,rms};
+  let ch=-1,cv=0;
+  for(let i=0;i<pk.length;i+=2){if(pk[i+1]>=0.9*bestV){ch=pk[i];cv=pk[i+1];break;}}
+  let tau=ch;
+  if(ch>minLag&&ch<=hi){
+    const a=ns[ch-1],b=ns[ch],c=ns[ch+1],d=a-2*b+c;
+    if(d<0)tau=ch+0.5*(a-c)/d;
+  }
+  return{f:sr/tau,c:cv,rms};
+}
+
+/* ===== 曲からメロディを読み取る（②） ===== */
+async function computeMelody(L,R,sr,onProg,isCancelled){
+  const f=Math.max(1,Math.round(sr/11025)),sr2=sr/f,n=Math.floor(L.length/f);
+  const x=new Float32Array(n);
+  let yPrev=0,sPrev=0;const a=Math.exp(-2*Math.PI*150/sr2);
+  for(let i=0;i<n;i++){
+    let s=0;for(let k=0;k<f;k++){const j=i*f+k;s+=L[j]+R[j];}
+    s/=2*f;const y=a*(yPrev+s-sPrev);yPrev=y;sPrev=s;x[i]=y;
+  }
+  const win=Math.round(0.075*sr2),hop=Math.round(0.05*sr2);
+  const nF=Math.max(0,Math.floor((n-win)/hop));
+  const minLag=Math.floor(sr2/1500),maxLag=Math.ceil(sr2/80);
+  const W={S:new Float64Array(win+1),ns:new Float32Array(maxLag+4)};
+  const fr=new Float32Array(nF).fill(NaN),cl=new Float32Array(nF),rm=new Float32Array(nF);
+  for(let i=0;i<nF;i++){
+    const r=nsdfPitch(x,i*hop,win,minLag,maxLag,sr2,W);
+    rm[i]=r.rms;cl[i]=r.c;
+    if(r.f>80&&r.f<1100&&r.c>0.8)fr[i]=f2m(r.f);
+    if(i%150===149){
+      if(isCancelled())return null;
+      onProg(i/nF);
+      await new Promise(res=>setTimeout(res,0));
+    }
+  }
+  if(!nF)return[];
+  const sorted=Array.from(rm).sort((p,q)=>p-q);
+  const p90=sorted[Math.floor(0.9*(nF-1))]||0;
+  for(let i=0;i<nF;i++)if(rm[i]<0.08*p90)fr[i]=NaN;
+  /* メディアン平滑 */
+  const sm=new Float32Array(nF).fill(NaN);
+  for(let i=0;i<nF;i++){
+    const w=[];
+    for(let k=-2;k<=2;k++){const j=i+k;if(j>=0&&j<nF&&!isNaN(fr[j]))w.push(fr[j]);}
+    if(w.length>=3&&!isNaN(fr[i]))sm[i]=median(w);
+  }
+  /* オクターブ飛び補正 */
+  let last=NaN,age=99;
+  for(let i=0;i<nF;i++){
+    let m=sm[i];
+    if(isNaN(m)){age++;continue;}
+    if(!isNaN(last)&&age<=4){
+      const d=m-last,k=Math.round(d/12);
+      if(Math.abs(d)>6&&k!==0&&Math.abs(d-12*k)<2.5)m-=12*k;
+    }
+    sm[i]=m;last=m;age=0;
+  }
+  /* 音符にまとめる */
+  const dt=hop/sr2,tOf=i=>(i*hop+win/2)/sr2;
+  const notes=[];let cur=null;
+  const close=c=>{if(c.e-c.s>=0.12)notes.push({s:c.s,e:c.e,m:Math.round(median(c.v))});};
+  for(let i=0;i<nF;i++){
+    const m=sm[i];
+    if(!isNaN(m)){
+      if(cur&&Math.abs(m-cur.med)<0.8){cur.v.push(m);cur.e=tOf(i)+dt/2;cur.gap=0;cur.med=median(cur.v.slice(-8));}
+      else{if(cur)close(cur);cur={s:tOf(i)-dt/2,e:tOf(i)+dt/2,v:[m],med:m,gap:0};}
+    }else if(cur){cur.gap++;if(cur.gap>=3){close(cur);cur=null;}}
+  }
+  if(cur)close(cur);
+  return notes;
+}
+
+/* ===== オーディオ ===== */
+let ac=null,graph=null,buffer=null,songName='',notes=[],range={lo:48,hi:84};
+let cur=null,playing=false,offset=0,startedAt=0,analysisId=0,seeking=false,renderedBlob=null;
+
+function buildGraph(c,dest){
+  const inp=c.createGain(),sp=c.createChannelSplitter(2),mg=c.createChannelMerger(2);
+  const gMid=c.createGain();gMid.gain.value=0.5;
+  const hp1=c.createBiquadFilter(),hp2=c.createBiquadFilter();
+  hp1.type=hp2.type='highpass';hp1.Q.value=hp2.Q.value=0.707;
+  const gS=c.createGain(),master=c.createGain();
+  inp.connect(sp);
+  sp.connect(mg,0,0);sp.connect(mg,1,1);
+  sp.connect(gMid,0);sp.connect(gMid,1);
+  gMid.connect(hp1);hp1.connect(hp2);hp2.connect(gS);
+  gS.connect(mg,0,0);gS.connect(mg,0,1);
+  mg.connect(master);master.connect(dest);
+  return{inp,gS,hp1,hp2,master};
+}
+function applyParams(g){
+  g.gS.gain.value=-(cfg.str/100);
+  g.hp1.frequency.value=cfg.bass;g.hp2.frequency.value=cfg.bass;
+  g.master.gain.value=cfg.vol/100;
+}
+function ensureCtx(){
+  if(!ac){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    ac=new AC();graph=buildGraph(ac,ac.destination);applyParams(graph);
+  }
+  if(ac.state==='suspended')ac.resume();
+  return ac;
+}
+const pos=()=>{
+  if(!buffer)return 0;
+  const p=playing?offset+(ac.currentTime-startedAt):offset;
+  return Math.min(Math.max(p,0),buffer.duration);
+};
+function startAt(t){
+  stopSrc();
+  const s=ac.createBufferSource();
+  s.buffer=buffer;s.connect(graph.inp);
+  s.onended=()=>{if(cur===s&&playing){playing=false;cur=null;offset=0;trail.length=0;setPlayBtn();}};
+  offset=t;startedAt=ac.currentTime;
+  s.start(0,t);cur=s;playing=true;setPlayBtn();
+}
+function stopSrc(){
+  if(cur){const s=cur;cur=null;s.onended=null;try{s.stop();}catch(e){}}
+}
+function play(){if(!buffer)return;ensureCtx();startAt(offset>=buffer.duration-0.05?0:offset);}
+function pause(){if(!playing)return;offset=pos();stopSrc();playing=false;setPlayBtn();}
+function seekTo(t){
+  t=Math.min(Math.max(t,0),buffer.duration);trail.length=0;
+  if(playing)startAt(t);else offset=t;
+}
+function setPlayBtn(){$('#play').textContent=playing?'⏸':'▶';}
+
+/* ===== 曲の読み込み ===== */
+function decode(ab){
+  return new Promise((res,rej)=>{
+    const p=ac.decodeAudioData(ab,res,rej);
+    if(p&&p.then)p.then(res,rej);
+  });
+}
+async function loadFile(file){
+  ensureCtx();pause();stopSrc();
+  const myId=++analysisId;
+  $('#fname').textContent='🎵 '+file.name;
+  $('#status').textContent='読み込み中…';
+  buffer=null;notes=[];trail.length=0;offset=0;renderedBlob=null;$('#dl').style.display='none';
+  $('#render').disabled=true;
+  let b;
+  try{b=await decode(await file.arrayBuffer());}
+  catch(e){
+    $('#status').textContent='この曲は読み込めへんかった…（配信サービスの曲かも）';
+    toast('読み込めへんかった😢');return;
+  }
+  if(myId!==analysisId)return;
+  let warn='';
+  if(b.numberOfChannels===1){
+    const st=ac.createBuffer(2,b.length,b.sampleRate),d=b.getChannelData(0);
+    st.getChannelData(0).set(d);st.getChannelData(1).set(d);
+    b=st;warn='モノラルの曲やから、ボーカルけしは効かへんで。';
+  }
+  buffer=b;songName=file.name.replace(/\.[^.]+$/,'');
+  $('#render').disabled=false;
+  $('#renmsg').textContent='長い曲は少し時間かかるで。';
+  $('#status').textContent=warn+'メロディを解析中… 0%';
+  updateTime();
+  try{
+    const res=await computeMelody(b.getChannelData(0),b.getChannelData(1),b.sampleRate,
+      p=>{if(myId===analysisId)$('#status').textContent=warn+'メロディを解析中… '+Math.round(p*100)+'%';},
+      ()=>myId!==analysisId);
+    if(res===null||myId!==analysisId)return;
+    notes=res;calcRange();
+    $('#status').textContent=warn+(notes.length?'解析おわり！ お手本バーが出るで✨':'メロディはうまく読み取れへんかった…（マイクの音程だけ使えるで）');
+  }catch(e){$('#status').textContent=warn+'解析に失敗したで…';}
+}
+function calcRange(){
+  if(!notes.length){range={lo:48,hi:84};return;}
+  const ms=notes.map(n=>n.m).sort((a,b)=>a-b);
+  let lo=ms[Math.floor(0.03*(ms.length-1))]-3,hi=ms[Math.ceil(0.97*(ms.length-1))]+3;
+  while(hi-lo<18){lo--;hi++;}
+  range={lo,hi};
+}
+
+/* ===== WAV保存 ===== */
+async function renderWav(){
+  if(!buffer)return;
+  const btn=$('#render');btn.disabled=true;$('#dl').style.display='none';
+  $('#renmsg').textContent='作っとるで…ちょっと待ってな⏳';
+  try{
+    const oc=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(2,buffer.length,buffer.sampleRate);
+    const g=buildGraph(oc,oc.destination);applyParams(g);
+    const s=oc.createBufferSource();s.buffer=buffer;s.connect(g.inp);s.start(0);
+    const out=await new Promise((res,rej)=>{const p=oc.startRendering();if(p&&p.then)p.then(res,rej);oc.oncomplete=e=>res(e.renderedBuffer);});
+    renderedBlob=encodeWav(out);
+    $('#dl').style.display='block';
+    $('#renmsg').textContent='できたで！下のボタンを押して保存してな。';
+  }catch(e){$('#renmsg').textContent='失敗してもた…（曲が長すぎるかも）';}
+  btn.disabled=false;
+}
+function encodeWav(ab){
+  const ch=ab.numberOfChannels,len=ab.length,sr=ab.sampleRate;
+  const d=[];for(let c=0;c<ch;c++)d.push(ab.getChannelData(c));
+  let peak=0;for(const a of d)for(let i=0;i<len;i++){const v=Math.abs(a[i]);if(v>peak)peak=v;}
+  const k=peak>0.99?0.99/peak:1;
+  const dv=new DataView(new ArrayBuffer(44+len*ch*2));
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');dv.setUint32(4,36+len*ch*2,true);ws(8,'WAVE');ws(12,'fmt ');dv.setUint32(16,16,true);
+  dv.setUint16(20,1,true);dv.setUint16(22,ch,true);dv.setUint32(24,sr,true);dv.setUint32(28,sr*ch*2,true);
+  dv.setUint16(32,ch*2,true);dv.setUint16(34,16,true);ws(36,'data');dv.setUint32(40,len*ch*2,true);
+  let o=44;
+  for(let i=0;i<len;i++)for(let c=0;c<ch;c++){
+    const v=Math.max(-1,Math.min(1,d[c][i]*k));
+    dv.setInt16(o,v<0?v*32768:v*32767,true);o+=2;
+  }
+  return new Blob([dv],{type:'audio/wav'});
+}
+async function saveWav(){
+  if(!renderedBlob)return;
+  const name=(songName||'song')+'_karaoke.wav';
+  try{
+    const file=new File([renderedBlob],name,{type:'audio/wav'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return;}
+  }catch(e){if(e&&e.name==='AbortError')return;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(renderedBlob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+}
+
+/* ===== マイク（①） ===== */
+let micOn=false,micStream=null,micSrc=null,analyser=null,micBuf=null,micW=null,micMin=0,micMax=0;
+const trail=[];let recent=[],userNow=null,silentFrames=0,frameCount=0;
+async function toggleMic(){
+  if(micOn){
+    micOn=false;try{micStream.getTracks().forEach(t=>t.stop());}catch(e){}
+    try{micSrc.disconnect();}catch(e){}
+    micStream=null;micSrc=null;analyser=null;userNow=null;
+    $('#mic').textContent='🎤 マイクをオンにする';$('#mic').classList.remove('on');
+    return;
+  }
+  try{
+    ensureCtx();
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){toast('マイクが使えへんかった（許可してな）');return;}
+  micSrc=ac.createMediaStreamSource(micStream);
+  analyser=ac.createAnalyser();analyser.fftSize=2048;micSrc.connect(analyser);
+  micBuf=new Float32Array(2048);
+  micMin=Math.floor(ac.sampleRate/1500);micMax=Math.ceil(ac.sampleRate/70);
+  micW={S:new Float64Array(2049),ns:new Float32Array(micMax+4)};
+  micOn=true;recent=[];trail.length=0;
+  $('#mic').textContent='🎤 マイクON（タップで止める）';$('#mic').classList.add('on');
+}
+
+/* 時間軸 */
+let clock0=performance.now();
+const timeline=()=>buffer?pos():(performance.now()-clock0)/1000;
+function noteAt(t){
+  if(!notes.length)return null;
+  let lo=0,hi=notes.length-1,idx=-1;
+  while(lo<=hi){const mid=(lo+hi)>>1;if(notes[mid].s<=t+0.05){idx=mid;lo=mid+1;}else hi=mid-1;}
+  let best=null,bd=0.35;
+  for(let k=Math.max(0,idx-1);k<=Math.min(notes.length-1,idx+1);k++){
+    const n=notes[k],d=t<n.s?n.s-t:(t>n.e?t-n.e:0);
+    if(d<bd){bd=d;best=n;}
+  }
+  return best;
+}
+function pollMic(){
+  if(!micOn||!analyser)return;
+  analyser.getFloatTimeDomainData(micBuf);
+  const r=nsdfPitch(micBuf,0,2048,micMin,micMax,ac.sampleRate,micW);
+  let m=null;
+  if(r.f>70&&r.f<1100&&r.c>0.7&&r.rms>0.008)m=f2m(r.f);
+  recent.push(m);if(recent.length>3)recent.shift();
+  const v=recent.filter(x=>x!==null);
+  if(m===null||v.length<2){silentFrames++;if(silentFrames>8)userNow=null;return;}
+  silentFrames=0;
+  let mm=median(v);
+  const canRec=!buffer||playing;
+  const t=timeline()-cfg.lat/1000;
+  const ref=noteAt(t);
+  let shown=mm;
+  if(cfg.fold&&ref)shown=mm+12*Math.round((ref.m-mm)/12);
+  userNow={raw:mm,shown,ref:ref?ref.m:null};
+  if(canRec){
+    const lt=trail.length?trail[trail.length-1]:null;
+    if(!lt||t>lt.t)trail.push({t,m:shown});
+    while(trail.length&&trail[0].t<t-6)trail.shift();
+  }
+}
+
+/* ===== 描画 ===== */
+const cv=$('#cv'),g2=cv.getContext('2d');
+let CW=300,CH=250;
+function resize(){
+  const dpr=window.devicePixelRatio||1;
+  CW=cv.clientWidth||300;CH=cv.clientHeight||250;
+  cv.width=Math.round(CW*dpr);cv.height=Math.round(CH*dpr);
+  g2.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize);
+function rr(g,x,y,w,h,r){
+  r=Math.min(r,w/2,h/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+}
+function draw(){
+  const g=g2,W=CW,H=CH,padY=14;
+  g.clearRect(0,0,W,H);
+  let lo=range.lo,hi=range.hi;
+  const yOf=m=>H-padY-(m-lo)/(hi-lo)*(H-2*padY),sem=(H-2*padY)/(hi-lo);
+  const before=2,after=5,pps=W/(before+after),nowX=before*pps;
+  const t0=timeline(),xOf=t=>nowX+(t-t0)*pps;
+  /* 目盛り */
+  g.font='10px sans-serif';g.textBaseline='middle';
+  for(let m=Math.ceil(lo);m<=hi;m++){
+    const y=yOf(m),isC=((m%12)+12)%12===0;
+    g.strokeStyle=isC?'rgba(255,255,255,.22)':'rgba(255,255,255,.06)';g.lineWidth=1;
+    g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke();
+    if(isC){g.fillStyle='rgba(255,255,255,.45)';g.fillText(midiName(m),4,y-7);}
+  }
+  /* お手本バー */
+  if(cfg.showref&&notes.length){
+    for(const n of notes){
+      if(n.e<t0-before-0.5)continue;if(n.s>t0+after+0.5)break;
+      const x1=xOf(n.s),x2=xOf(n.e),y=yOf(n.m),h=Math.max(8,sem*0.9);
+      const act=t0>=n.s&&t0<=n.e,past=n.e<t0;
+      g.fillStyle=act?'#FFD84D':(past?'rgba(255,77,141,.35)':'rgba(255,77,141,.9)');
+      rr(g,x1,y-h/2,Math.max(3,x2-x1),h,h/2);g.fill();
+    }
+  }
+  /* 自分の声 */
+  if(trail.length){
+    g.lineCap='round';g.lineJoin='round';
+    g.strokeStyle='#3DDCFF';g.lineWidth=5;g.shadowColor='#3DDCFF';g.shadowBlur=8;
+    let prev=null;g.beginPath();
+    for(const p of trail){
+      const x=xOf(p.t),y=Math.max(4,Math.min(H-4,yOf(p.m)));
+      if(prev&&p.t-prev.t<0.12)g.lineTo(x,y);else g.moveTo(x,y);
+      prev=p;
+    }
+    g.stroke();g.shadowBlur=0;
+    const lp=trail[trail.length-1];
+    if(t0-cfg.lat/1000-lp.t<0.3){g.fillStyle='#fff';g.beginPath();g.arc(xOf(lp.t),Math.max(4,Math.min(H-4,yOf(lp.m))),6,0,7);g.fill();}
+  }
+  /* 今の線 */
+  g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=2;g.beginPath();g.moveTo(nowX,0);g.lineTo(nowX,H);g.stroke();
+}
+let lastRead='';
+function updateReadout(){
+  let s;
+  if(!micOn)s='🎤 マイクをオンにすると、自分の声の音程が出るで';
+  else if(!userNow)s='🎤 歌ってみて〜';
+  else{
+    const c=Math.round((userNow.raw-Math.round(userNow.raw))*100);
+    s='いま '+midiName(userNow.raw)+'（'+(c>=0?'+':'')+c+'¢）';
+    if(userNow.ref!=null){
+      const d=userNow.shown-userNow.ref;
+      s+='　お手本 '+midiName(userNow.ref)+'　'+(Math.abs(d)<0.5?'ぴったり✨':d>0?'ちょい高い↑':'ちょい低い↓');
+    }
+  }
+  if(s!==lastRead){$('#readout').textContent=s;lastRead=s;}
+}
+function updateTime(){
+  const d=buffer?buffer.duration:0,p=buffer?pos():0;
+  $('#time').textContent=fmtT(p)+' / '+fmtT(d);
+  if(!seeking&&d)$('#seek').value=Math.round(p/d*1000);
+}
+function loop(){
+  frameCount++;
+  if(frameCount%2===0)pollMic();
+  draw();updateTime();
+  if(frameCount%6===0)updateReadout();
+  requestAnimationFrame(loop);
+}
+
+/* ===== UI ===== */
+function syncUi(){
+  $('#str').value=cfg.str;$('#bass').value=cfg.bass;$('#vol').value=cfg.vol;$('#lat').value=cfg.lat;
+  $('#fold').checked=cfg.fold;$('#showref').checked=cfg.showref;
+  $('#v_str').textContent=cfg.str+'%';$('#v_bass').textContent=cfg.bass+'Hz';$('#v_vol').textContent=cfg.vol+'%';$('#v_lat').textContent=cfg.lat+'ms';
+}
+function bind(id,key){
+  $('#'+id).addEventListener('input',e=>{cfg[key]=+e.target.value;syncUi();if(graph)applyParams(graph);saveCfg();if(key==='str'||key==='bass'||key==='vol'){renderedBlob=null;$('#dl').style.display='none';}});
+}
+bind('str','str');bind('bass','bass');bind('vol','vol');bind('lat','lat');
+$('#fold').addEventListener('change',e=>{cfg.fold=e.target.checked;saveCfg();});
+$('#showref').addEventListener('change',e=>{cfg.showref=e.target.checked;saveCfg();});
+$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f);e.target.value='';});
+$('#play').addEventListener('click',()=>{if(!buffer){toast('先に曲をえらんでな🎵');return;}playing?pause():play();});
+$('#seek').addEventListener('pointerdown',()=>{seeking=true;});
+$('#seek').addEventListener('input',e=>{if(buffer)$('#time').textContent=fmtT(e.target.value/1000*buffer.duration)+' / '+fmtT(buffer.duration);});
+$('#seek').addEventListener('change',e=>{seeking=false;if(buffer)seekTo(e.target.value/1000*buffer.duration);});
+$('#mic').addEventListener('click',toggleMic);
+$('#render').addEventListener('click',renderWav);
+$('#dl').addEventListener('click',saveWav);
+
+syncUi();resize();requestAnimationFrame(loop);
+</script>
+</body>
+</html>
