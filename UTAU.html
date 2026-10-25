@@ -77,6 +77,13 @@ textarea{width:100%;min-height:150px;font:inherit;font-size:15px;line-height:1.5
 .sbig{font-size:60px;font-weight:900;line-height:1.1;margin:6px 0;background:linear-gradient(90deg,var(--pink),var(--yellow));-webkit-background-clip:text;background-clip:text;color:transparent}
 .sbig small{font-size:22px}
 .sbub{background:#fff;color:#14121F;border-radius:14px;padding:10px 12px;font-weight:800;margin:8px 0}
+summary{cursor:pointer;font-weight:800;font-size:15px;min-height:36px;display:flex;align-items:center;gap:6px}
+summary #mycnt{font-weight:400;color:var(--mute);font-size:13px}
+.sg{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.sg .sn{flex:1;min-width:0}
+.sg .nm{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg.cur .nm{color:var(--yellow)}
+.sg .btn{min-height:40px;padding:8px 12px;font-size:14px}
 #probe{position:absolute;height:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)}
 </style>
 </head>
@@ -88,6 +95,7 @@ textarea{width:100%;min-height:150px;font:inherit;font-size:15px;line-height:1.5
     <input class="vh" type="file" id="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.flac,.ogg">
     <div id="fname" class="mute">まだ曲が選ばれてへんで</div>
     <div id="status" class="mute"></div>
+    <details id="mylist" style="margin-top:10px"><summary>📚 マイ曲リスト<span id="mycnt"></span></summary><div id="myl"></div><p class="mute" id="myuse" style="margin:6px 0 0"></p></details>
   </section>
 
   <section class="card" id="cvCard">
@@ -146,8 +154,7 @@ textarea{width:100%;min-height:150px;font:inherit;font-size:15px;line-height:1.5
 
   <section class="card">
     <h3>💾 保存</h3>
-    <button class="btn sub full" id="render" disabled>カラオケ音源を作る（WAV）</button>
-    <p class="mute" id="renmsg" style="margin:6px 0 0">曲を選ぶと使えるで。長い曲は少し時間かかるで。</p>
+    <p class="mute" id="renmsg" style="margin:0">録音したあとに「歌声だけ保存」か「ミックスを作る」を押すと、ここで聴いて保存できるで。</p>
     <audio id="pv" controls style="display:none"></audio>
     <button class="btn full" id="dl" style="display:none;margin-top:8px">📥 できた！保存する</button>
   </section>
@@ -155,7 +162,7 @@ textarea{width:100%;min-height:150px;font:inherit;font-size:15px;line-height:1.5
   <div class="note">
     <p>※簡易版やで。完全には消えへんし、曲によって効き方がバラバラや。</p>
     <p>※お手本バーは、曲の音から自動で読み取った「目安」やで。楽器が多い曲やと、ズレたり抜けたりするで。</p>
-    <p>※曲はスマホの中だけで処理して、どこにも送らへん。Apple Musicなどの配信サービスの曲は読み込めへんで。</p>
+    <p>※曲はスマホの中だけで処理して、どこにも送らへん。マイ曲リストも、このスマホの中にだけ保存されるで（容量は使うで）。Apple Musicなどの配信サービスの曲は読み込めへんで。</p>
     <p>※録音した歌声やミックスは、個人で楽しむ用にしてな。市販曲を使ったものをネットに公開するのはNGやで。</p>
   </div>
   </div>
@@ -431,17 +438,95 @@ function clearOut(){
   outBlob=null;$('#dl').style.display='none';$('#pv').style.display='none';
   try{$('#pv').pause();}catch(e){}
 }
+/* ===== マイ曲リスト（IndexedDB） ===== */
+let _db=null,curSongId='';
+const NV=2;
+function idb(){
+  if(_db)return Promise.resolve(_db);
+  return new Promise((res,rej)=>{
+    if(!window.indexedDB){rej(new Error('no idb'));return;}
+    const r=indexedDB.open('utau_db',1);
+    r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('meta',{keyPath:'id'});d.createObjectStore('data',{keyPath:'id'});};
+    r.onsuccess=()=>{_db=r.result;res(_db);};
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function dbop(stores,mode,fn){
+  const db=await idb();
+  return new Promise((res,rej)=>{
+    const t=db.transaction(stores,mode);let out;
+    try{out=fn(t);}catch(e){rej(e);return;}
+    t.oncomplete=()=>res(out&&typeof out==='object'&&('result' in out)?out.result:out);
+    t.onerror=()=>rej(t.error);
+    t.onabort=()=>rej(t.error||new Error('abort'));
+  });
+}
+const metaGet=id=>dbop(['meta'],'readonly',t=>t.objectStore('meta').get(id));
+const metaPut=m=>dbop(['meta'],'readwrite',t=>t.objectStore('meta').put(m));
+async function mySave(id,name,copy,dur){
+  try{
+    const old=await metaGet(id);
+    if(old){old.used=Date.now();await metaPut(old);}
+    else{
+      const meta={id,name,size:copy.byteLength,dur,notes:null,nv:0,used:Date.now()};
+      await dbop(['meta','data'],'readwrite',t=>{t.objectStore('meta').put(meta);return t.objectStore('data').put({id,ab:copy});});
+      try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();}catch(e){}
+    }
+  }catch(e){toast('マイ曲リストに保存できへんかった（容量がいっぱいかも）');}
+  renderList();
+}
+async function mySaveNotes(id,ns){
+  try{const m=await metaGet(id);if(!m)return;m.notes=ns;m.nv=NV;await metaPut(m);}catch(e){}
+}
+async function renderList(){
+  const box=$('#myl');let items=[];
+  try{items=await dbop(['meta'],'readonly',t=>t.objectStore('meta').getAll());}
+  catch(e){box.textContent='この端末では、曲の保存が使えへんみたい…';$('#mycnt').textContent='';return;}
+  items.sort((a,b)=>b.used-a.used);
+  $('#mycnt').textContent=items.length?'（'+items.length+'曲）':'';
+  box.innerHTML='';
+  if(!items.length){
+    const p=document.createElement('p');p.className='mute';
+    p.textContent='まだ曲が入ってへんで。曲をえらぶと、ここに追加されるで。';box.appendChild(p);
+  }
+  for(const it of items){
+    const row=document.createElement('div');row.className='sg'+(it.id===curSongId?' cur':'');
+    const info=document.createElement('div');info.className='sn';
+    const nm=document.createElement('div');nm.className='nm';nm.textContent=it.name;
+    const mt=document.createElement('div');mt.className='mute';
+    mt.textContent=(it.size/1048576).toFixed(1)+'MB ・ '+fmtT(it.dur||0);
+    info.appendChild(nm);info.appendChild(mt);
+    const b1=document.createElement('button');b1.className='btn sub';b1.textContent='えらぶ';b1.dataset.load=it.id;
+    const b2=document.createElement('button');b2.className='btn sub';b2.textContent='消す';b2.dataset.del=it.id;
+    row.appendChild(info);row.appendChild(b1);row.appendChild(b2);box.appendChild(row);
+  }
+  try{
+    if(navigator.storage&&navigator.storage.estimate){
+      const e=await navigator.storage.estimate();
+      $('#myuse').textContent='スマホの保存領域：約 '+Math.round((e.usage||0)/1048576)+'MB 使用中';
+    }
+  }catch(e){}
+}
+
+/* ===== 曲の読み込み ===== */
 async function loadFile(file){
+  let ab;
+  try{ab=await file.arrayBuffer();}catch(e){toast('読み込めへんかった😢');return;}
+  await loadData(file.name,ab,null);
+}
+async function loadData(name,ab,cached){
   ensureCtx();pause();stopSrc();stopRec(true);
   const hadName=!!songName;resetScore();lyrCorr=0;
   const myId=++analysisId;
-  $('#fname').textContent='🎵 '+file.name;
+  const id=cached?cached.id:name+'|'+ab.byteLength;
+  curSongId=id;
+  $('#fname').textContent='🎵 '+name;
   $('#status').textContent='読み込み中…';
   buffer=null;procBuf=null;notes=[];trail.length=0;offset=0;clearOut();
   rec.data=null;updateRecUi();syncMode();
-  $('#render').disabled=true;
+  const copy=cached?null:ab.slice(0);
   let b;
-  try{b=await decode(await file.arrayBuffer());}
+  try{b=await decode(ab);}
   catch(e){
     $('#status').textContent='この曲は読み込めへんかった…（配信サービスの曲かも）';
     toast('読み込めへんかった😢');return;
@@ -453,10 +538,9 @@ async function loadFile(file){
     st.getChannelData(0).set(d);st.getChannelData(1).set(d);
     b=st;warn='モノラルの曲やから、ボーカルけしは効かへんで。';
   }
-  buffer=b;songName=file.name.replace(/\.[^.]+$/,'');loadLyr(hadName);
-  $('#render').disabled=false;
-  $('#renmsg').textContent='長い曲は少し時間かかるで。';
+  buffer=b;songName=name.replace(/\.[^.]+$/,'');loadLyr(hadName);
   updateTime();updateRecUi();syncMode();
+  mySave(id,name,copy,b.duration);
   /* 強力モード用の分離 */
   $('#status').textContent=warn+'ボーカルを分けとるで… 0%（先にかんたんモードで聴けるで）';
   try{
@@ -472,7 +556,12 @@ async function loadFile(file){
     syncMode();clearOut();
     toast('強力モードが使えるようになったで✨');
   }catch(e){procBuf=null;syncMode();}
-  /* メロディ解析 */
+  /* メロディ（保存してあれば、それを使う） */
+  if(cached&&cached.nv===NV&&cached.notes&&cached.notes.length){
+    notes=cached.notes;calcRange();updateLyrInfo();
+    $('#status').textContent=warn+'保存してあったお手本バー '+notes.length+'個 を使うで✨';
+    return;
+  }
   $('#status').textContent=warn+'メロディを解析中… 0%';
   try{
     const pl=procBuf?procBuf.getChannelData(0):null,pr=procBuf?procBuf.getChannelData(1):null;
@@ -481,6 +570,7 @@ async function loadFile(file){
       ()=>myId!==analysisId,pl,pr);
     if(res===null||myId!==analysisId)return;
     notes=res;calcRange();updateLyrInfo();
+    mySaveNotes(id,notes);
     $('#status').textContent=warn+(notes.length?'解析おわり！ お手本バー '+notes.length+'個 見つけたで✨':'メロディはうまく読み取れへんかった…（マイクの音程だけ使えるで）');
   }catch(e){$('#status').textContent=warn+'解析に失敗したで…';}
 }
@@ -528,7 +618,7 @@ function showOut(blob,name){
 async function renderOut(kind){
   if(!buffer)return;
   if(kind==='mix'&&!rec.data){toast('先に録音してな🎙');return;}
-  const btns=[$('#render'),$('#recMix'),$('#recVoice')];btns.forEach(b=>b.disabled=true);
+  const btns=[$('#recMix'),$('#recVoice')];btns.forEach(b=>b.disabled=true);
   clearOut();
   $('#renmsg').textContent='作っとるで…ちょっと待ってな⏳';
   try{
@@ -546,7 +636,7 @@ async function renderOut(kind){
     showOut(encodeWav(out),(songName||'song')+(kind==='mix'?'_utattemita.wav':'_karaoke.wav'));
     $('#renmsg').textContent='できたで！聴いてみて、よかったら下のボタンで保存してな。';
   }catch(e){$('#renmsg').textContent='失敗してもた…（曲が長すぎるかも）';}
-  $('#render').disabled=false;updateRecUi();
+  updateRecUi();
 }
 function saveVoiceOnly(){
   if(!rec.data)return;
@@ -927,7 +1017,6 @@ $('#mic').addEventListener('click',toggleMic);
 $('#rec').addEventListener('click',toggleRec);
 $('#recVoice').addEventListener('click',saveVoiceOnly);
 $('#recMix').addEventListener('click',()=>renderOut('mix'));
-$('#render').addEventListener('click',()=>renderOut('karaoke'));
 $('#dl').addEventListener('click',saveBlobNow);
 
 $('#lyrTx').addEventListener('input',()=>{parseLyr();saveLyr();if(lyrOn)buildLyr();});
@@ -939,7 +1028,25 @@ $('#scoreBtn').addEventListener('click',showScore);
 $('#sclose').addEventListener('click',()=>$('#ov').classList.remove('on'));
 $('#ov').addEventListener('click',e=>{if(e.target.id==='ov')$('#ov').classList.remove('on');});
 
-syncUi();syncMode();updateRecUi();resize();parseLyr();requestAnimationFrame(loop);
+$('#myl').addEventListener('click',async e=>{
+  const l=e.target.closest('[data-load]'),d=e.target.closest('[data-del]');
+  try{
+    if(l){
+      const id=l.dataset.load,m=await metaGet(id),dd=await dbop(['data'],'readonly',t=>t.objectStore('data').get(id));
+      if(!m||!dd){toast('読み込めへんかった😢');return;}
+      $('#mylist').open=false;
+      await loadData(m.name,dd.ab,m);
+    }else if(d){
+      const id=d.dataset.del;
+      if(confirm('この曲をリストから消してええ？（歌詞はのこるで）')){
+        await dbop(['meta','data'],'readwrite',t=>{t.objectStore('meta').delete(id);return t.objectStore('data').delete(id);});
+        renderList();toast('消したで');
+      }
+    }
+  }catch(err){toast('うまくいかへんかった…');}
+});
+
+syncUi();syncMode();updateRecUi();resize();parseLyr();renderList();requestAnimationFrame(loop);
 </script>
 </body>
 </html>
