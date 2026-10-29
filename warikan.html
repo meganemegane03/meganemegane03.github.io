@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="theme-color" content="#17122d">
+
+<title>割り勘ルーレット</title>
+
+<style>
+
+:root {
+
+  --bg: #17122d;
+
+  --panel: #241d42;
+
+  --pink: #ff4f9a;
+
+  --yellow: #ffe66d;
+
+  --cyan: #65f3ff;
+
+  --white: #fff;
+
+  --muted: #c9c3e5;
+
+}
+
+* {
+
+  box-sizing: border-box;
+
+}
+
+body {
+
+  margin: 0;
+
+  background: radial-gradient(ellipse at top, #38235e 0, #17122d 55%, #100d20 100%);
+
+  color: var(--white);
+
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+
+  min-height: 100vh;
+
+}
+
+.wrap {
+
+  width: min(100%, 560px);
+
+  margin: 0 auto;
+
+  padding: 22px 16px 36px;
+
+}
+
+header {
+
+  text-align: center;
+
+  margin: 4px 0 20px;
+
+}
+
+.kicker {
+
+  font-size: 12px;
+
+  letter-spacing: .14em;
+
+  color: var(--cyan);
+
+  font-weight: 800;
+
+}
+
+h1 {
+
+  font-size: clamp(30px, 8vw, 42px);
+
+  line-height: 1.1;
+
+  margin: 8px 0;
+
+  color: var(--yellow);
+
+  text-shadow: 0 3px 0 #a44b23, 0 0 22px #ffb52e66;
+
+}
+
+.producer {
+
+  font-size: 12px;
+
+  color: var(--muted);
+
+  letter-spacing: .06em;
+
+}
+
+.panel {
+
+  background: linear-gradient(145deg, #2c2450, #211a3b);
+
+  border: 1px solid #ffffff20;
+
+  border-radius: 20px;
+
+  padding: 18px;
+
+  margin: 14px 0;
+
+  box-shadow: 0 12px 28px #0003;
+
+}
+
+label {
+
+  display: block;
+
+  font-size: 14px;
+
+  font-weight: 800;
+
+  margin: 0 0 8px;
+
+}
+
+input, textarea {
+
+  width: 100%;
+
+  border: 1px solid #ffffff30;
+
+  background: #130f28;
+
+  color: #fff;
+
+  border-radius: 12px;
+
+  padding: 13px 14px;
+
+  font: inherit;
+
+  font-size: 16px;
+
+  outline: none;
+
+}
+
+input:focus, textarea:focus {
+
+  border-color: var(--cyan);
+
+  box-shadow: 0 0 0 3px #65f3ff22;
+
+}
+
+textarea {
+
+  resize: vertical;
+
+  min-height: 140px;
+
+  line-height: 1.65;
+
+}
+
+.hint {
+
+  font-size: 12px;
+
+  color: var(--muted);
+
+  margin: 7px 0 0;
+
+  line-height: 1.5;
+
+}
+
+.row {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 12px;
+
+}
+
+.mode-tabs {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 10px;
+
+  margin: 14px 0;
+
+}
+
+.tab {
+
+  border: 1px solid #ffffff30;
+
+  border-radius: 13px;
+
+  background: #1a1532;
+
+  color: #d7d1f0;
+
+  padding: 13px 8px;
+
+  font-weight: 900;
+
+  font-size: 14px;
+
+}
+
+.tab.active {
+
+  background: linear-gradient(135deg, #ff4f9a, #ff8b5c);
+
+  border-color: transparent;
+
+  color: #fff;
+
+  box-shadow: 0 5px 18px #ff4f9a40;
+
+}
+
+.primary {
+
+  width: 100%;
+
+  border: 0;
+
+  border-radius: 15px;
+
+  padding: 16px 12px;
+
+  font-size: 18px;
+
+  font-weight: 900;
+
+  color: #21152c;
+
+  background: linear-gradient(135deg, var(--yellow), #ffb52e);
+
+  box-shadow: 0 5px 0 #b86a20;
+
+  cursor: pointer;
+
+  margin-top: 14px;
+
+}
+
+.primary:active {
+
+  transform: translateY(3px);
+
+  box-shadow: 0 2px 0 #b86a20;
+
+}
+
+.primary:disabled {
+
+  opacity: .45;
+
+  cursor: default;
+
+  transform: none;
+
+}
+
+.result {
+
+  display: none;
+
+  text-align: center;
+
+  overflow: hidden;
+
+  position: relative;
+
+}
+
+.result.show {
+
+  display: block;
+
+}
+
+.result-label {
+
+  font-size: 13px;
+
+  font-weight: 900;
+
+  color: var(--cyan);
+
+  letter-spacing: .1em;
+
+}
+
+.roulette-name {
+
+  font-size: clamp(30px, 9vw, 48px);
+
+  font-weight: 1000;
+
+  color: var(--yellow);
+
+  margin: 16px 0 6px;
+
+  overflow-wrap: anywhere;
+
+  text-shadow: 0 0 20px #ffe66d55;
+
+}
+
+.result-comment {
+
+  font-size: 17px;
+
+  font-weight: 800;
+
+  line-height: 1.6;
+
+  margin: 12px 0;
+
+}
+
+.amount {
+
+  font-size: clamp(25px, 7vw, 36px);
+
+  font-weight: 1000;
+
+  color: var(--pink);
+
+  margin: 8px 0;
+
+}
+
+.detail {
+
+  font-size: 13px;
+
+  color: var(--muted);
+
+  line-height: 1.8;
+
+  white-space: pre-line;
+
+}
+
+.result.flash {
+
+  animation: flash .65s ease-out;
+
+}
+
+@keyframes flash {
+
+  0% {
+
+    background: #fff8c9;
+
+    box-shadow: 0 0 0 0 #ffe66d;
+
+  }
+
+  100% {
+
+    background: linear-gradient(145deg, #2c2450, #211a3b);
+
+    box-shadow: 0 0 45px 8px #ff4f9a44;
+
+  }
+
+}
+
+.sparks {
+
+  font-size: 25px;
+
+  letter-spacing: .2em;
+
+}
+
+.note {
+
+  font-size: 12px;
+
+  color: #d4cdec;
+
+  line-height: 1.6;
+
+}
+
+footer {
+
+  text-align: center;
+
+  color: #aaa3c8;
+
+  font-size: 11px;
+
+  line-height: 1.8;
+
+  margin-top: 22px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="wrap">
+
+<header>
+
+  <div class="kicker">みんなの運命を決める！</div>
+
+  <h1>割り勘ルーレット</h1>
+
+  <div class="producer">Produced by MEGANE NO OSSAN</div>
+
+</header>
+
+<section class="panel">
+
+  <div class="row">
+
+    <div>
+
+      <label for="total">合計金額（円）</label>
+
+      <input id="total" type="number" inputmode="numeric" min="1" step="1" placeholder="例：19200">
+
+    </div>
+
+    <div>
+
+      <label>参加者の人数</label>
+
+      <div style="padding:13px 14px;border-radius:12px;background:#130f28;border:1px solid #ffffff30;font-size:16px">
+
+        <span id="count">0</span> 人
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <label for="names" style="margin-top:14px">名前（1行に1人ずつ）</label>
+
+  <textarea id="names" placeholder="田中&#10;鈴木&#10;佐藤&#10;山本"></textarea>
+
+  <p class="hint">名前は1行に1人。空行は無視するで！</p>
+
+  <div class="mode-tabs">
+
+    <button class="tab active" id="remainderTab" type="button">端数ルーレット</button>
+
+    <button class="tab" id="allTab" type="button">全額払いルーレット</button>
+
+  </div>
+
+  <div id="modeInfo" class="note">
+
+    1人あたりの金額を1,000円単位で切り下げて、残りをルーレットで決めるで！
+
+  </div>
+
+  <button class="primary" id="start" type="button">
+
+    ルーレットを回す！
+
+  </button>
+
+</section>
+
+<section class="panel result" id="result" aria-live="polite">
+
+  <div class="sparks" id="sparks">✨ 🎉 ✨</div>
+
+  <div class="result-label" id="resultLabel">運命の人は……</div>
+
+  <div class="roulette-name" id="winner">？？？</div>
+
+  <div class="amount" id="winnerAmount"></div>
+
+  <div class="result-comment" id="comment"></div>
+
+  <div class="detail" id="detail"></div>
+
+  <button class="primary" id="again" type="button">
+
+    もう一回回す！
+
+  </button>
+
+</section>
+
+<footer>
+
+  ※ みんなで楽しむための遊びやで。実際のお支払いはみんなで相談してな。<br>
+
+  画面の演出・効果音は端末内で動作します。
+
+</footer>
+
+</div>
+
+<script>
+
+(() => {
+
+const $ = id => document.getElementById(id);
+
+let mode = "remainder";
+
+let spinning = false;
+
+let audioCtx = null;
+
+function namesList() {
+
+  return $("names").value
+
+    .split(/\r?\n/)
+
+    .map(s => s.trim())
+
+    .filter(Boolean);
+
+}
+
+function yen(n) {
+
+  return Math.round(n).toLocaleString("ja-JP") + "円";
+
+}
+
+function updateCount() {
+
+  $("count").textContent = namesList().length;
+
+}
+
+$("names").addEventListener("input", updateCount);
+
+function setMode(next) {
+
+  mode = next;
+
+  $("remainderTab").classList.toggle("active", mode === "remainder");
+
+  $("allTab").classList.toggle("active", mode === "all");
+
+  $("modeInfo").textContent =
+
+    mode === "remainder"
+
+    ? "1人あたりの金額を1,000円単位で切り下げて、残りをルーレットで決めるで！"
+
+    : "合計金額を払う人を、ルーレットで1人決めるで……！";
+
+  $("result").classList.remove("show");
+
+}
+
+$("remainderTab").addEventListener("click", () => setMode("remainder"));
+
+$("allTab").addEventListener("click", () => setMode("all"));
+
+function playTone(freq, duration, type = "sine", gain = .06, delay = 0) {
+
+  try {
+
+    if (!audioCtx) {
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    }
+
+    if (audioCtx.state === "suspended") {
+
+      audioCtx.resume();
+
+    }
+
+    const osc = audioCtx.createOscillator();
+
+    const g = audioCtx.createGain();
+
+    osc.type = type;
+
+    osc.frequency.setValueAtTime(
+
+      freq,
+
+      audioCtx.currentTime + delay
+
+    );
+
+    g.gain.setValueAtTime(
+
+      gain,
+
+      audioCtx.currentTime + delay
+
+    );
+
+    g.gain.exponentialRampToValueAtTime(
+
+      .001,
+
+      audioCtx.currentTime + delay + duration
+
+    );
+
+    osc.connect(g);
+
+    g.connect(audioCtx.destination);
+
+    osc.start(audioCtx.currentTime + delay);
+
+    osc.stop(audioCtx.currentTime + delay + duration);
+
+  } catch(e) {}
+
+}
+
+function tick() {
+
+  playTone(680, .035, "square", .025);
+
+}
+
+function fanfare() {
+
+  [523, 659, 784, 1047].forEach((f, i) => {
+
+    playTone(f, .22, "sine", .07, i * .12);
+
+  });
+
+  playTone(1318, .45, "triangle", .045, .48);
+
+}
+
+const remainderComments = [
+
+  "端数の神様が選んだのは……あなた！",
+
+  "おおっと！運命の端数が舞い降りた！",
+
+  "その数百円に、今日のドラマが詰まっとる！",
+
+  "おめでとう……と言ってええんかな？",
+
+  "財布に小さな試練が訪れました！"
+
+];
+
+const allComments = [
+
+  "本日の運命の人は……あなたです！",
+
+  "まさかの展開！今日の主役に決定！",
+
+  "財布よ、心の準備はできとるか！",
+
+  "運命は時に、なかなか容赦がない！",
+
+  "全額払いの大当たり……いや、大ハズレ！？"
+
+];
+
+function showResult(who, amount, comment, detail) {
+
+  $("winner").textContent = who;
+
+  $("winnerAmount").textContent = amount;
+
+  $("comment").textContent = comment;
+
+  $("detail").textContent = detail;
+
+  $("result").classList.add("show");
+
+  $("result").classList.remove("flash");
+
+  void $("result").offsetWidth;
+
+  $("result").classList.add("flash");
+
+  $("sparks").textContent = "✨ 🎉 ✨";
+
+  fanfare();
+
+}
+
+function spin() {
+
+  if (spinning) return;
+
+  const names = namesList();
+
+  const total = Number($("total").value);
+
+  if (!Number.isFinite(total) || total <= 0 || !Number.isInteger(total)) {
+
+    alert("合計金額を1円以上の整数で入力してな！");
+
+    return;
+
+  }
+
+  if (names.length < 2) {
+
+    alert("名前を2人以上入力してな！");
+
+    return;
+
+  }
+
+  if (total < names.length) {
+
+    alert("合計金額が人数より少ないで。金額を確認してな！");
+
+    return;
+
+  }
+
+  if (mode === "remainder") {
+
+    // 1人あたりの金額を1,000円単位で切り下げる
+
+    const perPerson = Math.floor((total / names.length) / 1000) * 1000;
+
+    // 切り下げた基本金額を全員分引いた残り
+
+    const extra = total - perPerson * names.length;
+
+    if (extra === 0) {
+
+      alert("今回は端数がないで！合計金額を変えてみてな。");
+
+      return;
+
+    }
+
+    runSpin(names, () => {
+
+      const winner = names[Math.floor(Math.random() * names.length)];
+
+      showResult(
+
+        winner,
+
+        yen(extra),
+
+        remainderComments[Math.floor(Math.random() * remainderComments.length)],
+
+        `みんな基本 ${yen(perPerson)} ＋ 当たった人が端数 ${yen(extra)} を追加！\n合計：${yen(total)}（${names.length}人）`
+
+      );
+
+    });
+
+  } else {
+
+    runSpin(names, () => {
+
+      const winner = names[Math.floor(Math.random() * names.length)];
+
+      showResult(
+
+        winner,
+
+        yen(total),
+
+        allComments[Math.floor(Math.random() * allComments.length)],
+
+        `当たった人が合計金額 ${yen(total)} を払うルール。\n合計：${yen(total)}（${names.length}人）`
+
+      );
+
+    });
+
+  }
+
+}
+
+function runSpin(names, finish) {
+
+  spinning = true;
+
+  $("start").disabled = true;
+
+  $("result").classList.add("show");
+
+  $("result").classList.remove("flash");
+
+  $("resultLabel").textContent = "運命のルーレット……";
+
+  $("winnerAmount").textContent = "";
+
+  $("comment").textContent = "誰に当たるんや……！";
+
+  $("detail").textContent = "";
+
+  const duration = 3400;
+
+  const start = performance.now();
+
+  let lastIndex = -1;
+
+  function frame(now) {
+
+    const elapsed = now - start;
+
+    const progress = Math.min(elapsed / duration, 1);
+
+    const eased = 1 - Math.pow(1 - progress, 4);
+
+    const interval = 45 + eased * 260;
+
+    const index = Math.floor(elapsed / interval) % names.length;
+
+    if (index !== lastIndex) {
+
+      $("winner").textContent = names[index];
+
+      tick();
+
+      lastIndex = index;
+
+    }
+
+    if (progress < 1) {
+
+      requestAnimationFrame(frame);
+
+    } else {
+
+      spinning = false;
+
+      $("start").disabled = false;
+
+      $("resultLabel").textContent = "運命の人は……";
+
+      finish();
+
+    }
+
+  }
+
+  requestAnimationFrame(frame);
+
+}
+
+$("start").addEventListener("click", spin);
+
+$("again").addEventListener("click", () => {
+
+  $("result").classList.remove("show");
+
+  window.scrollTo({
+
+    top: 0,
+
+    behavior: "smooth"
+
+  });
+
+});
+
+updateCount();
+
+})();
+
+</script>
+
+</body>
+
+</html>
