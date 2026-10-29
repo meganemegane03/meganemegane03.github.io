@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TSUNAGU | MEGANE OSSAN PRODUCE</title>
+<meta name="theme-color" content="#23283A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TSUNAGU">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="normal-icon-192.JPG">
+<link rel="icon" href="normal-icon-192.JPG">
+<link rel="manifest" id="mf">
+<style>
+:root{--bg:#F4F1EA;--ink:#23283A;--card:#fff;--line:#DDD6C8;--mute:#7A7468;--acc:#3D5AFE;--hot:#FF7A59;--ok:#1E9E6A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;font-size:16px;line-height:1.55}
+#top{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 6px) 8px 6px;display:flex;align-items:center;gap:4px}
+#top .tt{flex:1;min-width:0;text-align:center}
+#top h1{margin:0;font-size:18px;letter-spacing:.16em;font-weight:900;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#top small{display:block;font-size:10px;letter-spacing:.12em;opacity:.65}
+.tb{background:none;border:0;color:#fff;font:inherit;font-size:20px;min-width:44px;min-height:44px;visibility:hidden}
+.tb.on{visibility:visible}
+main{max-width:600px;margin:0 auto;padding:12px 12px calc(env(safe-area-inset-bottom,0px) + 60px)}
+.view{display:none}.view.on{display:block}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px;margin:0 0 12px}
+.card h3{margin:0 0 8px;font-size:15px}
+.btn{display:block;width:100%;font:inherit;font-weight:800;font-size:16px;padding:12px 14px;border:0;border-radius:12px;background:var(--acc);color:#fff;min-height:48px;text-align:center}
+.btn.hot{background:var(--hot)}
+.btn.sub{background:#fff;color:var(--ink);border:1.5px solid var(--line)}
+.btn.sm{display:inline-block;width:auto;min-height:40px;padding:8px 12px;font-size:14px}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mute{color:var(--mute);font-size:13px}
+label.f{display:block;font-size:13px;font-weight:800;margin:10px 0 4px}
+input[type=text],textarea,select{width:100%;font:inherit;font-size:16px;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:#FCFBF8;color:var(--ink)}
+textarea{resize:vertical;min-height:70px}
+input[type=color]{width:44px;height:40px;padding:2px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 6px;border-radius:99px;border:2px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:14px;font-weight:700;min-height:42px}
+.chip.pr{padding:8px 14px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip .no{font-size:11px;background:#fff;color:var(--ink);border-radius:99px;padding:0 6px;margin-left:2px}
+.av{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;font-size:16px;flex:none;color:#fff;overflow:hidden}
+.conv{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.conv:first-child{border-top:0}
+.conv .ci{flex:1;min-width:0}
+.conv .ct{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avs{display:flex}
+.avs .av{width:24px;height:24px;font-size:12px;margin-right:-6px;border:2px solid #fff}
+.msg{display:flex;gap:8px;margin:0 0 12px}
+.msg .b{flex:1;min-width:0}
+.msg .nm{font-size:12px;font-weight:800;margin:0 0 2px}
+.msg .bub{display:inline-block;max-width:100%;padding:9px 12px;border-radius:4px 16px 16px 16px;border:1.5px solid var(--line);white-space:pre-wrap;word-break:break-word;font-size:15px}
+.msg .ac{display:flex;gap:4px;margin-top:2px}
+.msg .ac button{background:none;border:0;font-size:13px;color:var(--mute);min-height:32px;padding:0 8px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0 0}
+.bar i{display:block;height:100%;background:var(--acc)}
+.step{border-left:5px solid var(--acc);padding-left:10px;margin:0 0 12px}
+.step.two{border-left-color:var(--hot)}
+.step h4{margin:0 0 6px;font-size:14px}
+details summary{cursor:pointer;font-size:13px;color:var(--mute);min-height:32px;display:flex;align-items:center}
+pre.pv{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:12px;background:#FCFBF8;border:1px solid var(--line);border-radius:8px;padding:8px;max-height:200px;overflow:auto;margin:4px 0 0}
+.banner{background:#FFF3D6;border:1.5px solid #E6C770;border-radius:12px;padding:10px 12px;margin:0 0 12px;font-size:14px;font-weight:700}
+.aix{display:grid;grid-template-columns:auto 1fr auto auto;gap:6px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.aix:first-of-type{border-top:0}
+.aix input[type=text]{padding:8px}
+.aix .mk{width:52px;text-align:center}
+#ov{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(35,40,58,.92);z-index:20;display:none;overflow:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) 12px 40px}
+#ov.on{display:block}
+#ov .in{max-width:560px;margin:0 auto}
+#ov img{width:100%;border-radius:10px;display:block;margin:0 0 8px;background:#fff}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;font-size:14px;font-weight:800;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90%;text-align:center}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<div id="top">
+  <button class="tb" id="bk" aria-label="もどる">‹</button>
+  <div class="tt"><h1 id="ttl">TSUNAGU</h1><small>MEGANE OSSAN PRODUCE</small></div>
+  <button class="tb on" id="gear" aria-label="AIの設定">⚙</button>
+</div>
+<main>
+  <section class="view on" id="v-home"></section>
+  <section class="view" id="v-setup"></section>
+  <section class="view" id="v-chat"></section>
+  <section class="view" id="v-ais"></section>
+</main>
+<div id="ov"><div class="in" id="ovin"></div></div>
+<div id="toast"></div>
+
+<script>
+/* PWA manifest (inline) */
+try{
+  const base=location.href.split('#')[0].split('?')[0];
+  const m={name:'TSUNAGU',short_name:'TSUNAGU',start_url:base,scope:base.replace(/[^\/]*$/,''),
+    display:'standalone',background_color:'#F4F1EA',theme_color:'#23283A',
+    icons:[{src:new URL('normal-icon-192.JPG',base).href,sizes:'192x192',type:'image/jpeg'},
+           {src:new URL('normal-icon-512.JPG',base).href,sizes:'512x512',type:'image/jpeg'}]};
+  document.getElementById('mf').href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));
+}catch(e){}
+
+const $=(s,r)=>(r||document).querySelector(s);
+function h(tag,props,...kids){
+  const e=document.createElement(tag);
+  if(props)for(const k in props){
+    const v=props[k];
+    if(k==='class')e.className=v;
+    else if(k==='style')e.style.cssText=v;
+    else if(k==='value')e.value=v;
+    else if(k==='text')e.textContent=v;
+    else if(k.slice(0,2)==='on')e.addEventListener(k.slice(2),v);
+    else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v);
+  }
+  for(const c of kids.flat()){
+    if(c==null||c===false)continue;
+    e.appendChild(typeof c==='string'?document.createTextNode(c):c);
+  }
+  return e;
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2400);}
+
+/* ===== データ ===== */
+const LS='tsunagu_v1';
+const PRESET_AIS=[
+  {id:'chatgpt',name:'ChatGPT',color:'#2FA67C',mark:'💬'},
+  {id:'gemini',name:'Gemini',color:'#4D7CFE',mark:'✨'},
+  {id:'claude',name:'Claude',color:'#D9774E',mark:'🌿'},
+  {id:'copilot',name:'Copilot',color:'#7B5CE0',mark:'🧭'},
+  {id:'perplexity',name:'Perplexity',color:'#1FA9BF',mark:'🔍'},
+  {id:'grok',name:'Grok',color:'#5B6270',mark:'⚡'}
+].map(a=>Object.assign({builtin:true,off:false},a));
+const PALETTE=['#E0527A','#C2902B','#3C9D4E','#8E5CC9','#2D86B8','#B5563C','#4F6D7A','#D46A9E'];
+const PRESETS=[
+  {id:'brain',label:'ブレスト',desc:'アイデアを出し合う',rule:'アイデアを出し合うブレインストーミングです。相手の案はまず「いいね」と受け止めてから、「こうしたらもっと良くなる」と膨らませ、新しい案も1つ足してください。',roles:['','','','']},
+  {id:'manzai',label:'漫才',desc:'ボケとツッコミ',rule:'テンポのよい漫才をします。ボケ役とツッコミ役に分かれ、短いやりとりを交互に続けてください。ボケは意表をつく内容に、ツッコミは鋭く的確にしてください。',roles:['ボケ','ツッコミ','ボケ','ツッコミ']},
+  {id:'debate',label:'ディベート',desc:'賛成と反対',rule:'テーマについて、賛成側と反対側に分かれて議論します。根拠を示し、相手の主張にきちんと反論してください。感情的にならず、冷静に進めてください。',roles:['賛成','反対','賛成','反対']},
+  {id:'teach',label:'先生と生徒',desc:'質問と解説',rule:'先生役が分かりやすく説明し、生徒役が素朴な疑問を質問する形で進めます。専門用語を使ったら、すぐに説明してください。',roles:['先生','生徒','生徒','先生']},
+  {id:'free',label:'自由記入',desc:'自分でルールを書く',rule:'',roles:['','','','']}
+];
+const LENS={s:{label:'短め（100文字くらい）',text:'100文字くらいの短め'},m:{label:'ふつう（200文字くらい）',text:'200文字くらい'},l:{label:'長め（400文字くらい）',text:'400文字くらいまで'}};
+const CTXS=[[1,'直前の発言だけ'],[3,'直近3発言'],[5,'直近5発言'],[10,'直近10発言'],[0,'これまでぜんぶ']];
+
+let db={ais:PRESET_AIS.map(a=>Object.assign({},a)),convs:[],my:{name:'あなた'}};
+try{
+  const r=JSON.parse(localStorage.getItem(LS)||'null');
+  if(r&&Array.isArray(r.ais)&&Array.isArray(r.convs)){db=r;if(!db.my)db.my={name:'あなた'};}
+}catch(e){}
+function save(){try{localStorage.setItem(LS,JSON.stringify(db));}catch(e){toast('保存できへんかった（容量がいっぱいかも）');}}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function getAI(id){return db.ais.find(a=>a.id===id)||{id,name:'（削除したAI）',color:'#9A958A',mark:'？'};}
+const presetOf=id=>PRESETS.find(p=>p.id===id)||PRESETS[4];
+const speakerName=m=>m.who==='me'?db.my.name:getAI(m.who).name;
+const myIsDefault=()=>db.my.name==='あなた';
+const speakerLabel=m=>m.who==='me'?(myIsDefault()?'人間':db.my.name+'（人間）'):getAI(m.who).name;
+
+/* ===== 文章づくり ===== */
+function buildPrompt(conv,idx,mode){
+  const part=conv.parts[idx],ai=getAI(part.ai),L=[];
+  L.push('あなたは、複数のAIが順番に話す「AI同士の会話」に参加しています。');
+  L.push('あなたの名前は「'+ai.name+'」です。'+(part.role?'あなたの役割は「'+part.role+'」です。':''));
+  L.push('');
+  L.push('【テーマ】'+conv.topic);
+  const pr=presetOf(conv.preset);
+  L.push('【会話の形式】'+pr.label);
+  if(pr.rule)L.push(pr.rule);
+  if(conv.extra&&conv.extra.trim())L.push('【追加ルール】'+conv.extra.trim());
+  L.push('');
+  L.push('【参加者】'+conv.parts.map(p=>getAI(p.ai).name+(p.role?'（'+p.role+'）':'')).join('、'));
+  L.push('（'+(myIsDefault()?'人間の仲介者':db.my.name+'という人間の仲介者')+'が、各AIの発言を順番に伝えています）');
+  L.push('');
+  L.push('【返事のルール】');
+  L.push('・返事は'+LENS[conv.len].text+'にしてください');
+  L.push('・直前の発言に必ず反応してから、自分の考えを足してください');
+  L.push('・返事の本文だけを書いてください（自分の名前や前置きは不要です）');
+  L.push('・日本語で話してください');
+  L.push('');
+  let use=conv.msgs,cut=false;
+  if(mode!=='summary'&&conv.ctx>0&&conv.msgs.length>conv.ctx){
+    let st=conv.msgs.length-conv.ctx;
+    for(let i=conv.msgs.length-1;i>=0;i--){if(conv.msgs[i].who!=='me'){st=Math.min(st,i);break;}}
+    use=conv.msgs.slice(st);cut=st>0;
+  }
+  if(use.length){
+    L.push('【これまでの会話】'+(cut?'（新しい発言だけ。古い発言は省略しています）':''));
+    for(const m of use)L.push(speakerLabel(m)+'：'+m.text);
+    L.push('');
+  }
+  L.push('【あなたの番です】');
+  if(mode==='summary'){
+    L.push('ここまでの会話を、「'+ai.name+'」として、次の形でまとめてください。');
+    L.push('・結論（1〜2文）');
+    L.push('・おもしろかった点（箇条書きで3つまで）');
+    L.push('・次にやってみたいこと（1つ）');
+  }else{
+    L.push(use.length?'「'+ai.name+'」として、続きを話してください。':'「'+ai.name+'」として、最初の発言をしてください。');
+  }
+  return L.join('\n');
+}
+function cleanReply(t,name){
+  t=String(t).replace(/\r/g,'').trim();
+  const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  t=t.replace(new RegExp('^(?:【'+esc+'】|'+esc+'\\s*[:：])\\s*'),'');
+  return t.trim();
+}
+function computeTurn(conv){
+  for(let i=conv.msgs.length-1;i>=0;i--){
+    const m=conv.msgs[i];
+    if(m.who==='me')continue;
+    const k=conv.parts.findIndex(p=>p.ai===m.who);
+    if(k>=0)return (k+1)%conv.parts.length;
+  }
+  return 0;
+}
+const turnOf=conv=>(conv.over!=null&&conv.over<conv.parts.length)?conv.over:computeTurn(conv);
+function toText(conv,style){
+  const L=['■テーマ：'+conv.topic,'■形式：'+presetOf(conv.preset).label,''];
+  for(const m of conv.msgs){
+    const n=speakerName(m)+(m.kind==='summary'?'（まとめ）':'');
+    L.push(style==='kagi'?n+'「'+m.text+'」':n+'：'+m.text,'');
+  }
+  return L.join('\n').trim();
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true;}
+  catch(e){
+    const ta=document.createElement('textarea');
+    ta.value=t;ta.style.cssText='position:fixed;left:0;top:0;opacity:0';
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{ta.setSelectionRange(0,t.length);}catch(_){}
+    let ok=false;try{ok=document.execCommand('copy');}catch(_){}
+    ta.remove();return ok;
+  }
+}
+const av=(a,sz)=>h('span',{class:'av',style:'background:'+a.color+(sz?';width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*0.5)+'px':'')},a.mark);
+
+/* ===== 画面切りかえ ===== */
+let cur=null,view='home';
+const S={topic:'',preset:'manzai',extra:'',sel:[],roles:{},len:'s',max:10,ctx:5};
+const chat={mode:'normal',editing:null,meMode:false};
+function show(v){
+  view=v;
+  for(const k of['home','setup','chat','ais'])$('#v-'+k).classList.toggle('on',k===v);
+  $('#bk').classList.toggle('on',v!=='home');
+  $('#gear').classList.toggle('on',v==='home');
+  $('#ttl').textContent=v==='home'?'TSUNAGU':v==='setup'?'新しい会話':v==='ais'?'AIの設定':'TSUNAGU';
+  if(v==='home')renderHome();else if(v==='setup')renderSetup();else if(v==='chat')renderChat();else renderAis();
+  window.scrollTo(0,0);
+}
+$('#bk').addEventListener('click',()=>{if(view==='setup'&&confirm('書いた内容は消えるけど、もどってええ？')===false)return;show('home');});
+$('#gear').addEventListener('click',()=>show('ais'));
+
+/* ===== ホーム ===== */
+function renderHome(){
+  const el=$('#v-home');el.textContent='';
+  el.appendChild(h('div',{class:'card'},
+    h('p',{style:'margin:0 0 10px;font-weight:800'},'AI同士の会話を、あなたがコピペでつなぐアプリや🔗'),
+    h('p',{class:'mute',style:'margin:0 0 12px'},'ChatGPT、Gemini、Claudeなどを順番に話させて、おもしろい会話を作れるで。お金はかからへん（APIも使わへん）。'),
+    h('button',{class:'btn hot',onclick:()=>{resetSetup();show('setup');}},'＋ 新しい会話をはじめる')));
+  const box=h('div',{class:'card'},h('h3',{},'これまでの会話'));
+  const list=db.convs.slice().sort((a,b)=>b.updated-a.updated);
+  if(!list.length)box.appendChild(h('p',{class:'mute',style:'margin:0'},'まだ会話がないで。上のボタンからはじめてな。'));
+  for(const c of list){
+    box.appendChild(h('div',{class:'conv'},
+      h('div',{class:'avs'},c.parts.map(p=>av(getAI(p.ai)))),
+      h('div',{class:'ci',onclick:()=>{cur=c;chat.mode='normal';chat.editing=null;chat.meMode=false;show('chat');}},
+        h('div',{class:'ct'},c.topic),
+        h('div',{class:'mute'},presetOf(c.preset).label+' ・ '+c.msgs.length+'発言')),
+      h('button',{class:'btn sub sm',onclick:()=>{if(confirm('この会話を消してええ？')){db.convs=db.convs.filter(x=>x!==c);save();renderHome();}}},'消す')));
+  }
+  el.appendChild(box);
+  el.appendChild(h('div',{class:'note mute',style:'font-size:12px'},
+    '※会話は、このスマホの中だけに保存されるで。AIに送る文章は、あなたがコピペする時だけ外に出るで。AIの名前は、公式のものとは関係ない、あくまで呼び名や。'));
+}
+
+/* ===== 会話のセットアップ ===== */
+function resetSetup(){
+  S.topic='';S.preset='manzai';S.extra='';S.sel=[];S.roles={};S.len='s';S.max=10;S.ctx=5;
+  const use=db.ais.filter(a=>!a.off);
+  S.sel=use.slice(0,2).map(a=>a.id);
+  fillRoles(true);
+}
+function fillRoles(force){
+  const pr=presetOf(S.preset);
+  S.sel.forEach((id,i)=>{if(force||!S.roles[id]||S.roles[id].auto)S.roles[id]={text:pr.roles[i]||'',auto:true};});
+}
+function renderSetup(){
+  const el=$('#v-setup');el.textContent='';
+  const topic=h('textarea',{rows:'2',placeholder:'例：AIが人間のおっさんに転生したら、最初に何をする？',value:S.topic,oninput:e=>{S.topic=e.target.value;}});
+  el.appendChild(h('div',{class:'card'},h('h3',{},'① テーマ'),topic));
+  const pc=h('div',{class:'chips'},PRESETS.map(p=>h('button',{class:'chip pr'+(S.preset===p.id?' on':''),onclick:()=>{S.preset=p.id;fillRoles(false);renderSetup();}},p.label)));
+  el.appendChild(h('div',{class:'card'},h('h3',{},'② 会話の形式'),pc,
+    h('p',{class:'mute',style:'margin:8px 0 0'},presetOf(S.preset).desc),
+    h('label',{class:'f'},'追加ルール（なくてもOK。自由記入のときは、ここにルールを書いてな）'),
+    h('textarea',{rows:'2',placeholder:'例：語尾は全部関西弁にする',value:S.extra,oninput:e=>{S.extra=e.target.value;}})));
+  const use=db.ais.filter(a=>!a.off);
+  const chips=h('div',{class:'chips'},use.map(a=>{
+    const k=S.sel.indexOf(a.id);
+    return h('button',{class:'chip'+(k>=0?' on':''),onclick:()=>{
+      const i=S.sel.indexOf(a.id);
+      if(i>=0)S.sel.splice(i,1);
+      else{if(S.sel.length>=4){toast('参加は4人までやで');return;}S.sel.push(a.id);}
+      fillRoles(false);renderSetup();}},
+      av(a),a.name,k>=0?h('span',{class:'no'},String(k+1)+'番目'):null);
+  }));
+  const rolesBox=h('div',{});
+  S.sel.forEach(id=>{
+    const a=getAI(id),r=S.roles[id]||(S.roles[id]={text:'',auto:true});
+    rolesBox.appendChild(h('div',{class:'row',style:'margin:8px 0 0'},av(a),h('div',{style:'width:84px;font-weight:800;font-size:13px;overflow:hidden;text-overflow:ellipsis'},a.name),
+      h('input',{type:'text',style:'flex:1;min-width:120px',placeholder:'役割（なくてもOK）',value:r.text,oninput:e=>{r.text=e.target.value;r.auto=false;}})));
+  });
+  el.appendChild(h('div',{class:'card'},h('h3',{},'③ 参加するAI（2〜4人、タップした順に話すで）'),chips,
+    S.sel.length<2?h('p',{class:'mute',style:'margin:8px 0 0;color:#B5563C'},'2人以上えらんでな'):null,rolesBox,
+    h('p',{class:'mute',style:'margin:10px 0 0'},'AIの追加や名前の変更は、右上の⚙でできるで。')));
+  const lenSel=h('select',{onchange:e=>{S.len=e.target.value;}},Object.keys(LENS).map(k=>h('option',{value:k,selected:S.len===k},LENS[k].label)));
+  const maxSel=h('select',{onchange:e=>{S.max=+e.target.value;}},[6,10,16,24,0].map(n=>h('option',{value:String(n),selected:S.max===n},n?n+'発言でひと区切り':'ずっと続ける')));
+  const ctxSel=h('select',{onchange:e=>{S.ctx=+e.target.value;}},CTXS.map(c=>h('option',{value:String(c[0]),selected:S.ctx===c[0]},c[1])));
+  el.appendChild(h('div',{class:'card'},h('h3',{},'④ こまかい設定'),
+    h('label',{class:'f'},'AIの返事の長さ'),lenSel,
+    h('label',{class:'f'},'どこまで会話を続ける？'),maxSel,
+    h('label',{class:'f'},'次のAIに渡す「前の会話」'),ctxSel,
+    h('p',{class:'mute',style:'margin:6px 0 0'},'AIは前の会話を覚えてへんから、毎回アプリが前の会話をつけるで。長くなりすぎる時は、少なめにしてな。')));
+  el.appendChild(h('button',{class:'btn hot',onclick:startConv},'会話をはじめる'));
+}
+function startConv(){
+  const topic=S.topic.trim();
+  if(!topic){toast('テーマを書いてな');return;}
+  if(S.sel.length<2){toast('AIを2人以上えらんでな');return;}
+  const conv={id:uid(),topic,preset:S.preset,extra:S.extra,len:S.len,max:S.max,ctx:S.ctx,over:null,
+    parts:S.sel.map(id=>({ai:id,role:((S.roles[id]||{}).text||'').trim()})),msgs:[],created:Date.now(),updated:Date.now()};
+  db.convs.push(conv);save();
+  cur=conv;chat.mode='normal';chat.editing=null;chat.meMode=false;show('chat');
+}
+
+/* ===== 会話画面 ===== */
+function addMsg(who,text,kind){
+  text=String(text).trim();
+  if(!text){toast('空っぽやで');return false;}
+  cur.msgs.push({who,text,kind:kind||null,t:Date.now()});
+  cur.over=null;cur.updated=Date.now();save();return true;
+}
+function renderChat(){
+  const el=$('#v-chat');el.textContent='';
+  const conv=cur;if(!conv){show('home');return;}
+  const n=conv.msgs.length;
+  /* ヘッダー */
+  const head=h('div',{class:'card'},
+    h('div',{style:'font-weight:800'},conv.topic),
+    h('div',{class:'mute'},presetOf(conv.preset).label+(conv.extra?' ＋追加ルール':'')),
+    conv.max?h('div',{},h('div',{class:'bar'},h('i',{style:'width:'+Math.min(100,Math.round(n/conv.max*100))+'%'})),h('div',{class:'mute',style:'margin-top:2px'},'発言 '+n+' / '+conv.max)):h('div',{class:'mute'},'発言 '+n));
+  el.appendChild(head);
+  /* ログ */
+  const log=h('div',{});
+  conv.msgs.forEach((m,i)=>{
+    const a=m.who==='me'?{color:'#8A8274',mark:'🙂',name:db.my.name}:getAI(m.who);
+    log.appendChild(h('div',{class:'msg'},av(a),h('div',{class:'b'},
+      h('div',{class:'nm',style:'color:'+a.color},a.name+(m.kind==='summary'?'　⭐まとめ':'')),
+      h('div',{class:'bub',style:'border-color:'+a.color+';background:'+a.color+'18'},m.text),
+      h('div',{class:'ac'},
+        h('button',{onclick:()=>{chat.editing=i;chat.meMode=false;renderChat();setTimeout(()=>{const p=$('#panel');if(p&&p.scrollIntoView)p.scrollIntoView({block:'start'});},50);}},'✏️ 直す'),
+        h('button',{onclick:()=>{if(confirm('この発言を消してええ？')){conv.msgs.splice(i,1);conv.over=null;save();renderChat();}}},'🗑 消す')))));
+  });
+  el.appendChild(log);
+  if(conv.max&&n>=conv.max)el.appendChild(h('div',{class:'banner'},'ここまでで'+conv.max+'発言や！ そろそろ「まとめ」を頼もか？（もっと続けてもええで）'));
+  /* パネル */
+  const panel=h('div',{id:'panel',class:'card'});
+  el.appendChild(panel);
+  if(chat.editing!=null){
+    const m=conv.msgs[chat.editing];
+    const ta=h('textarea',{rows:'4',value:m?m.text:''});
+    panel.appendChild(h('h3',{},'発言を直す'));
+    panel.appendChild(ta);
+    panel.appendChild(h('div',{class:'row',style:'margin-top:8px'},
+      h('button',{class:'btn sm',onclick:()=>{const t=ta.value.trim();if(!t){toast('空っぽやで');return;}m.text=t;conv.updated=Date.now();save();chat.editing=null;renderChat();}},'直した！'),
+      h('button',{class:'btn sub sm',onclick:()=>{chat.editing=null;renderChat();}},'やめる')));
+    return;
+  }
+  /* だれの番 */
+  const turn=turnOf(conv);
+  const chips=h('div',{class:'chips'});
+  conv.parts.forEach((p,i)=>{
+    const a=getAI(p.ai);
+    chips.appendChild(h('button',{class:'chip'+(!chat.meMode&&i===turn?' on':''),onclick:()=>{conv.over=i;chat.meMode=false;save();renderChat();}},av(a),a.name+(p.role?'（'+p.role+'）':'')));
+  });
+  chips.appendChild(h('button',{class:'chip'+(chat.meMode?' on':''),onclick:()=>{chat.meMode=!chat.meMode;renderChat();}},h('span',{class:'av',style:'background:#8A8274'},'🙂'),db.my.name+'の一言'));
+  panel.appendChild(h('h3',{},'次に話す人'));
+  panel.appendChild(chips);
+  if(chat.meMode){
+    const ta=h('textarea',{rows:'3',placeholder:'話をふったり、ツッコんだり、テーマを変えたり…'});
+    panel.appendChild(h('div',{style:'margin-top:12px'},ta,
+      h('div',{class:'row',style:'margin-top:8px'},
+        h('button',{class:'btn sm',onclick:()=>{if(addMsg('me',ta.value)){chat.meMode=false;renderChat();scrollPanel();}}},'追加'),
+        h('button',{class:'btn sub sm',onclick:()=>{chat.meMode=false;renderChat();}},'やめる'))));
+    return;
+  }
+  const part=conv.parts[turn],ai=getAI(part.ai);
+  const mode=chat.mode;
+  const prompt=buildPrompt(conv,turn,mode);
+  panel.appendChild(h('div',{class:'step',style:'margin-top:14px'},
+    h('h4',{},'① この文章をコピーして、「'+ai.name+'」に貼ってな'+(mode==='summary'?'（まとめ）':'')),
+    h('button',{class:'btn',onclick:async()=>{toast((await copyText(prompt))?'コピーしたで📋 '+ai.name+'に貼ってな':'コピーできへんかった。下の文章を長押ししてコピーしてな');}},'📋 コピーする'),
+    h('details',{},h('summary',{},'文章の中身を見る（'+prompt.length+'文字）'),h('pre',{class:'pv'},prompt))));
+  const ta=h('textarea',{rows:'3',placeholder:'「'+ai.name+'」の返事を、ここに貼ってな'});
+  const doAdd=text=>{
+    const t=cleanReply(text,ai.name);
+    if(addMsg(part.ai,t,mode==='summary'?'summary':null)){chat.mode='normal';renderChat();scrollPanel();}
+  };
+  panel.appendChild(h('div',{class:'step two'},
+    h('h4',{},'② 「'+ai.name+'」の返事を貼ってな'),
+    h('button',{class:'btn hot',onclick:async()=>{
+      try{const t=await navigator.clipboard.readText();if(!t||!t.trim()){toast('クリップボードが空っぽやで');return;}doAdd(t);}
+      catch(e){toast('貼り付けできへんかった。下の入力欄に貼ってな');ta.focus();}}},'📥 貼り付けて追加'),
+    h('div',{class:'mute',style:'margin:8px 0 4px'},'うまくいかん時は、ここに貼って「追加」を押してな'),
+    ta,h('button',{class:'btn sub sm',style:'margin-top:6px',onclick:()=>doAdd(ta.value)},'追加')));
+  /* ツール */
+  const ctxSel=h('select',{onchange:e=>{conv.ctx=+e.target.value;save();renderChat();}},CTXS.map(c=>h('option',{value:String(c[0]),selected:conv.ctx===c[0]},c[1])));
+  panel.appendChild(h('div',{class:'row',style:'margin:4px 0 10px'},
+    h('button',{class:'btn sub sm'+(mode==='summary'?' on':''),style:mode==='summary'?'background:#FFF3D6':'',onclick:()=>{chat.mode=mode==='summary'?'normal':'summary';renderChat();}},mode==='summary'?'🏁 まとめ中（やめる）':'🏁 まとめを頼む'),
+    h('button',{class:'btn sub sm',onclick:()=>openExport()},'📤 書き出し')));
+  panel.appendChild(h('label',{class:'f',style:'margin-top:0'},'次のAIに渡す「前の会話」'));
+  panel.appendChild(ctxSel);
+}
+function scrollPanel(){setTimeout(()=>{const p=$('#panel');if(p&&p.scrollIntoView)p.scrollIntoView({block:'start',behavior:'smooth'});},60);}
+
+/* ===== 書き出し ===== */
+function openOv(){$('#ov').classList.add('on');}
+function closeOv(){$('#ov').classList.remove('on');$('#ovin').textContent='';}
+function openExport(){
+  const conv=cur,box=$('#ovin');box.textContent='';
+  const card=h('div',{class:'card'},h('h3',{},'📤 書き出し（'+conv.msgs.length+'発言）'),
+    h('button',{class:'btn',style:'margin-bottom:8px',onclick:async()=>{toast((await copyText(toText(conv,'colon')))?'コピーしたで📋（名前：本文）':'コピーできへんかった');}},'📋 テキストをコピー（名前：本文）'),
+    h('button',{class:'btn sub',style:'margin-bottom:8px',onclick:async()=>{toast((await copyText(toText(conv,'kagi')))?'コピーしたで📋（名前「本文」）':'コピーできへんかった');}},'📋 テキストをコピー（名前「本文」）'),
+    h('button',{class:'btn hot',style:'margin-bottom:8px',onclick:()=>makeImages(conv)},'🖼 画像にする（スクショ風）'),
+    h('button',{class:'btn sub',onclick:closeOv},'とじる'));
+  box.appendChild(card);
+  box.appendChild(h('p',{style:'color:#fff;font-size:12px'},'※AIの返事をそのまま載せる時は、使ったAIの名前を書いておくと親切やで。'));
+  openOv();
+}
+function wrapText(meas,text,maxW){
+  const out=[];
+  for(const para of String(text).split('\n')){
+    if(para===''){out.push('');continue;}
+    let line='';
+    for(const ch of Array.from(para)){
+      const w=meas(line+ch);
+      if(w>maxW&&line){
+        if('、。，．」』）！？…ー'.indexOf(ch)>=0&&w<=maxW*1.12){line+=ch;continue;}
+        out.push(line);line=ch;
+      }else line+=ch;
+    }
+    out.push(line);
+  }
+  return out;
+}
+const IMG={W:390,PAD:14,AV:36,GAP:10,BP:10,FS:14,LH:21,MAXH:1500,FOOT:30};
+function layoutPages(meas,conv,titleMeas){
+  const {W,PAD,AV,GAP,BP,LH,MAXH,FOOT}=IMG;
+  const x0=PAD+AV+GAP,textW=W-x0-PAD-BP*2-6;
+  const themeLines=wrapText(titleMeas,conv.topic,W-PAD*2);
+  const hdrH=44+themeLines.length*22+22;
+  const items=conv.msgs.map(m=>{
+    const lines=wrapText(meas,m.text,textW);
+    return{m,lines,h:18+lines.length*LH+BP*2+14};
+  });
+  const pages=[];let page={items:[],y:hdrH+8,first:true};
+  for(const it of items){
+    if(page.y+it.h>MAXH-FOOT&&page.items.length){pages.push(page);page={items:[],y:PAD,first:false};}
+    it.y=page.y;page.items.push(it);page.y+=it.h;
+  }
+  pages.push(page);
+  pages.forEach(p=>{p.h=Math.max(p.y+FOOT,200);});
+  return{pages,themeLines,hdrH,x0,textW};
+}
+function hexA(hex,a){
+  const n=parseInt(hex.replace('#',''),16);
+  return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';
+}
+function rrect(g,x,y,w,hh,r){
+  r=Math.min(r,w/2,hh/2);g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+hh,r);g.arcTo(x+w,y+hh,x,y+hh,r);g.arcTo(x,y+hh,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();
+}
+function drawPage(L,conv,pi,total){
+  const {W,PAD,AV,GAP,BP,FS,LH,FOOT}=IMG,S2=2,pg=L.pages[pi];
+  const c=document.createElement('canvas');c.width=W*S2;c.height=pg.h*S2;
+  const g=c.getContext('2d');g.scale(S2,S2);
+  const FF='"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';
+  g.fillStyle='#F4F1EA';g.fillRect(0,0,W,pg.h);
+  if(pg.first){
+    g.fillStyle='#23283A';g.fillRect(0,0,W,L.hdrH-10);
+    g.fillStyle='#fff';g.font='bold 15px '+FF;g.textBaseline='alphabetic';
+    g.fillText('🔗 TSUNAGU',PAD,26);
+    g.font='bold 15px '+FF;
+    L.themeLines.forEach((t,i)=>g.fillText(t,PAD,52+i*22));
+    g.fillStyle='rgba(255,255,255,.7)';g.font='12px '+FF;
+    g.fillText('形式：'+presetOf(conv.preset).label+'　'+conv.parts.map(p=>getAI(p.ai).name).join(' × '),PAD,52+L.themeLines.length*22);
+  }
+  for(const it of pg.items){
+    const m=it.m,a=m.who==='me'?{color:'#8A8274',mark:'🙂',name:db.my.name}:getAI(m.who),y=it.y;
+    g.fillStyle=a.color;g.beginPath();g.arc(PAD+AV/2,y+AV/2+2,AV/2,0,Math.PI*2);g.fill();
+    g.fillStyle='#fff';g.font='18px '+FF;g.textAlign='center';g.textBaseline='middle';g.fillText(a.mark,PAD+AV/2,y+AV/2+3);
+    g.textAlign='left';g.textBaseline='alphabetic';
+    g.fillStyle=a.color;g.font='bold 12px '+FF;g.fillText(a.name+(m.kind==='summary'?'　⭐まとめ':''),L.x0,y+12);
+    g.font=FS+'px '+FF;
+    let mw=0;it.lines.forEach(t=>{mw=Math.max(mw,g.measureText(t).width);});
+    const bw=Math.min(L.textW+BP*2+6,mw+BP*2+6),bh=it.lines.length*LH+BP*2;
+    rrect(g,L.x0,y+18,bw,bh,12);g.fillStyle='#fff';g.fill();g.fillStyle=hexA(a.color,0.1);g.fill();
+    g.strokeStyle=a.color;g.lineWidth=1;g.stroke();
+    g.fillStyle='#23283A';
+    it.lines.forEach((t,i)=>g.fillText(t,L.x0+BP,y+18+BP+LH*i+15));
+  }
+  g.fillStyle='#8A8274';g.font='10px '+FF;g.textAlign='center';
+  g.fillText('TSUNAGU / MEGANE OSSAN PRODUCE'+(total>1?'　'+(pi+1)+'/'+total:''),W/2,pg.h-12);
+  return c;
+}
+async function makeImages(conv){
+  if(!conv.msgs.length){toast('まだ発言がないで');return;}
+  const probe=document.createElement('canvas').getContext('2d');
+  const FF='"Hiragino Sans","Yu Gothic","Noto Sans JP",sans-serif';
+  const meas=t=>{probe.font=IMG.FS+'px '+FF;return probe.measureText(t).width;};
+  const tmeas=t=>{probe.font='bold 15px '+FF;return probe.measureText(t).width;};
+  const L=layoutPages(meas,conv,tmeas);
+  if(L.pages.length>12){toast('長すぎるから、最初の12枚までにするで');L.pages.length=12;}
+  const box=$('#ovin');box.textContent='';
+  box.appendChild(h('p',{style:'color:#fff;font-weight:800'},'画像を作っとるで…'));
+  await new Promise(r=>setTimeout(r,30));
+  const blobs=[];
+  for(let i=0;i<L.pages.length;i++){
+    const c=drawPage(L,conv,i,L.pages.length);
+    const b=await new Promise(r=>c.toBlob(r,'image/png'));
+    if(b)blobs.push(b);
+  }
+  box.textContent='';
+  box.appendChild(h('p',{style:'color:#fff;font-size:13px'},'できたで！ボタンで保存・共有できるし、画像を長押ししてもええで。'));
+  blobs.forEach((b,i)=>{
+    const url=URL.createObjectURL(b),name='tsunagu_'+(i+1)+'.png';
+    const file=new File([b],name,{type:'image/png'});
+    box.appendChild(h('img',{src:url,alt:'会話の画像 '+(i+1)}));
+    box.appendChild(h('button',{class:'btn',style:'margin-bottom:14px',onclick:async()=>{
+      try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return;}}
+      catch(e){if(e&&e.name==='AbortError')return;}
+      const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    }},'💾 この画像を保存・共有'+(blobs.length>1?'（'+(i+1)+'/'+blobs.length+'）':'')));
+  });
+  box.appendChild(h('button',{class:'btn sub',onclick:closeOv},'とじる'));
+}
+
+/* ===== AIの設定 ===== */
+function renderAis(){
+  const el=$('#v-ais');el.textContent='';
+  el.appendChild(h('div',{class:'card'},h('h3',{},'あなたの呼び名'),
+    h('input',{type:'text',value:db.my.name,maxlength:'10',oninput:e=>{db.my.name=e.target.value||'あなた';save();}}),
+    h('p',{class:'mute',style:'margin:6px 0 0'},'会話の中の、あなたの名前や。「おっさん」とかにしてもええで。')));
+  const box=h('div',{class:'card'},h('h3',{},'AIの名前・色・マーク'),
+    h('p',{class:'mute',style:'margin:0 0 6px'},'呼び名は自由に変えられるで（くーちゃん、チャッピーなど）。「使う」のチェックを外すと、えらぶ画面に出てこおへん。'));
+  db.ais.forEach(a=>{
+    const dot=h('span',{class:'av',style:'background:'+a.color},a.mark);
+    box.appendChild(h('div',{class:'aix'},
+      h('input',{type:'text',class:'mk',value:a.mark,maxlength:'2',oninput:e=>{a.mark=e.target.value||'🤖';dot.textContent=a.mark;save();}}),
+      h('input',{type:'text',value:a.name,maxlength:'16',oninput:e=>{a.name=e.target.value||'名無しAI';save();}}),
+      h('input',{type:'color',value:a.color,oninput:e=>{a.color=e.target.value;dot.style.background=a.color;save();}}),
+      h('label',{style:'font-size:12px;white-space:nowrap;display:flex;align-items:center;gap:4px'},
+        h('input',{type:'checkbox',checked:!a.off,onchange:e=>{a.off=!e.target.checked;save();}}),'使う')));
+    if(!a.builtin)box.appendChild(h('div',{style:'text-align:right'},h('button',{class:'btn sub sm',onclick:()=>{if(confirm('「'+a.name+'」を消してええ？（これまでの会話には名前が残らへんで）')){db.ais=db.ais.filter(x=>x!==a);save();renderAis();}}},'このAIを消す')));
+  });
+  box.appendChild(h('button',{class:'btn sub',style:'margin-top:10px',onclick:()=>{
+    const i=db.ais.filter(a=>!a.builtin).length;
+    db.ais.push({id:'c'+uid(),name:'新しいAI',color:PALETTE[i%PALETTE.length],mark:'🤖',builtin:false,off:false});save();renderAis();}},'＋ AIを追加する（Museなど）'));
+  el.appendChild(box);
+  el.appendChild(h('button',{class:'btn sub',onclick:()=>{
+    if(confirm('最初の6つのAIの名前・色・マークをもどす？（追加したAIは残るで）')){
+      PRESET_AIS.forEach(p=>{const a=db.ais.find(x=>x.id===p.id);if(a)Object.assign(a,{name:p.name,color:p.color,mark:p.mark,off:false});else db.ais.push(Object.assign({},p));});
+      save();renderAis();}}},'最初の名前にもどす'));
+}
+
+/* ===== 起動 ===== */
+$('#ov').addEventListener('click',e=>{if(e.target.id==='ov')closeOv();});
+renderHome();
+</script>
+</body>
+</html>
