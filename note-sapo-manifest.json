@@ -1,0 +1,20 @@
+{
+  "name": "noteサポ",
+  "short_name": "noteサポ",
+  "start_url": "./note-sapo.html",
+  "display": "standalone",
+  "background_color": "#f5f6f1",
+  "theme_color": "#557c5b",
+  "icons": [
+    {
+      "src": "./normal-icon-192.JPG",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "./normal-icon-512.JPG",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}
