@@ -1,0 +1,587 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color" content="#527b58">
+
+<title>noteサポ</title>
+
+<style>
+
+* {
+
+  box-sizing: border-box;
+
+}
+
+body {
+
+  margin: 0;
+
+  padding: 20px 15px 40px;
+
+  background: #f6f7f2;
+
+  color: #333;
+
+  font-family: -apple-system, BlinkMacSystemFont,
+
+    "Helvetica Neue", sans-serif;
+
+}
+
+main {
+
+  max-width: 520px;
+
+  margin: auto;
+
+}
+
+header {
+
+  text-align: center;
+
+  padding: 15px 0 20px;
+
+}
+
+h1 {
+
+  margin: 0;
+
+  color: #527b58;
+
+  font-size: 32px;
+
+}
+
+header p {
+
+  color: #777;
+
+  font-size: 14px;
+
+}
+
+.card {
+
+  background: white;
+
+  border-radius: 16px;
+
+  padding: 18px;
+
+  margin-bottom: 15px;
+
+  box-shadow: 0 2px 8px #00000008;
+
+}
+
+h2 {
+
+  font-size: 17px;
+
+  margin: 0 0 12px;
+
+}
+
+label {
+
+  display: block;
+
+  font-size: 13px;
+
+  color: #666;
+
+  margin-bottom: 7px;
+
+}
+
+input, textarea, select {
+
+  width: 100%;
+
+  padding: 12px;
+
+  border: 1px solid #ddd;
+
+  border-radius: 10px;
+
+  background: #fff;
+
+  font-size: 16px;
+
+  font-family: inherit;
+
+}
+
+textarea {
+
+  resize: vertical;
+
+  min-height: 180px;
+
+  line-height: 1.7;
+
+}
+
+input {
+
+  margin-bottom: 14px;
+
+}
+
+button {
+
+  width: 100%;
+
+  padding: 15px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  font-size: 16px;
+
+  font-weight: bold;
+
+  cursor: pointer;
+
+  font-family: inherit;
+
+}
+
+.menu {
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+
+  gap: 10px;
+
+}
+
+.menu button {
+
+  background: #e8f0e6;
+
+  color: #426a48;
+
+  min-height: 76px;
+
+}
+
+.menu button:last-child {
+
+  grid-column: 1 / 3;
+
+}
+
+.primary {
+
+  background: #527b58;
+
+  color: white;
+
+  margin-top: 12px;
+
+}
+
+.secondary {
+
+  background: #eee;
+
+  color: #444;
+
+  margin-top: 10px;
+
+}
+
+#result {
+
+  min-height: 220px;
+
+}
+
+.note {
+
+  font-size: 12px;
+
+  color: #888;
+
+  line-height: 1.6;
+
+  text-align: center;
+
+  margin-top: 20px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<main>
+
+<header>
+
+  <h1>noteサポ</h1>
+
+  <p>記事の投稿準備をお手伝い</p>
+
+</header>
+
+<div class="card">
+
+  <h2>① 記事を貼り付ける</h2>
+
+  <label for="article">noteの記事本文</label>
+
+  <textarea id="article"
+
+    placeholder="ここに記事本文を貼り付けてください"></textarea>
+
+  <label for="title">記事タイトル（任意）</label>
+
+  <input id="title"
+
+    placeholder="まだ決まっていなくてもOK">
+
+  <label for="style">記事の雰囲気</label>
+
+  <select id="style">
+
+    <option>おまかせ</option>
+
+    <option>親しみやすい</option>
+
+    <option>ユーモラス</option>
+
+    <option>感動的</option>
+
+    <option>知的で落ち着いた</option>
+
+    <option>読者の共感を重視</option>
+
+  </select>
+
+</div>
+
+<div class="card">
+
+  <h2>② やりたいことを選ぶ</h2>
+
+  <div class="menu">
+
+    <button onclick="makePrompt('title')">
+
+      ✏️ タイトル案
+
+    </button>
+
+    <button onclick="makePrompt('tag')">
+
+      # ハッシュタグ
+
+    </button>
+
+    <button onclick="makePrompt('image')">
+
+      🖼 見出し画像のアイデア
+
+    </button>
+
+    <button onclick="makePrompt('all')">
+
+      📋 投稿準備まとめ
+
+    </button>
+
+  </div>
+
+</div>
+
+<div class="card">
+
+  <h2>③ AIに渡す指示文</h2>
+
+  <textarea id="result"
+
+    placeholder="上のボタンを押すと、ここに指示文が表示されます"
+
+    readonly></textarea>
+
+  <button class="primary" onclick="copyPrompt()">
+
+    指示文をコピーする
+
+  </button>
+
+  <button class="secondary" onclick="clearAll()">
+
+    最初からやり直す
+
+  </button>
+
+</div>
+
+<p class="note">
+
+  noteサポは、記事を書く人を応援する無料アプリです。<br>
+
+  AIの利用にはChatGPTやClaudeなどのサービスを使います。
+
+</p>
+
+</main>
+
+<script>
+
+function makePrompt(mode) {
+
+  const article = document.getElementById("article").value.trim();
+
+  const title = document.getElementById("title").value.trim();
+
+  const style = document.getElementById("style").value;
+
+  if (!article) {
+
+    alert("先に記事本文を貼り付けてください");
+
+    return;
+
+  }
+
+  let task = "";
+
+  if (mode === "title") {
+
+    task = `
+
+この記事に合うタイトル案を10個考えてください。
+
+・記事の内容から外れない
+
+・本文の書き手らしさを大切にする
+
+・大げさな煽りや釣りタイトルにしない
+
+・切り口の異なるタイトルを提案する
+
+・それぞれのタイトルの特徴を簡単に説明する
+
+・最後におすすめを3つ選ぶ
+
+`;
+
+  }
+
+  if (mode === "tag") {
+
+    task = `
+
+この記事に合うハッシュタグを提案してください。
+
+・記事の中心テーマを読み取る
+
+・内容に本当に関係するタグを選ぶ
+
+・読者が記事を見つける手がかりになるタグを優先する
+
+・広いテーマと具体的なテーマを組み合わせる
+
+・無関係なタグや人気だけを狙ったタグは使わない
+
+・おすすめのタグを5〜10個提案する
+
+・タグを選んだ理由も簡単に説明する
+
+・最後にコピーしやすい形でまとめる
+
+`;
+
+  }
+
+  if (mode === "image") {
+
+    task = `
+
+この記事に合うnoteの見出し画像を考えてください。
+
+・記事の内容や雰囲気を読み取る
+
+・記事の世界観に合う画像を提案する
+
+・画像の構図、背景、色、人物や物の配置を説明する
+
+・文字を入れる場合は短くする
+
+・noteの見出し画像に適した横長16:9を想定する
+
+・画像生成AIにそのまま渡せる完成プロンプトも作る
+
+・画像案を3種類提案する
+
+`;
+
+  }
+
+  if (mode === "all") {
+
+    task = `
+
+この記事の投稿準備をまとめて手伝ってください。
+
+【1】記事の内容とテーマ
+
+記事の中心テーマ、伝えたいこと、読者に与える印象を簡潔に整理する。
+
+【2】タイトル案
+
+切り口の異なるタイトルを5個提案する。
+
+それぞれの特徴も説明し、おすすめを選ぶ。
+
+【3】ハッシュタグ
+
+記事に本当に合うタグを5〜10個提案する。
+
+選んだ理由も説明し、最後にコピーしやすい形でまとめる。
+
+【4】見出し画像
+
+記事の雰囲気に合う画像案を3種類提案する。
+
+その中からおすすめを選び、画像生成AIに渡せるプロンプトも作る。
+
+【5】投稿前のアドバイス
+
+記事の魅力を損なわず、読者に伝わりやすくするための
+
+簡単なアドバイスを1〜3個提案する。
+
+注意：
+
+記事そのものを書き直す必要はありません。
+
+元の記事の書き手らしさを尊重してください。
+
+`;
+
+  }
+
+  const prompt = `
+
+あなたはnoteの投稿準備をサポートするアシスタントです。
+
+記事を書いた本人の個性や表現を大切にしてください。
+
+内容を勝手に変更したり、記事にない情報を追加したりしないでください。
+
+【記事の雰囲気】
+
+${style}
+
+【現在のタイトル】
+
+${title || "未定"}
+
+【依頼内容】
+
+${task}
+
+【記事本文】
+
+${article}
+
+分かりやすく、実際に使える形で回答してください。
+
+`;
+
+  document.getElementById("result").value = prompt.trim();
+
+  document.getElementById("result").scrollIntoView({
+
+    behavior: "smooth",
+
+    block: "center"
+
+  });
+
+}
+
+async function copyPrompt() {
+
+  const result = document.getElementById("result");
+
+  if (!result.value.trim()) {
+
+    alert("先に指示文を作成してください");
+
+    return;
+
+  }
+
+  result.focus();
+
+  result.select();
+
+  try {
+
+    await navigator.clipboard.writeText(result.value);
+
+    alert("コピーできたで！AIに貼り付けて使ってください");
+
+  } catch (e) {
+
+    const success = document.execCommand("copy");
+
+    if (success) {
+
+      alert("コピーできたで！AIに貼り付けて使ってください");
+
+    } else {
+
+      alert("指示文を長押ししてコピーしてください");
+
+    }
+
+  }
+
+}
+
+function clearAll() {
+
+  if (!confirm("入力内容をすべて消しますか？")) {
+
+    return;
+
+  }
+
+  document.getElementById("article").value = "";
+
+  document.getElementById("title").value = "";
+
+  document.getElementById("style").selectedIndex = 0;
+
+  document.getElementById("result").value = "";
+
+}
+
+</script>
+
+</body>
+
+</html>
