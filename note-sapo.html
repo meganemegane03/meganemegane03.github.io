@@ -10,7 +10,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta name="theme-color" content="#527b58">
+<meta name="theme-color" content="#557c5b">
 
 <title>noteサポ</title>
 
@@ -26,9 +26,9 @@ body {
 
   margin: 0;
 
-  padding: 20px 15px 40px;
+  padding: 18px 14px 40px;
 
-  background: #f6f7f2;
+  background: #f5f6f1;
 
   color: #333;
 
@@ -40,7 +40,7 @@ body {
 
 main {
 
-  max-width: 520px;
+  max-width: 560px;
 
   margin: auto;
 
@@ -50,7 +50,33 @@ header {
 
   text-align: center;
 
-  padding: 15px 0 20px;
+  padding: 18px 0 22px;
+
+}
+
+.logo {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  width: 64px;
+
+  height: 64px;
+
+  border-radius: 20px;
+
+  background: #557c5b;
+
+  color: white;
+
+  font-size: 31px;
+
+  font-weight: bold;
+
+  margin-bottom: 10px;
 
 }
 
@@ -58,9 +84,9 @@ h1 {
 
   margin: 0;
 
-  color: #527b58;
+  color: #557c5b;
 
-  font-size: 32px;
+  font-size: 31px;
 
 }
 
@@ -68,7 +94,9 @@ header p {
 
   color: #777;
 
-  font-size: 14px;
+  font-size: 13px;
+
+  margin: 8px 0 0;
 
 }
 
@@ -76,7 +104,7 @@ header p {
 
   background: white;
 
-  border-radius: 16px;
+  border-radius: 17px;
 
   padding: 18px;
 
@@ -90,7 +118,17 @@ h2 {
 
   font-size: 17px;
 
-  margin: 0 0 12px;
+  margin: 0 0 13px;
+
+}
+
+.small {
+
+  font-size: 12px;
+
+  color: #888;
+
+  line-height: 1.7;
 
 }
 
@@ -102,7 +140,7 @@ label {
 
   color: #666;
 
-  margin-bottom: 7px;
+  margin: 12px 0 7px;
 
 }
 
@@ -112,7 +150,7 @@ input, textarea, select {
 
   padding: 12px;
 
-  border: 1px solid #ddd;
+  border: 1px solid #dedede;
 
   border-radius: 10px;
 
@@ -122,21 +160,23 @@ input, textarea, select {
 
   font-family: inherit;
 
+  color: #333;
+
 }
 
 textarea {
 
   resize: vertical;
 
-  min-height: 180px;
+  min-height: 170px;
 
   line-height: 1.7;
 
 }
 
-input {
+#article {
 
-  margin-bottom: 14px;
+  min-height: 230px;
 
 }
 
@@ -144,13 +184,13 @@ button {
 
   width: 100%;
 
-  padding: 15px;
+  padding: 14px;
 
   border: none;
 
   border-radius: 12px;
 
-  font-size: 16px;
+  font-size: 15px;
 
   font-weight: bold;
 
@@ -176,7 +216,9 @@ button {
 
   color: #426a48;
 
-  min-height: 76px;
+  min-height: 82px;
+
+  line-height: 1.5;
 
 }
 
@@ -184,11 +226,15 @@ button {
 
   grid-column: 1 / 3;
 
+  background: #557c5b;
+
+  color: white;
+
 }
 
 .primary {
 
-  background: #527b58;
+  background: #557c5b;
 
   color: white;
 
@@ -198,31 +244,65 @@ button {
 
 .secondary {
 
-  background: #eee;
+  background: #eeeeea;
 
-  color: #444;
+  color: #555;
 
   margin-top: 10px;
 
 }
 
-#result {
+.result {
 
   min-height: 220px;
 
+  background: #fafbf8;
+
 }
 
-.note {
-
-  font-size: 12px;
-
-  color: #888;
-
-  line-height: 1.6;
+#copyStatus {
 
   text-align: center;
 
-  margin-top: 20px;
+  font-size: 13px;
+
+  color: #557c5b;
+
+  min-height: 20px;
+
+  margin-top: 8px;
+
+}
+
+.footer {
+
+  text-align: center;
+
+  color: #888;
+
+  font-size: 11px;
+
+  line-height: 1.8;
+
+  margin-top: 22px;
+
+}
+
+details summary {
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: bold;
+
+  color: #557c5b;
+
+}
+
+details[open] summary {
+
+  margin-bottom: 12px;
 
 }
 
@@ -236,6 +316,8 @@ button {
 
 <header>
 
+  <div class="logo">n</div>
+
   <h1>noteサポ</h1>
 
   <p>記事の投稿準備をお手伝い</p>
@@ -246,21 +328,27 @@ button {
 
   <h2>① 記事を貼り付ける</h2>
 
-  <label for="article">noteの記事本文</label>
+  <p class="small">
+
+    noteに投稿する記事をコピーして、ここに貼り付けてください。
+
+  </p>
+
+  <label for="article">記事本文</label>
 
   <textarea id="article"
 
     placeholder="ここに記事本文を貼り付けてください"></textarea>
 
-  <label for="title">記事タイトル（任意）</label>
+  <label for="title">現在のタイトル（任意）</label>
 
   <input id="title"
 
     placeholder="まだ決まっていなくてもOK">
 
-  <label for="style">記事の雰囲気</label>
+  <label for="tone">記事の雰囲気</label>
 
-  <select id="style">
+  <select id="tone">
 
     <option>おまかせ</option>
 
@@ -274,6 +362,8 @@ button {
 
     <option>読者の共感を重視</option>
 
+    <option>素直で自然体</option>
+
   </select>
 
 </div>
@@ -286,25 +376,25 @@ button {
 
     <button onclick="makePrompt('title')">
 
-      ✏️ タイトル案
+      ✏️<br>タイトル案
 
     </button>
 
     <button onclick="makePrompt('tag')">
 
-      # ハッシュタグ
+      #️⃣<br>ハッシュタグ
 
     </button>
 
     <button onclick="makePrompt('image')">
 
-      🖼 見出し画像のアイデア
+      🖼️<br>見出し画像
 
     </button>
 
     <button onclick="makePrompt('all')">
 
-      📋 投稿準備まとめ
+      📋<br>投稿準備まとめ
 
     </button>
 
@@ -314,11 +404,77 @@ button {
 
 <div class="card">
 
-  <h2>③ AIに渡す指示文</h2>
+  <h2>③ 自分の世界観を登録（任意）</h2>
 
-  <textarea id="result"
+  <p class="small">
 
-    placeholder="上のボタンを押すと、ここに指示文が表示されます"
+    いつも使っているキャラクターや画像の雰囲気を登録できます。
+
+    毎回同じ説明をする手間を減らせます。
+
+  </p>
+
+  <label for="world">noteの世界観・発信テーマ</label>
+
+  <textarea id="world"
+
+    style="min-height:85px"
+
+    placeholder="例：日常の出来事、AIとの会話、ユーモアのあるエッセイ"></textarea>
+
+  <label for="character">キャラクター・画像の特徴</label>
+
+  <textarea id="character"
+
+    style="min-height:85px"
+
+    placeholder="例：いつも同じキャラクターを使う。顔や髪型を変えない。"></textarea>
+
+  <label for="imageStyle">画像の好み</label>
+
+  <select id="imageStyle">
+
+    <option>おまかせ</option>
+
+    <option>イラスト風</option>
+
+    <option>アニメ風</option>
+
+    <option>写真風</option>
+
+    <option>レトロポップ</option>
+
+    <option>シンプルな図解</option>
+
+    <option>絵本風</option>
+
+  </select>
+
+  <button class="secondary" onclick="saveSettings()">
+
+    世界観を保存する
+
+  </button>
+
+  <p id="saveStatus" class="small"></p>
+
+</div>
+
+<div class="card">
+
+  <h2>④ AIに渡す指示文</h2>
+
+  <p class="small">
+
+    上のボタンを押すと指示文が作られます。
+
+    コピーしてChatGPTやClaudeに貼り付けてください。
+
+  </p>
+
+  <textarea id="result" class="result"
+
+    placeholder="ここにAIへの指示文が表示されます"
 
     readonly></textarea>
 
@@ -328,37 +484,97 @@ button {
 
   </button>
 
+  <p id="copyStatus"></p>
+
   <button class="secondary" onclick="clearAll()">
 
-    最初からやり直す
+    入力内容を消して最初から
 
   </button>
 
 </div>
 
-<p class="note">
+<div class="footer">
 
-  noteサポは、記事を書く人を応援する無料アプリです。<br>
+  noteサポ<br>
 
-  AIの利用にはChatGPTやClaudeなどのサービスを使います。
+  noteの記事を書く人を応援する無料アプリ<br>
 
-</p>
+  AIの回答はChatGPTやClaudeなどのサービスを利用します。
+
+</div>
 
 </main>
 
 <script>
 
+const $ = id => document.getElementById(id);
+
+function saveSettings() {
+
+  try {
+
+    localStorage.setItem("noteSapoWorld", $("world").value);
+
+    localStorage.setItem("noteSapoCharacter", $("character").value);
+
+    localStorage.setItem("noteSapoImageStyle", $("imageStyle").value);
+
+    $("saveStatus").textContent =
+
+      "世界観をこの端末に保存しました！";
+
+  } catch (e) {
+
+    $("saveStatus").textContent =
+
+      "保存できませんでした。";
+
+  }
+
+}
+
+function loadSettings() {
+
+  try {
+
+    $("world").value =
+
+      localStorage.getItem("noteSapoWorld") || "";
+
+    $("character").value =
+
+      localStorage.getItem("noteSapoCharacter") || "";
+
+    $("imageStyle").value =
+
+      localStorage.getItem("noteSapoImageStyle") || "おまかせ";
+
+  } catch (e) {
+
+    // 保存機能が使えない場合もアプリは利用可能
+
+  }
+
+}
+
 function makePrompt(mode) {
 
-  const article = document.getElementById("article").value.trim();
+  const article = $("article").value.trim();
 
-  const title = document.getElementById("title").value.trim();
+  const title = $("title").value.trim();
 
-  const style = document.getElementById("style").value;
+  const tone = $("tone").value;
+
+  const world = $("world").value.trim();
+
+  const character = $("character").value.trim();
+
+  const imageStyle = $("imageStyle").value;
 
   if (!article) {
 
-    alert("先に記事本文を貼り付けてください");
+    alert("先に記事本文を貼り付けてください。");
 
     return;
 
@@ -370,7 +586,11 @@ function makePrompt(mode) {
 
     task = `
 
-この記事に合うタイトル案を10個考えてください。
+【タイトル案】
+
+この記事の内容を読み取り、
+
+記事の魅力が伝わるタイトルを10個提案してください。
 
 ・記事の内容から外れない
 
@@ -379,6 +599,8 @@ function makePrompt(mode) {
 ・大げさな煽りや釣りタイトルにしない
 
 ・切り口の異なるタイトルを提案する
+
+・共感型、興味を引く型、ユーモア型などを含める
 
 ・それぞれのタイトルの特徴を簡単に説明する
 
@@ -392,21 +614,23 @@ function makePrompt(mode) {
 
     task = `
 
-この記事に合うハッシュタグを提案してください。
+【ハッシュタグ】
 
-・記事の中心テーマを読み取る
+この記事の主題と読者の関心を読み取り、
 
-・内容に本当に関係するタグを選ぶ
+記事に合うハッシュタグを提案してください。
 
-・読者が記事を見つける手がかりになるタグを優先する
+・記事の中心テーマを重視する
 
 ・広いテーマと具体的なテーマを組み合わせる
 
-・無関係なタグや人気だけを狙ったタグは使わない
+・記事の内容に関連するタグだけを選ぶ
 
-・おすすめのタグを5〜10個提案する
+・無関係な人気タグを混ぜない
 
-・タグを選んだ理由も簡単に説明する
+・おすすめを5〜10個提案する
+
+・各タグを選んだ理由も簡単に説明する
 
 ・最後にコピーしやすい形でまとめる
 
@@ -418,21 +642,35 @@ function makePrompt(mode) {
 
     task = `
 
-この記事に合うnoteの見出し画像を考えてください。
+【見出し画像】
 
-・記事の内容や雰囲気を読み取る
+この記事の内容や雰囲気に合うnoteの見出し画像を考えてください。
 
-・記事の世界観に合う画像を提案する
+・記事の中心テーマを読み取る
 
-・画像の構図、背景、色、人物や物の配置を説明する
+・記事の世界観に合った画像を提案する
 
-・文字を入れる場合は短くする
-
-・noteの見出し画像に適した横長16:9を想定する
-
-・画像生成AIにそのまま渡せる完成プロンプトも作る
+・構図、背景、色、人物や物の配置を説明する
 
 ・画像案を3種類提案する
+
+・それぞれの画像が記事に合う理由を説明する
+
+・おすすめの案を1つ選ぶ
+
+・画像生成AIにそのまま渡せる完成プロンプトを作る
+
+画像の好み：
+
+${imageStyle}
+
+キャラクターの指定：
+
+${character || "特に指定なし"}
+
+世界観：
+
+${world || "記事の内容に合う自然な世界観"}
 
 `;
 
@@ -442,41 +680,47 @@ function makePrompt(mode) {
 
     task = `
 
-この記事の投稿準備をまとめて手伝ってください。
+【投稿準備まとめ】
 
-【1】記事の内容とテーマ
+記事を書いた本人の個性を大切にしながら、
 
-記事の中心テーマ、伝えたいこと、読者に与える印象を簡潔に整理する。
+投稿準備をまとめて手伝ってください。
 
-【2】タイトル案
+1. 記事のテーマと伝えたいこと
 
-切り口の異なるタイトルを5個提案する。
+2. 記事の魅力と読者に与える印象
 
-それぞれの特徴も説明し、おすすめを選ぶ。
+3. タイトル候補を5個
 
-【3】ハッシュタグ
+4. おすすめのタイトルを1つ
 
-記事に本当に合うタグを5〜10個提案する。
+5. ハッシュタグ候補を5〜10個
 
-選んだ理由も説明し、最後にコピーしやすい形でまとめる。
+6. タグを選んだ理由
 
-【4】見出し画像
+7. 見出し画像のアイデアを3種類
 
-記事の雰囲気に合う画像案を3種類提案する。
+8. おすすめの画像案と生成用プロンプト
 
-その中からおすすめを選び、画像生成AIに渡せるプロンプトも作る。
+9. 投稿前の簡単なアドバイス
 
-【5】投稿前のアドバイス
-
-記事の魅力を損なわず、読者に伝わりやすくするための
-
-簡単なアドバイスを1〜3個提案する。
-
-注意：
+タイトルやタグは、記事の内容に合ったものにしてください。
 
 記事そのものを書き直す必要はありません。
 
 元の記事の書き手らしさを尊重してください。
+
+世界観：
+
+${world || "特に指定なし"}
+
+キャラクター：
+
+${character || "特に指定なし"}
+
+画像の好み：
+
+${imageStyle}
 
 `;
 
@@ -486,13 +730,23 @@ function makePrompt(mode) {
 
 あなたはnoteの投稿準備をサポートするアシスタントです。
 
-記事を書いた本人の個性や表現を大切にしてください。
+【重要な方針】
 
-内容を勝手に変更したり、記事にない情報を追加したりしないでください。
+・記事の内容を正確に読み取る
+
+・書き手本人の個性や表現を尊重する
+
+・記事に書かれていない事実を作らない
+
+・大げさな煽りや誇張を避ける
+
+・分かりやすく、実際に使える提案をする
+
+・日本語で自然に回答する
 
 【記事の雰囲気】
 
-${style}
+${tone}
 
 【現在のタイトル】
 
@@ -506,13 +760,15 @@ ${task}
 
 ${article}
 
-分かりやすく、実際に使える形で回答してください。
+以上をもとに回答してください。
 
 `;
 
-  document.getElementById("result").value = prompt.trim();
+  $("result").value = prompt.trim();
 
-  document.getElementById("result").scrollIntoView({
+  $("copyStatus").textContent = "";
+
+  $("result").scrollIntoView({
 
     behavior: "smooth",
 
@@ -524,37 +780,43 @@ ${article}
 
 async function copyPrompt() {
 
-  const result = document.getElementById("result");
+  const result = $("result");
 
   if (!result.value.trim()) {
 
-    alert("先に指示文を作成してください");
+    alert("先に指示文を作成してください。");
 
     return;
 
   }
 
-  result.focus();
-
-  result.select();
-
   try {
 
     await navigator.clipboard.writeText(result.value);
 
-    alert("コピーできたで！AIに貼り付けて使ってください");
+    $("copyStatus").textContent =
+
+      "コピーできたで！AIに貼り付けて使ってください。";
 
   } catch (e) {
+
+    result.focus();
+
+    result.select();
 
     const success = document.execCommand("copy");
 
     if (success) {
 
-      alert("コピーできたで！AIに貼り付けて使ってください");
+      $("copyStatus").textContent =
+
+        "コピーできたで！AIに貼り付けて使ってください。";
 
     } else {
 
-      alert("指示文を長押ししてコピーしてください");
+      $("copyStatus").textContent =
+
+        "指示文を長押ししてコピーしてください。";
 
     }
 
@@ -564,21 +826,25 @@ async function copyPrompt() {
 
 function clearAll() {
 
-  if (!confirm("入力内容をすべて消しますか？")) {
+  if (!confirm("記事本文とタイトル、指示文を消しますか？")) {
 
     return;
 
   }
 
-  document.getElementById("article").value = "";
+  $("article").value = "";
 
-  document.getElementById("title").value = "";
+  $("title").value = "";
 
-  document.getElementById("style").selectedIndex = 0;
+  $("tone").selectedIndex = 0;
 
-  document.getElementById("result").value = "";
+  $("result").value = "";
+
+  $("copyStatus").textContent = "";
 
 }
+
+loadSettings();
 
 </script>
 
